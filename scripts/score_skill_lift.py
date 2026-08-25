@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
-"""Normalize paired baseline/treatment runs into a Skill Lift report."""
+"""Normalize paired baseline/treatment runs into a schema-validated Skill Lift report."""
 from __future__ import annotations
 import json, sys
 from pathlib import Path
+from jsonschema import Draft202012Validator
 
+ROOT=Path(__file__).resolve().parents[1]
 SIGNALS=("security","skill_execution","skill_efficiency","accuracy","goal_accuracy","behavior_check")
 DIMENSIONS=("security","correctness","discoverability","effectiveness","efficiency")
 
 def load(path): return json.loads(Path(path).read_text(encoding="utf-8"))
 def mean(xs): return sum(xs)/len(xs)
 def pct(before, after): return None if before == 0 else ((after-before)/before)*100.0
+
+def validate(data, schema_name):
+    schema=load(ROOT/"schemas"/schema_name)
+    errors=sorted(Draft202012Validator(schema).iter_errors(data),key=lambda e:list(e.absolute_path))
+    if errors:
+        for e in errors: print(f"SCHEMA ERROR {'/'.join(map(str,e.absolute_path)) or '<root>'}: {e.message}",file=sys.stderr)
+        raise ValueError(schema_name)
 
 def dimensions(scores):
     return {
@@ -26,7 +35,10 @@ def verdict(lift): return "pass" if lift >= .05 else "fail" if lift <= -.10 else
 def main():
     if len(sys.argv)!=3:
         print("usage: score_skill_lift.py EXPERIMENT.json OUTPUT.json",file=sys.stderr); return 2
-    exp=load(sys.argv[1]); cases=[]
+    exp=load(sys.argv[1])
+    try: validate(exp,"skill-paired-experiment.schema.json")
+    except ValueError: return 1
+    cases=[]
     for pair in exp["pairs"]:
         b,t=pair["baseline"],pair["treatment"]
         bd,td=dimensions(b["scores"]),dimensions(t["scores"])
@@ -55,6 +67,8 @@ def main():
             "mean_composite_lift":round(mean(lifts),6),"mean_outcome_lift":round(mean(outcome),6),
             "positive_case_rate":round(sum(x>0 for x in lifts)/len(lifts),6),"negative_case_rate":round(sum(x<0 for x in lifts)/len(lifts),6),
             "security_regressions":sum(c["dimensions"]["security"]["lift"]<0 for c in cases)}}
+    try: validate(report,"skill-lift-report.schema.json")
+    except ValueError: return 1
     Path(sys.argv[2]).write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
     print(f"WROTE {sys.argv[2]} composite_lift={report['summary']['mean_composite_lift']:+.4f}")
     return 0
