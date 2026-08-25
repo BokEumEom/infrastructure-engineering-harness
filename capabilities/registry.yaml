@@ -52,6 +52,28 @@ capabilities:
     execution_policy: governed
     requires_human_gate: true
 
+  - id: security-review
+    source: harness-local
+    skill_path: security-review/SKILL.md
+    class: decision
+    category: security
+    domains: [security, infrastructure, devops, cross-domain]
+    intents: [security review, trust boundary review, privilege review, external integration review]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: capability-routing
+    source: harness-local
+    skill_path: capability-routing/SKILL.md
+    class: control
+    category: operations
+    domains: [cross-domain]
+    intents: [implementation planning, build capability selection, operations capability selection]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
   - id: loop-engineering
     source: harness-local
     skill_path: loop-engineering/SKILL.md
