@@ -1,0 +1,12 @@
+{
+  "primary_hypothesis": "database_saturation",
+  "checks": [
+    "database_connections",
+    "slow_queries",
+    "lock_waits",
+    "cpu_credit_balance"
+  ],
+  "recommendations": [
+    "review_non_burstable_database_capacity"
+  ]
+}
