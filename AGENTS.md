@@ -18,6 +18,7 @@ Use an explicitly supplied context path first. Otherwise use `.infra-context/` f
 - SLI/SLO, error budget, incidents, reliability, toil → `domains/sre/README.md`
 - build, release, deployment, rollback, delivery performance → `domains/devops/README.md`
 - cost, allocation, usage efficiency, commitments, unit economics → `domains/finops/README.md`
+- trust boundaries, identity/privilege, sensitive data, external integrations, supply chain → `domains/security/README.md`
 
 For cross-domain work, preserve each domain's explicit constraints. Do not let a technology-specific implementation pattern override reliability, security, cost, data-integrity, or authorization requirements.
 
@@ -78,7 +79,7 @@ Loop invariants:
 
 ## Evidence contract
 
-Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost or business values. External Skill documentation is not environment evidence.
+Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost, security or business values. External Skill documentation is not environment evidence.
 
 ## MCP ticketing workflow
 
@@ -86,7 +87,7 @@ Jira and Linear workflow writes use connected MCP servers. Build a provider-neut
 
 ## Safety contract
 
-Prefer read-only discovery. Production changes follow `workflows/change-proposal.md`; ticket writes follow `workflows/ticketing.md`. Production mutation, destructive actions, authorization expansion and financial commitments remain independently authorized. Hooks and external Skill command lists are defense-in-depth/reference material, not a security boundary.
+Prefer read-only discovery. Production changes follow `workflows/change-proposal.md`; security-sensitive decisions can use `workflows/security-review.md`; ticket writes follow `workflows/ticketing.md`. Production mutation, destructive actions, authorization expansion and financial commitments remain independently authorized. Hooks and external Skill command lists are defense-in-depth/reference material, not a security boundary.
 
 ## Validation
 
@@ -94,6 +95,7 @@ Prefer read-only discovery. Production changes follow `workflows/change-proposal
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
 python scripts/validate_capability_registry.py capabilities/registry.yaml
+python scripts/check_domain_eval.py evals/domains/security.json mcp-write-boundary examples/eval-output/domain-security-mcp-boundary.json
 python scripts/check_loop_eval.py evals/loops/standard.json incident-recovered examples/eval-output/loop-incident-recovered.json
 python -m unittest discover -s tests
 python -m compileall scripts hooks adapters loops
@@ -101,13 +103,13 @@ python -m compileall scripts hooks adapters loops
 
 ## Repository map
 
-- `domains/` — Infrastructure, SRE, DevOps, FinOps lenses
+- `domains/` — Infrastructure, SRE, DevOps, FinOps, Security lenses
 - `skills/` — directly discoverable Decision, Control, Workflow, and routing skills
 - `capabilities/` — implementation/verification capability registry and external source trust metadata
 - `loops/` — bounded Engineering Loops and reference runtime helpers
 - `schemas/` — context, evidence, change, ticket, capability, loop and eval contracts
 - `evals/` — one-shot and long-horizon regression scenarios
 - `adapters/` and `mcp/` — optional evidence/workflow integrations
-- `workflows/` — production change and ticketing workflows
+- `workflows/` — production change, security review and ticketing workflows
 - `docs/CAPABILITY-MODEL.md` — Decision Skill vs implementation Capability design
 - `docs/REFERENCE-MODELS.md` — research and operational models behind the harness
