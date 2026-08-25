@@ -1,0 +1,27 @@
+services:
+  - name: orders-api
+    owner: platform
+    criticality: high
+    runtime:
+      platform: ecs-fargate
+    dependencies:
+      database:
+        - aurora-orders
+      messaging:
+        - event-stream
+    observability:
+      apm: datadog
+      logs: datadog
+      infrastructure: cloudwatch
+    slo:
+      availability: 99.9
+      latency_p95_ms: 500
+
+  - name: worker
+    owner: platform
+    criticality: medium
+    runtime:
+      platform: ecs-fargate
+    dependencies:
+      messaging:
+        - event-stream
