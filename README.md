@@ -2,271 +2,207 @@
 
 **English** | [한국어](README.ko.md)
 
-A provider-neutral, cross-agent harness for turning infrastructure knowledge and live evidence into reviewable engineering decisions.
+A provider-neutral, cross-agent harness for turning infrastructure knowledge and current evidence into reviewable engineering decisions across **Infrastructure Engineering, SRE, DevOps, and FinOps**.
 
 > **Infrastructure Knowledge → Context → Agent → Decision/Proposal → Human Review → Infrastructure**
 
-The project is designed for **Codex, Kiro, Claude Code, and other agents** rather than one model, one cloud, or one infrastructure delivery method. It focuses on the layer before execution: architecture knowledge, decisions, operational history, policy, evidence provenance, evaluation, and change control.
+The project is designed for **Codex, Kiro, Claude Code, and other repository-aware agents**. It does not require one cloud, one runtime, Terraform, Kubernetes, Datadog, or any particular CI/CD or cost platform.
 
 ## Why this exists
 
-Agents can already generate infrastructure-as-code, manifests, scripts, configuration, runbooks, and operational procedures quickly. The harder problem is giving them enough context to answer:
+Agents can already generate IaC, configuration, scripts, runbooks and operational procedures. The harder problem is giving them enough organizational context to decide **what should change, why, with what evidence, and under which constraints**.
 
-- Why is this change appropriate for this system?
-- What past decision or incident constrains it?
-- What current evidence supports the diagnosis?
-- What is the blast radius and rollback path?
-- What should remain under independent human/production control?
+This harness makes Architecture, ADRs, incidents, operating policy, reliability objectives, delivery rules, cost ownership and current evidence usable as agent context.
 
-## Core architecture
+## Architecture
 
 ```text
-Durable Infrastructure Knowledge          Optional Live Evidence
-Service catalog / ADR / incidents         Metrics / logs / traces
-Policy / runbooks / architecture          runtime / deploy / status
-              │                                  │
-              └──────────────┬───────────────────┘
-                             ▼
-                    Progressive Context
-                             ▼
-                    Infrastructure Agent
-                             ▼
-                   Evidence-based Decision
-                             ▼
-                      Change Proposal
-                             ▼
-          Validation / Policy / Eval / Review
-                             ▼
-        PR / Change Ticket / Approved Runbook
-                             ▼
-                       Human Approval
-                             ▼
-                      Infrastructure
+Durable Knowledge + Optional Live Evidence
+                    ↓
+              Context Resolution
+                    ↓
+               Harness Core
+                    ↓
+      ┌─────────────┼─────────────┐
+Infrastructure     SRE          DevOps        FinOps
+Architecture   Reliability    Delivery      Cost/Value
+Capacity       SLO/Budget     Recovery      Allocation
+Failure modes  Incidents      Stability     Unit economics
+      └─────────────┼─────────────┘
+                    ↓
+          Evidence-based Decision
+                    ↓
+              Change Proposal
+                    ↓
+       Validation / Eval / Review
+                    ↓
+ PR / Ticket / Runbook / Controlled Procedure
+                    ↓
+              Human Approval
+                    ↓
+                Execution
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md).
+See [Architecture](docs/ARCHITECTURE.md) and [Production Readiness](docs/PRODUCTION-READINESS.md).
+
+## Domain packs
+
+The shared core is reused by four engineering lenses:
+
+| Pack | Use it for | Additional context |
+| --- | --- | --- |
+| [Infrastructure](domains/infrastructure/README.md) | architecture, capacity, migration, dependency and change risk | architecture, ADR, runtime/capacity evidence |
+| [SRE](domains/sre/README.md) | SLI/SLO, error budgets, incidents, reliability, toil | `domains/sre.yaml` |
+| [DevOps](domains/devops/README.md) | build/release/deployment, rollback, delivery performance | `domains/devops.yaml` |
+| [FinOps](domains/finops/README.md) | allocation, usage efficiency, commitments, unit economics | `domains/finops.yaml` |
+
+Use multiple packs for cross-domain decisions. A cost optimization that violates an SLO should remain visible as a FinOps opportunity **and** an SRE constraint, not become an averaged generic recommendation.
 
 ## Agent support
 
 ### Codex
 
-`AGENTS.md` is the primary repository instruction file. Keep durable knowledge in structured context; `AGENTS.md` acts as a map and operating contract.
+Use the repository `AGENTS.md` as the operating contract. It routes tasks to the appropriate domain pack and context.
 
 ### Kiro
 
-Kiro supports `AGENTS.md`; this repository also includes `.kiro/steering/infrastructure-harness.md` as a workspace steering adapter.
+Kiro can use `AGENTS.md`; `.kiro/steering/infrastructure-harness.md` provides an additional workspace steering adapter.
 
 ### Claude Code
-
-The repository includes a Claude Code plugin adapter with Skills, reviewer agent, and a defensive `PreToolUse` hook:
 
 ```bash
 claude --plugin-dir ./infrastructure-engineering-harness
 ```
 
-Skills:
+Skills include:
 
 ```text
 /infra-harness:incident-analysis
-/infra-harness:change-review
 /infra-harness:architecture-review
+/infra-harness:change-review
+/infra-harness:sre-review
+/infra-harness:delivery-review
+/infra-harness:finops-review
 ```
 
 ## Usage modes
 
-The harness does **not** require every service repository to contain agent files. Two adoption modes are supported conceptually.
+### A. Embedded context
 
-### Mode A — Embedded context
-
-Use this when a service or infrastructure repository should own its own operational knowledge.
+Put the context with a service or infrastructure repository:
 
 ```text
 service-repository/
 ├── AGENTS.md
-├── application-or-infrastructure-files/
 └── .infra-context/
     ├── service-catalog.yaml
     ├── architecture/
     ├── adr/
     ├── incidents/
     ├── policies/
-    └── runbooks/
+    ├── runbooks/
+    └── domains/
+        ├── sre.yaml
+        ├── devops.yaml
+        └── finops.yaml
 ```
 
-Typical request:
+Example:
 
 ```text
-Analyze the current latency incident using AGENTS.md and .infra-context.
-Separate evidence from assumptions, rank hypotheses, and do not make a production change.
+Analyze the latency incident using .infra-context.
+Use Infrastructure and SRE lenses. Separate evidence from assumptions and do not execute a production change.
 ```
 
-### Mode B — Central harness / platform workspace
+### B. Central harness / platform workspace
 
-Use this when a platform, SRE, or infrastructure team wants to keep service repositories unchanged.
+Keep service repositories unchanged and manage organizational context centrally:
 
 ```text
-infrastructure-harness-workspace/
+harness-workspace/
 ├── AGENTS.md
-├── schemas/
-├── evals/
-├── workflows/
-├── adapters/
-└── contexts/
-    ├── payment-platform/
-    ├── identity-platform/
-    └── shared-network/
-
-service repositories / monitoring / runtime systems
-                 │
-                 └── read-only sources
+├── contexts/
+│   ├── payment-platform/
+│   ├── identity-platform/
+│   └── shared-network/
+└── read-only sources
+    ├── service repositories
+    ├── runtime / observability
+    ├── deployment systems
+    └── cost / business data
 ```
 
-In this mode, the harness repository is the reasoning/control workspace. Service repositories, deployment history, monitoring systems, cloud/runtime APIs, and status feeds are read-only evidence sources.
-
-Typical request:
+Example:
 
 ```text
-Analyze the payment-platform incident using contexts/payment-platform.
-Inspect the payment service repository only as a read-only source.
-Use current evidence if available. Produce hypotheses, verification steps, and a change proposal only if justified.
+Analyze payment-platform using contexts/payment-platform.
+The proposed capacity reduction affects cost and reliability, so use Infrastructure, SRE and FinOps packs.
+Treat external systems as read-only and produce a proposal only if the evidence is sufficient.
 ```
 
-This mode is often a better fit for organizations where architecture boundaries span multiple repositories.
+See [Central Context Example](examples/central-context/README.md).
 
-## Provider-neutral context contract
+## Example: one decision, four lenses
 
-A context set uses the same knowledge categories whether it is embedded in a service repository or stored centrally:
+A service has stable traffic, high capacity headroom, a 99.9% SLO, healthy error budget, a reversible deployment path, and rising monthly cost.
 
-```text
-service-catalog.yaml
-architecture/
-adr/
-incidents/
-policies/
-runbooks/
-```
+- **Infrastructure** checks whether capacity is genuinely oversized and whether failure modes change.
+- **SRE** checks whether reduced capacity can still satisfy the SLO and error-budget policy.
+- **DevOps** checks rollout, validation, rollback and failed-deployment recovery.
+- **FinOps** checks unit cost, allocation, expected savings and whether engineering effort/risk is justified.
 
-The reference data intentionally avoids assuming ECS, Kubernetes, a specific database, AWS, or a particular observability product. Component types are expressed as capabilities such as `compute`, `datastore`, `messaging`, `network`, `storage`, `identity`, and `external_dependency`.
+The final proposal contains the trade-offs and evidence from each lens before approval.
 
-## Context schemas and CI validation
+## Context and schemas
 
-Machine-readable contracts live in `schemas/`:
-
-- service catalog
-- incident knowledge
-- ADR
-- policy
-- live evidence/provenance
-- change proposal
-- eval suite
-
-Run:
+Machine-readable contracts live in `schemas/` for service catalog, incidents, ADRs, policy, evidence, change proposals, domain profiles and eval suites.
 
 ```bash
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
 ```
 
-GitHub Actions runs the same validation on pushes and pull requests.
+## Optional live evidence adapters
 
-## Live evidence: optional adapters
+The core works without live integrations. Add read-only adapters only when current state is required.
 
-The core works without live integrations. Add read-only adapters when you need current state.
-
-Datadog is **optional**. A team can use Prometheus, OpenTelemetry backends, cloud-native monitoring, another APM, or repository-only evidence. Cloud providers are also adapters rather than assumptions in the reasoning model.
-
-All integrations should normalize data to `schemas/evidence.schema.json` before reasoning. See [adapters/README.md](adapters/README.md).
-
-## Evidence and provenance
-
-A recommendation should be traceable to stable evidence IDs, including source type, observation time, signal, component, and source/query/resource reference when available. This keeps "the agent says so" from becoming an operational justification.
+Possible sources include Prometheus, OpenTelemetry backends, Datadog, cloud-native monitoring, runtime APIs, source control, deployment history, SLO tooling, cost/usage systems and business metrics. **Datadog is optional.** Normalize results to `schemas/evidence.schema.json`.
 
 ## Provider-neutral evaluation
 
-`evals/standard/incident-scenarios.json` contains **30 golden incident scenarios** spanning compute, datastore, messaging, cache, network, identity, deployment, storage, external dependencies, availability, and observability gaps.
+The repository includes:
 
-The scenarios test judgment such as "do not scale a healthy tier when the bottleneck is downstream" rather than testing a vendor-specific service name.
+- 30 provider-neutral incident scenarios in `evals/standard/`
+- Infrastructure domain scenarios
+- SRE error-budget/reliability scenarios
+- DevOps delivery/recovery scenarios
+- FinOps allocation/unit-economics scenarios
 
 Example:
 
 ```bash
-python scripts/check_eval_output.py \
-  evals/standard/incident-scenarios.json \
-  dependency-latency-001 \
-  examples/eval-output/dependency-latency-001.json
+python scripts/check_domain_eval.py \
+  evals/domains/sre.json \
+  error-budget-exhausted \
+  examples/eval-output/domain-sre-error-budget.json
 ```
 
 ## Terraform or IaC is not required
 
-The harness is not a Terraform workflow and does not require infrastructure-as-code.
-
-A change proposal can result in different execution artifacts depending on the environment:
+The change artifact depends on the environment:
 
 ```text
-IaC-managed environment
-Evidence → Proposal → Code/Config Diff → Plan/Dry Run → PR → Approval → Deployment
-
-Non-IaC managed service
-Evidence → Proposal → Change Ticket → Approved Console/API Procedure → Approval → Operator Execution
-
-Operational procedure
-Evidence → Proposal → Reviewed Runbook → Maintenance Window → Approval → Operator Execution
-
-Hybrid environment
-Evidence → Proposal → Script/Config/API Change → Validation → Controlled Pipeline or Operator
+IaC-managed        Proposal → Code/Config → Plan → PR → Approval
+Non-IaC service    Proposal → Change Ticket → Console/API Procedure → Approval
+Operational work   Proposal → Reviewed Runbook → Maintenance Window → Approval
+Hybrid             Proposal → Script/Config/API Change → Controlled Pipeline/Operator
 ```
 
-Examples of environments that may not use Terraform include vendor-managed SaaS, managed network appliances, legacy systems, database operations, hardware platforms, cloud resources maintained through another control system, or teams that deliberately use approved console/API workflows.
-
-The harness requirement is not "produce Terraform." The requirement is:
-
-- cite evidence;
-- state risk and blast radius;
-- define validation;
-- define rollback or recovery;
-- use an independently authorized execution path.
-
-## Production change workflow
-
-The default harness stops at a reviewable proposal:
-
-```text
-Evidence → Recommendation → Change Proposal → Validation → Review Artifact → Human Approval → Execution System
-```
-
-The review artifact can be a **pull request, change ticket, approved runbook, plan, or controlled procedure**.
-
-`schemas/change-proposal.schema.json` requires evidence references, risk, blast radius, validation, rollback, and explicit approval. See [workflows/change-proposal.md](workflows/change-proposal.md).
-
-## Practical incident example
-
-Suppose a request-serving service shows high end-to-end latency while the service compute layer remains healthy and a critical datastore dependency is saturated.
-
-The agent should reason like this:
-
-```text
-Current evidence
-├── service compute utilization: normal
-├── dependency connection utilization: high
-└── dependency operation latency: high
-
-Historical context
-└── previous dependency saturation incident
-
-Decision
-├── primary hypothesis: dependency saturation
-├── do not scale healthy compute without evidence
-├── verify connection pressure / slow operations / recent changes
-└── produce a reversible change proposal only after verification
-```
-
-The same reasoning should work whether the service runs on containers, virtual machines, serverless compute, physical hosts, or a managed platform.
+The common contract is evidence, risk, blast radius, validation, recovery and independent approval — not Terraform.
 
 ## Safety model
 
-Agent hooks are defense in depth, **not a security boundary**. Real production enforcement belongs in least-privilege IAM/RBAC, CI/CD approvals, protected branches, change-management controls, policy-as-code, audit logs, and deployment/operations authorization outside the model.
-
-The bundled Claude hook blocks several common direct mutation commands, but production pilots should begin with read-only access.
+Agent-side hooks are defense-in-depth, not a security boundary. Real production enforcement belongs outside the model in IAM/RBAC, deployment/change approvals, policy-as-code, protected branches, audit systems and other independent controls.
 
 ## Quick start
 
@@ -277,19 +213,11 @@ python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
 ```
 
-For embedded mode, copy `examples/.infra-context` into a target repository. For central mode, use the same context structure under a service/domain-specific directory in your harness workspace. Keep secrets and sensitive payloads out of agent context.
+## Reference models
 
-## Design principles
-
-1. Evidence before action.
-2. Progressive disclosure instead of loading the whole knowledge base.
-3. Decisions and incident history are first-class context.
-4. Provider and observability vendors are adapters, not core assumptions.
-5. IaC is optional; engineering controls are not.
-6. Recommendations carry provenance.
-7. Production changes are reviewable and reversible.
-8. Independent authorization remains outside the model.
-9. Agent judgment is regression-tested with provider-neutral evals.
+- Google SRE — SLOs and error budgets: https://sre.google/sre-book/service-level-objectives/
+- DORA software delivery performance: https://dora.dev/insights/dora-metrics-history/
+- FinOps Framework: https://www.finops.org/framework/
 
 ## License
 

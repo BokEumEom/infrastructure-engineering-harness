@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """Validate provider-neutral infrastructure context and repository contracts."""
-
 from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
-
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
@@ -31,7 +28,7 @@ def validate(path: Path, schema_name: str) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("context", type=Path, help="Path to .infra-context")
+    parser.add_argument("context", type=Path, help="Path to an embedded .infra-context or central context root")
     args = parser.parse_args()
     context = args.context
 
@@ -40,11 +37,22 @@ def main() -> int:
     targets += [(p, "adr.schema.json") for p in sorted((context / "adr").glob("*.y*ml"))]
     targets += [(p, "incident.schema.json") for p in sorted((context / "incidents").glob("*.y*ml"))]
 
-    repository_targets = [
+    domain_profiles = {
+        "sre.yaml": "sre-profile.schema.json",
+        "devops.yaml": "devops-profile.schema.json",
+        "finops.yaml": "finops-profile.schema.json",
+    }
+    for name, schema in domain_profiles.items():
+        path = context / "domains" / name
+        if path.exists():
+            targets.append((path, schema))
+
+    repository_targets: list[tuple[Path, str]] = [
         (ROOT / "examples/evidence/dependency-saturation.json", "evidence.schema.json"),
         (ROOT / "examples/change-proposal.json", "change-proposal.schema.json"),
         (ROOT / "evals/standard/incident-scenarios.json", "eval-suite.schema.json"),
     ]
+    repository_targets += [(p, "domain-eval-suite.schema.json") for p in sorted((ROOT / "evals/domains").glob("*.json"))]
 
     failures: list[str] = []
     for path, schema in targets + repository_targets:
