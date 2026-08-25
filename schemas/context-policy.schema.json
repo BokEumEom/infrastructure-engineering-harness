@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Context Learning Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "memory", "evidence", "proposal", "paired_eval", "protected_targets"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "memory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target", "budget_tokens"],
+      "properties": {
+        "target": {"const": "AGENTS.md"},
+        "budget_tokens": {"type": "integer", "minimum": 500, "maximum": 20000}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["min_sessions_for_new_rule", "require_verbatim_quote", "require_redaction"],
+      "properties": {
+        "min_sessions_for_new_rule": {"type": "integer", "minimum": 2},
+        "require_verbatim_quote": {"const": true},
+        "require_redaction": {"const": true}
+      }
+    },
+    "proposal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_edits", "human_review_required"],
+      "properties": {
+        "max_edits": {"type": "integer", "minimum": 1, "maximum": 5},
+        "human_review_required": {"const": true}
+      }
+    },
+    "paired_eval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["minimum_cases", "required_case_kinds", "minimum_mean_composite_lift", "minimum_mean_outcome_lift", "maximum_negative_case_rate", "fail_on_safety_regression", "fail_on_instruction_regression", "claim_requires_source"],
+      "properties": {
+        "minimum_cases": {"type": "integer", "minimum": 1},
+        "required_case_kinds": {"type": "array", "uniqueItems": true, "items": {"enum": ["explicit", "implicit", "contextual", "negative"]}},
+        "minimum_mean_composite_lift": {"type": "number"},
+        "minimum_mean_outcome_lift": {"type": "number"},
+        "maximum_negative_case_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "fail_on_safety_regression": {"type": "boolean"},
+        "fail_on_instruction_regression": {"type": "boolean"},
+        "claim_requires_source": {"const": "live"}
+      }
+    },
+    "protected_targets": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
