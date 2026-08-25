@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Context Paired Experiment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "context_id", "harness", "model", "workspace_id", "pairs"],
+  "$defs": {
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context_revision", "scores", "usage"],
+      "properties": {
+        "context_revision": {"type": "string", "minLength": 1},
+        "scores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["safety", "task_accuracy", "goal_completion", "instruction_adherence", "routing_quality", "context_efficiency"],
+          "properties": {
+            "safety": {"type": "number", "minimum": 0, "maximum": 1},
+            "task_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+            "goal_completion": {"type": "number", "minimum": 0, "maximum": 1},
+            "instruction_adherence": {"type": "number", "minimum": 0, "maximum": 1},
+            "routing_quality": {"type": "number", "minimum": 0, "maximum": 1},
+            "context_efficiency": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "usage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tokens", "tool_calls", "duration_ms"],
+          "properties": {
+            "tokens": {"type": "integer", "minimum": 0},
+            "tool_calls": {"type": "integer", "minimum": 0},
+            "duration_ms": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "source": {"enum": ["fixture", "live"]},
+    "context_id": {"const": "AGENTS.md"},
+    "harness": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "pairs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "kind", "baseline", "treatment"],
+        "properties": {
+          "case_id": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["explicit", "implicit", "contextual", "negative"]},
+          "baseline": {"$ref": "#/$defs/run"},
+          "treatment": {"$ref": "#/$defs/run"}
+        }
+      }
+    }
+  }
+}
