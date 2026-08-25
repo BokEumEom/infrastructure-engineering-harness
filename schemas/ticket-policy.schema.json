@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Harness Ticket Policy",
+  "type": "object",
+  "required": ["schema_version", "mode", "default_action", "rules"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "mode": {"enum": ["disabled", "manual", "policy"]},
+    "default_action": {"enum": ["disabled", "manual", "auto_create"]},
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "when", "action"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "when": {
+            "type": "object",
+            "properties": {
+              "providers": {"type": "array", "items": {"enum": ["jira", "linear"]}},
+              "kinds": {"type": "array", "items": {"enum": ["incident", "change", "reliability", "delivery", "finops", "infrastructure", "follow_up"]}},
+              "severities": {"type": "array", "items": {"enum": ["sev1", "sev2", "sev3", "sev4"]}},
+              "risks": {"type": "array", "items": {"enum": ["low", "medium", "high", "critical"]}},
+              "domains": {"type": "array", "items": {"enum": ["infrastructure", "sre", "devops", "finops"]}}
+            },
+            "additionalProperties": false
+          },
+          "action": {"enum": ["disabled", "manual", "auto_create"]},
+          "require_evidence": {"type": "boolean", "default": true},
+          "min_evidence": {"type": "integer", "minimum": 0, "default": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "targets": {
+      "type": "object",
+      "properties": {
+        "jira": {
+          "type": "object",
+          "properties": {
+            "project_key": {"type": "string"},
+            "issue_type": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "linear": {
+          "type": "object",
+          "properties": {
+            "team": {"type": "string"},
+            "project": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

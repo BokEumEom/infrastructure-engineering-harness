@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "id": "TREQ-2026-001",
+  "source_ref": "INC-2026-014",
+  "service": "payment-api",
+  "kind": "incident",
+  "title": "[SEV2] payment-api dependency saturation follow-up",
+  "description": "Investigate and remediate sustained dependency saturation. Preserve evidence, validation and rollback requirements.",
+  "provider": "jira",
+  "severity": "sev2",
+  "risk": "medium",
+  "domains": ["infrastructure", "sre"],
+  "evidence_refs": ["EV-101", "EV-102", "INC-042"],
+  "labels": ["infra-harness", "incident", "sre"],
+  "target": {
+    "project_key": "OPS",
+    "issue_type": "Task"
+  }
+}

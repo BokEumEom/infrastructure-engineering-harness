@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Harness Ticket Request",
+  "type": "object",
+  "required": ["schema_version", "id", "source_ref", "service", "kind", "title", "description", "provider", "evidence_refs", "domains"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string", "minLength": 1},
+    "source_ref": {"type": "string", "minLength": 1},
+    "service": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["incident", "change", "reliability", "delivery", "finops", "infrastructure", "follow_up"]},
+    "title": {"type": "string", "minLength": 1, "maxLength": 240},
+    "description": {"type": "string", "minLength": 1},
+    "provider": {"enum": ["jira", "linear"]},
+    "severity": {"enum": ["sev1", "sev2", "sev3", "sev4"]},
+    "risk": {"enum": ["low", "medium", "high", "critical"]},
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["infrastructure", "sre", "devops", "finops"]}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "labels": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "target": {
+      "type": "object",
+      "properties": {
+        "project_key": {"type": "string"},
+        "issue_type": {"type": "string"},
+        "team": {"type": "string"},
+        "project": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "additionalProperties": false
+}

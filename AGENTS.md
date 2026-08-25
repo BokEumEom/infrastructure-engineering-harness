@@ -72,19 +72,40 @@ Evidence may come from metrics, logs, traces, runtime state, deployments, delive
 
 Never invent telemetry, cost, business-volume, SLO, or delivery values.
 
+## MCP ticketing workflow
+
+Jira and Linear ticket writes should use connected MCP servers rather than provider REST/GraphQL calls embedded in harness logic.
+
+When analysis should become tracked work:
+
+1. build a Ticket Request conforming to `schemas/ticket-request.schema.json`;
+2. evaluate `schemas/ticket-policy.schema.json`;
+3. compute a stable fingerprint;
+4. discover the connected Jira/Linear MCP tools;
+5. search existing work by `source_ref` and fingerprint before creating;
+6. update/comment when matching work already exists;
+7. create only when policy returns `auto_create`, or when policy returns `manual` and the user explicitly asks for creation;
+8. return the created/updated ticket ID and URL to the calling workflow.
+
+Use `skills/ticketing/SKILL.md` and `workflows/ticketing.md` for the detailed process.
+
+Ticket creation is a workflow write. It never grants permission to mutate production infrastructure.
+
 ## Provider and tool neutrality
 
-Core reasoning must not assume a particular cloud, container platform, database, observability product, IaC tool, CI/CD system, or cost platform.
+Core reasoning must not assume a particular cloud, container platform, database, observability product, IaC tool, CI/CD system, cost platform, or ticketing provider.
 
-Datadog, Terraform, Kubernetes, AWS, GitHub and similar products are adapters or execution choices, not core requirements.
+Datadog, Terraform, Kubernetes, AWS, GitHub, Jira and Linear are adapters or execution choices, not core requirements.
 
 ## Safety contract
 
 - Prefer read-only discovery and evidence collection.
 - Do not directly apply/delete infrastructure, mutate production data, broaden authorization, purchase commitments, or bypass deployment/change controls.
 - Production changes follow `workflows/change-proposal.md`.
+- Ticket writes follow `workflows/ticketing.md` and the configured ticket policy.
+- Do not auto-approve broad MCP write tool sets. Scope write access to the intended workflow.
 - Hooks are defense-in-depth, not a security boundary.
-- Real enforcement belongs in independently authorized systems: IAM/RBAC, CI/CD, change management, policy-as-code, protected branches, approval workflows, and audit controls.
+- Real enforcement belongs in independently authorized systems: IAM/RBAC, CI/CD, change management, policy-as-code, protected branches, approval workflows, MCP provider controls, and audit controls.
 
 ## Validation
 
@@ -93,16 +114,18 @@ python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
 python scripts/check_eval_output.py evals/standard/incident-scenarios.json dependency-latency-001 examples/eval-output/dependency-latency-001.json
 python scripts/check_domain_eval.py evals/domains/sre.json error-budget-exhausted examples/eval-output/domain-sre-error-budget.json
-python -m compileall scripts hooks
+python -m unittest discover -s tests
+python -m compileall scripts hooks adapters
 ```
 
 ## Repository map
 
 - `domains/` — Infrastructure, SRE, DevOps, FinOps domain packs
-- `schemas/` — machine-readable context/evidence/change/eval contracts
+- `schemas/` — machine-readable context/evidence/change/ticket/eval contracts
 - `evals/` — provider-neutral regression scenarios
-- `skills/` — Claude Code skill adapter
+- `skills/` — Claude Code skill adapter, including MCP ticketing
 - `.kiro/steering/` — Kiro steering adapter
-- `adapters/` — optional read-only live evidence integrations
-- `workflows/` — production change workflow
-- `examples/` — embedded and central usage examples
+- `adapters/` — optional evidence and workflow action adapters
+- `mcp/` — MCP client connection guidance
+- `workflows/` — production change and ticketing workflows
+- `examples/` — embedded, central and ticketing examples

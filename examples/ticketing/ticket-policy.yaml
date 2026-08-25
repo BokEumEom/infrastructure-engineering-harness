@@ -1,0 +1,27 @@
+schema_version: "1.0"
+mode: policy
+default_action: manual
+rules:
+  - id: high-severity-incident
+    when:
+      kinds: [incident]
+      severities: [sev1, sev2]
+      domains: [sre, infrastructure]
+    action: auto_create
+    require_evidence: true
+    min_evidence: 2
+
+  - id: finops-review-manual
+    when:
+      kinds: [finops]
+      domains: [finops]
+    action: manual
+    require_evidence: true
+    min_evidence: 1
+
+targets:
+  jira:
+    project_key: OPS
+    issue_type: Task
+  linear:
+    team: Infrastructure
