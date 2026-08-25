@@ -4,13 +4,13 @@
 
 A provider-neutral, cross-agent harness for turning infrastructure knowledge and live evidence into reviewable engineering decisions.
 
-> **Infrastructure Knowledge → Context → Agent → Code/Proposal → Human Review → Infrastructure**
+> **Infrastructure Knowledge → Context → Agent → Decision/Proposal → Human Review → Infrastructure**
 
-The project is designed for **Codex, Kiro, Claude Code, and other agents** rather than one model or one infrastructure stack. It focuses on the layer before code: architecture knowledge, decisions, operational history, policy, evidence provenance, evaluation, and change control.
+The project is designed for **Codex, Kiro, Claude Code, and other agents** rather than one model, one cloud, or one infrastructure delivery method. It focuses on the layer before execution: architecture knowledge, decisions, operational history, policy, evidence provenance, evaluation, and change control.
 
 ## Why this exists
 
-Agents can already generate Terraform, manifests, scripts, and configuration quickly. The harder problem is giving them enough context to answer:
+Agents can already generate infrastructure-as-code, manifests, scripts, configuration, runbooks, and operational procedures quickly. The harder problem is giving them enough context to answer:
 
 - Why is this change appropriate for this system?
 - What past decision or incident constrains it?
@@ -35,7 +35,9 @@ Policy / runbooks / architecture          runtime / deploy / status
                              ▼
                       Change Proposal
                              ▼
-                  Validation / Eval / PR
+          Validation / Policy / Eval / Review
+                             ▼
+        PR / Change Ticket / Approved Runbook
                              ▼
                        Human Approval
                              ▼
@@ -48,7 +50,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/PRODUCTION-READINESS.
 
 ### Codex
 
-`AGENTS.md` is the primary repository instruction file. Keep durable knowledge in `.infra-context/`; `AGENTS.md` acts as a map and operating contract.
+`AGENTS.md` is the primary repository instruction file. Keep durable knowledge in structured context; `AGENTS.md` acts as a map and operating contract.
 
 ### Kiro
 
@@ -70,18 +72,78 @@ Skills:
 /infra-harness:architecture-review
 ```
 
-## Provider-neutral context contract
+## Usage modes
 
-A target project owns its knowledge:
+The harness does **not** require every service repository to contain agent files. Two adoption modes are supported conceptually.
+
+### Mode A — Embedded context
+
+Use this when a service or infrastructure repository should own its own operational knowledge.
 
 ```text
-.infra-context/
-├── service-catalog.yaml
-├── architecture/
-├── adr/
-├── incidents/
-├── policies/
-└── runbooks/
+service-repository/
+├── AGENTS.md
+├── application-or-infrastructure-files/
+└── .infra-context/
+    ├── service-catalog.yaml
+    ├── architecture/
+    ├── adr/
+    ├── incidents/
+    ├── policies/
+    └── runbooks/
+```
+
+Typical request:
+
+```text
+Analyze the current latency incident using AGENTS.md and .infra-context.
+Separate evidence from assumptions, rank hypotheses, and do not make a production change.
+```
+
+### Mode B — Central harness / platform workspace
+
+Use this when a platform, SRE, or infrastructure team wants to keep service repositories unchanged.
+
+```text
+infrastructure-harness-workspace/
+├── AGENTS.md
+├── schemas/
+├── evals/
+├── workflows/
+├── adapters/
+└── contexts/
+    ├── payment-platform/
+    ├── identity-platform/
+    └── shared-network/
+
+service repositories / monitoring / runtime systems
+                 │
+                 └── read-only sources
+```
+
+In this mode, the harness repository is the reasoning/control workspace. Service repositories, deployment history, monitoring systems, cloud/runtime APIs, and status feeds are read-only evidence sources.
+
+Typical request:
+
+```text
+Analyze the payment-platform incident using contexts/payment-platform.
+Inspect the payment service repository only as a read-only source.
+Use current evidence if available. Produce hypotheses, verification steps, and a change proposal only if justified.
+```
+
+This mode is often a better fit for organizations where architecture boundaries span multiple repositories.
+
+## Provider-neutral context contract
+
+A context set uses the same knowledge categories whether it is embedded in a service repository or stored centrally:
+
+```text
+service-catalog.yaml
+architecture/
+adr/
+incidents/
+policies/
+runbooks/
 ```
 
 The reference data intentionally avoids assuming ECS, Kubernetes, a specific database, AWS, or a particular observability product. Component types are expressed as capabilities such as `compute`, `datastore`, `messaging`, `network`, `storage`, `identity`, and `external_dependency`.
@@ -134,19 +196,75 @@ python scripts/check_eval_output.py \
   examples/eval-output/dependency-latency-001.json
 ```
 
+## Terraform or IaC is not required
+
+The harness is not a Terraform workflow and does not require infrastructure-as-code.
+
+A change proposal can result in different execution artifacts depending on the environment:
+
+```text
+IaC-managed environment
+Evidence → Proposal → Code/Config Diff → Plan/Dry Run → PR → Approval → Deployment
+
+Non-IaC managed service
+Evidence → Proposal → Change Ticket → Approved Console/API Procedure → Approval → Operator Execution
+
+Operational procedure
+Evidence → Proposal → Reviewed Runbook → Maintenance Window → Approval → Operator Execution
+
+Hybrid environment
+Evidence → Proposal → Script/Config/API Change → Validation → Controlled Pipeline or Operator
+```
+
+Examples of environments that may not use Terraform include vendor-managed SaaS, managed network appliances, legacy systems, database operations, hardware platforms, cloud resources maintained through another control system, or teams that deliberately use approved console/API workflows.
+
+The harness requirement is not "produce Terraform." The requirement is:
+
+- cite evidence;
+- state risk and blast radius;
+- define validation;
+- define rollback or recovery;
+- use an independently authorized execution path.
+
 ## Production change workflow
 
 The default harness stops at a reviewable proposal:
 
 ```text
-Evidence → Recommendation → Change Proposal → Plan/Validation → PR → Human Approval → Deployment
+Evidence → Recommendation → Change Proposal → Validation → Review Artifact → Human Approval → Execution System
 ```
+
+The review artifact can be a **pull request, change ticket, approved runbook, plan, or controlled procedure**.
 
 `schemas/change-proposal.schema.json` requires evidence references, risk, blast radius, validation, rollback, and explicit approval. See [workflows/change-proposal.md](workflows/change-proposal.md).
 
+## Practical incident example
+
+Suppose a request-serving service shows high end-to-end latency while the service compute layer remains healthy and a critical datastore dependency is saturated.
+
+The agent should reason like this:
+
+```text
+Current evidence
+├── service compute utilization: normal
+├── dependency connection utilization: high
+└── dependency operation latency: high
+
+Historical context
+└── previous dependency saturation incident
+
+Decision
+├── primary hypothesis: dependency saturation
+├── do not scale healthy compute without evidence
+├── verify connection pressure / slow operations / recent changes
+└── produce a reversible change proposal only after verification
+```
+
+The same reasoning should work whether the service runs on containers, virtual machines, serverless compute, physical hosts, or a managed platform.
+
 ## Safety model
 
-Agent hooks are defense in depth, **not a security boundary**. Real production enforcement belongs in least-privilege IAM/RBAC, CI/CD approvals, protected branches, policy-as-code, audit logs, and deployment authorization outside the model.
+Agent hooks are defense in depth, **not a security boundary**. Real production enforcement belongs in least-privilege IAM/RBAC, CI/CD approvals, protected branches, change-management controls, policy-as-code, audit logs, and deployment/operations authorization outside the model.
 
 The bundled Claude hook blocks several common direct mutation commands, but production pilots should begin with read-only access.
 
@@ -159,7 +277,7 @@ python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
 ```
 
-To adopt the context model in another repository, copy `examples/.infra-context` and adapt it to your system. Keep secrets and sensitive payloads out of agent context.
+For embedded mode, copy `examples/.infra-context` into a target repository. For central mode, use the same context structure under a service/domain-specific directory in your harness workspace. Keep secrets and sensitive payloads out of agent context.
 
 ## Design principles
 
@@ -167,10 +285,11 @@ To adopt the context model in another repository, copy `examples/.infra-context`
 2. Progressive disclosure instead of loading the whole knowledge base.
 3. Decisions and incident history are first-class context.
 4. Provider and observability vendors are adapters, not core assumptions.
-5. Recommendations carry provenance.
-6. Production changes are reviewable and reversible.
-7. Independent authorization remains outside the model.
-8. Agent judgment is regression-tested with provider-neutral evals.
+5. IaC is optional; engineering controls are not.
+6. Recommendations carry provenance.
+7. Production changes are reviewable and reversible.
+8. Independent authorization remains outside the model.
+9. Agent judgment is regression-tested with provider-neutral evals.
 
 ## License
 
