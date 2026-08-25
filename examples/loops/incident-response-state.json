@@ -1,0 +1,10 @@
+{
+  "schema_version":"1.0","run_id":"LOOP-INC-001","loop_id":"incident-response","status":"verifying","iteration":2,
+  "started_at":"2026-08-25T08:50:00Z","updated_at":"2026-08-25T08:56:00Z","current_step":"verify-hypothesis",
+  "verified_facts":[{"id":"impact_confirmed","statement":"User-visible latency is above the service objective.","verified_by":"tool","evidence_refs":["EV-101"]},{"id":"dependency_saturation_signal","statement":"A critical dependency is saturated while request-serving compute remains healthy.","verified_by":"tool","evidence_refs":["EV-102","EV-103"]}],
+  "assumptions":["The observed dependency saturation is the primary cause until verification completes."],
+  "history":[{"iteration":1,"step":"observe","event":"impact_confirmed","outcome":"progress","evidence_refs":["EV-101"]},{"iteration":2,"step":"verify-hypothesis","event":"leading_hypothesis_selected","outcome":"progress","evidence_refs":["EV-102","EV-103"]}],
+  "progress":{"last_material_progress_iteration":2,"no_progress_iterations":0},
+  "regression_obligations":[{"id":"recovered_service_remains_within_objective","description":"After recovery, service health must remain within the agreed objective.","status":"pending"}],
+  "pending_human_gate":null
+}

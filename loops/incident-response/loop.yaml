@@ -1,0 +1,54 @@
+schema_version: '1.0'
+id: incident-response
+description: Investigate an incident, restore reliability, verify recovery, and capture durable learning.
+domains: [infrastructure, sre]
+autonomy: workflow
+trigger:
+  types: [manual, alert, incident_event]
+goal:
+  objective: Identify the leading cause, restore service reliability, verify recovery from independent evidence, and capture learning.
+  success_criteria: [impact_confirmed, leading_hypothesis_verified, service_recovered]
+  desired_state:
+    - service health is within agreed reliability objectives
+    - no unverified production mutation is performed
+context:
+  load: [service_catalog, architecture, sre_profile, production_policy, recent_incidents, runbooks, current_evidence]
+steps:
+  - id: observe
+    purpose: Confirm impact and collect current service/dependency evidence.
+    skill: incident-analysis
+    produces: [impact, evidence, hypotheses]
+  - id: verify-hypothesis
+    purpose: Verify the leading hypothesis with the minimum independent checks.
+    skill: incident-analysis
+    requires: [leading_hypothesis]
+    produces: [verified_hypothesis]
+  - id: propose-mitigation
+    purpose: Prepare the smallest reversible mitigation when evidence is sufficient.
+    skill: change-review
+    requires: [verified_hypothesis]
+    produces: [change_proposal]
+    human_gate: true
+  - id: verify-recovery
+    purpose: Observe actual service state after mitigation or external recovery.
+    skill: sre-review
+    produces: [recovery_verification]
+  - id: learn
+    purpose: Capture incident learning and regression obligations.
+    action: writeback
+    requires: [recovery_verification]
+    produces: [incident_record, eval_candidate]
+terminal:
+  done: [service_recovered, leading_hypothesis_verified]
+  escalate: [production_change_requires_approval, insufficient_evidence, cross_team_dependency]
+  failed: [safety_policy_violation, regression_detected_after_recovery]
+budgets:
+  max_iterations: 8
+  max_duration_minutes: 60
+  max_no_progress_iterations: 2
+human_gates:
+  - condition: production_mutation
+    required_for: [apply_change, destructive_action, authorization_change]
+regression_obligations: [recovered_service_remains_within_objective]
+learn:
+  writeback: [incident, runbook, eval_candidate]
