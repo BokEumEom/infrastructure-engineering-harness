@@ -1,0 +1,1 @@
+{"classification":"dependency_bottleneck","checks":["dependency_capacity","dependency_latency"],"recommendations":["investigate_dependency"]}

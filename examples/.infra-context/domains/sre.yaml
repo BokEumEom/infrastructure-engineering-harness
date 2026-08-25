@@ -1,0 +1,42 @@
+schema_version: "1.0"
+service: public-api
+slis:
+  - id: request-availability
+    type: availability
+    description: Fraction of valid user requests completed successfully.
+    good_event_definition: A valid request completes without a service-attributable error.
+  - id: request-latency
+    type: latency
+    description: Fraction of valid user requests completed within the user-facing latency threshold.
+    good_event_definition: A valid request completes within 500 ms.
+slos:
+  - id: availability-30d
+    sli: request-availability
+    target_percent: 99.9
+    window: 30d
+  - id: latency-30d
+    sli: request-latency
+    target_percent: 99.0
+    window: 30d
+error_budget_policy:
+  release_policy: High-risk releases require additional review when the error budget is at risk.
+  on_exhaustion:
+    - prioritize reliability remediation over discretionary high-risk changes
+    - require explicit reliability approval for risk-increasing releases
+incident_policy:
+  severity_levels:
+    - id: SEV-1
+      description: Widespread critical user impact or data-integrity risk.
+    - id: SEV-2
+      description: Significant user impact with a viable mitigation path.
+    - id: SEV-3
+      description: Limited impact or degraded non-critical behavior.
+  postmortem_required_for:
+    - SEV-1
+    - SEV-2
+toil:
+  target_percent_max: 30
+  tracked_categories:
+    - repetitive incident remediation
+    - manual deployment recovery
+    - recurring access or maintenance work

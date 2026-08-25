@@ -1,0 +1,1 @@
+{"classification":"error_budget_exhausted","checks":["slo_window","budget_consumption","change_necessity"],"recommendations":["prioritize_reliability"]}

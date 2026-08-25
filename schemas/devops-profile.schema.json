@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DevOps Delivery Profile",
+  "type": "object",
+  "required": ["schema_version", "service", "delivery", "quality_gates", "delivery_metrics"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "service": {"type": "string"},
+    "delivery": {"type": "object", "required": ["environments", "deployment_strategy", "rollback"], "properties": {"repository": {"type": "string"}, "environments": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "deployment_strategy": {"type": "string"}, "rollback": {"type": "object", "required": ["supported"], "properties": {"supported": {"type": "boolean"}, "method": {"type": "string"}}, "additionalProperties": true}, "change_control": {"type": "string"}}, "additionalProperties": true},
+    "quality_gates": {"type": "array", "items": {"type": "object", "required": ["id", "required"], "properties": {"id": {"type": "string"}, "required": {"type": "boolean"}, "description": {"type": "string"}}, "additionalProperties": true}},
+    "delivery_metrics": {"type": "array", "minItems": 5, "items": {"enum": ["change_lead_time", "deployment_frequency", "failed_deployment_recovery_time", "change_failure_rate", "deployment_rework_rate"]}, "uniqueItems": true},
+    "observability_requirements": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

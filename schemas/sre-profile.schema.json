@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRE Reliability Profile",
+  "type": "object",
+  "required": ["schema_version", "service", "slis", "slos", "error_budget_policy", "incident_policy"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "service": {"type": "string"},
+    "slis": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "type", "description"], "properties": {"id": {"type": "string"}, "type": {"enum": ["availability", "latency", "errors", "throughput", "correctness", "freshness", "durability", "custom"]}, "description": {"type": "string"}, "good_event_definition": {"type": "string"}}, "additionalProperties": true}},
+    "slos": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "sli", "target_percent", "window"], "properties": {"id": {"type": "string"}, "sli": {"type": "string"}, "target_percent": {"type": "number", "minimum": 0, "maximum": 100}, "window": {"type": "string"}}, "additionalProperties": true}},
+    "error_budget_policy": {"type": "object", "required": ["on_exhaustion"], "properties": {"on_exhaustion": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "release_policy": {"type": "string"}}, "additionalProperties": true},
+    "incident_policy": {"type": "object", "required": ["severity_levels"], "properties": {"severity_levels": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "description"], "properties": {"id": {"type": "string"}, "description": {"type": "string"}}, "additionalProperties": true}}, "postmortem_required_for": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true},
+    "toil": {"type": "object", "properties": {"target_percent_max": {"type": "number", "minimum": 0, "maximum": 100}, "tracked_categories": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true}
+  },
+  "additionalProperties": true
+}
