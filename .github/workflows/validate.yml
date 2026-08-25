@@ -19,4 +19,5 @@ jobs:
       - run: python scripts/check_domain_eval.py evals/domains/sre.json error-budget-exhausted examples/eval-output/domain-sre-error-budget.json
       - run: python scripts/check_domain_eval.py evals/domains/devops.json delivery-instability examples/eval-output/domain-devops-instability.json
       - run: python scripts/check_domain_eval.py evals/domains/finops.json cost-up-unit-down examples/eval-output/domain-finops-unit-cost.json
-      - run: python -m compileall scripts hooks
+      - run: python -m unittest discover -s tests
+      - run: python -m compileall scripts hooks adapters
