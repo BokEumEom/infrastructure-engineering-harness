@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Engineering Loop State",
+  "type": "object",
+  "required": ["schema_version", "run_id", "loop_id", "status", "iteration", "started_at", "updated_at", "verified_facts", "assumptions", "history", "progress", "regression_obligations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "loop_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["initialized", "running", "waiting", "verifying", "done", "escalated", "failed", "budget_exhausted"]},
+    "iteration": {"type": "integer", "minimum": 0},
+    "started_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "current_step": {"type": ["string", "null"]},
+    "verified_facts": {"type": "array", "items": {"type": "object", "required": ["id", "statement", "verified_by", "evidence_refs"], "properties": {"id": {"type": "string"}, "statement": {"type": "string", "minLength": 1}, "verified_by": {"enum": ["environment", "tool", "human", "test"]}, "evidence_refs": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false}},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "history": {"type": "array", "items": {"type": "object", "required": ["iteration", "step", "event", "outcome"], "properties": {"iteration": {"type": "integer", "minimum": 0}, "step": {"type": "string"}, "event": {"type": "string"}, "outcome": {"enum": ["progress", "no_progress", "blocked", "verified", "failed", "escalated"]}, "evidence_refs": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false}},
+    "progress": {"type": "object", "required": ["last_material_progress_iteration", "no_progress_iterations"], "properties": {"last_material_progress_iteration": {"type": "integer", "minimum": 0}, "no_progress_iterations": {"type": "integer", "minimum": 0}}, "additionalProperties": false},
+    "regression_obligations": {"type": "array", "items": {"type": "object", "required": ["id", "description", "status"], "properties": {"id": {"type": "string"}, "description": {"type": "string"}, "status": {"enum": ["pending", "passed", "failed"]}}, "additionalProperties": false}},
+    "pending_human_gate": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

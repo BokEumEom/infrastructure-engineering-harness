@@ -1,0 +1,50 @@
+schema_version: '1.0'
+id: finops-optimization
+description: Cycle through cost/value evidence, optimization, controlled execution and realized-value verification.
+domains: [finops, infrastructure, sre]
+autonomy: workflow
+trigger:
+  types: [manual, cost_anomaly, optimization_review, budget_review]
+goal:
+  objective: Improve technology value using verified cost, usage and business evidence while preserving reliability and contractual constraints.
+  success_criteria: [opportunity_verified, optimization_tracked, realized_value_measured]
+  desired_state: [unit economics or justified business value improves without violating reliability policy]
+context:
+  load: [service_catalog, finops_profile, architecture, sre_profile, cost_usage_evidence, business_metrics, commitment_policy]
+steps:
+  - id: inform
+    purpose: Establish allocated cost, usage and unit-economic baseline.
+    skill: finops-review
+    produces: [finops_baseline]
+  - id: optimize
+    purpose: Identify a verified optimization and its constraints.
+    skill: finops-review
+    requires: [finops_baseline]
+    produces: [optimization_candidate]
+  - id: track
+    purpose: Create or update tracked work when policy permits.
+    skill: ticketing
+    requires: [optimization_candidate]
+    produces: [work_item]
+  - id: measure-realization
+    purpose: Compare actual post-change cost/value and reliability with the expected outcome.
+    skill: finops-review
+    produces: [realization_measurement]
+  - id: learn
+    purpose: Persist realized value, misses and future eval candidates.
+    action: writeback
+    produces: [optimization_record, eval_candidate]
+terminal:
+  done: [realized_value_measured]
+  escalate: [commitment_purchase_requires_approval, insufficient_business_context, reliability_constraint_blocks_optimization]
+  failed: [unit_economics_regressed_without_accepted_reason, reliability_regressed]
+budgets:
+  max_iterations: 6
+  max_duration_minutes: 44640
+  max_no_progress_iterations: 2
+human_gates:
+  - condition: financial_commitment_or_production_change
+    required_for: [purchase_commitment, execute_change]
+regression_obligations: [reliability_not_worse, cost_allocation_remains_traceable]
+learn:
+  writeback: [optimization_record, measurement, eval_candidate]

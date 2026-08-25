@@ -1,0 +1,10 @@
+{
+  "schema_version":"1.0","run_id":"LOOP-INC-001","loop_id":"incident-response","terminal_status":"done","iterations":4,
+  "goal_outcome":"Leading cause verified and service recovered within objective.",
+  "verified_conditions":["impact_confirmed","leading_hypothesis_verified","service_recovered"],
+  "evidence_refs":["EV-101","EV-102","EV-109"],
+  "events":["impact_confirmed","hypothesis_verified","recovery_verified"],
+  "writeback":[{"type":"incident","action":"record incident outcome","ref":"INC-101"},{"type":"eval_candidate","action":"add regression candidate","ref":"EVAL-INC-101"}],
+  "regression_results":[{"id":"recovered_service_remains_within_objective","status":"passed"}],
+  "remaining_risks":[]
+}

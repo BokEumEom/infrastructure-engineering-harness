@@ -1,0 +1,58 @@
+schema_version: '1.0'
+id: change-validation
+description: Validate a material change before and after independently authorized execution, preserving previous guarantees as regression obligations.
+domains: [infrastructure, sre, devops, finops]
+autonomy: change
+trigger:
+  types: [change_proposal, release_candidate, maintenance]
+goal:
+  objective: Verify that a proposed change satisfies preconditions, is independently approved, and achieves the desired outcome without breaking protected guarantees.
+  success_criteria: [preconditions_verified, independent_approval_recorded, post_change_outcome_verified, regression_obligations_passed]
+  desired_state: [desired outcome achieved, rollback remains available until verification completes]
+context:
+  load: [change_proposal, service_catalog, architecture, domain_profiles, production_policy, current_evidence, historical_failures]
+steps:
+  - id: precheck
+    purpose: Review risk, blast radius, validation, rollback and evidence before execution.
+    skill: change-review
+    produces: [precheck_result]
+  - id: approval
+    purpose: Require authorization outside the agent reasoning loop.
+    action: human_approval
+    requires: [precheck_result]
+    produces: [approval_record]
+    human_gate: true
+  - id: execute
+    purpose: Delegate execution to the independently authorized deployment or operator workflow.
+    action: external_execution
+    requires: [approval_record]
+    produces: [execution_record]
+    human_gate: true
+  - id: postverify
+    purpose: Verify the actual environment state and target outcome.
+    skill: change-review
+    requires: [execution_record]
+    produces: [post_change_verification]
+  - id: regression-check
+    purpose: Re-check protected guarantees from earlier successful states.
+    action: run_regression_obligations
+    requires: [post_change_verification]
+    produces: [regression_results]
+  - id: learn
+    purpose: Record outcome, rollback lessons and eval candidates.
+    action: writeback
+    produces: [change_record, eval_candidate]
+terminal:
+  done: [post_change_outcome_verified, regression_obligations_passed]
+  escalate: [approval_missing, verification_inconclusive, rollback_required]
+  failed: [regression_obligation_failed, unauthorized_execution]
+budgets:
+  max_iterations: 5
+  max_duration_minutes: 1440
+  max_no_progress_iterations: 1
+human_gates:
+  - condition: production_execution
+    required_for: [execute]
+regression_obligations: [availability_not_worse, data_integrity_preserved, security_scope_not_broadened_without_approval]
+learn:
+  writeback: [change_record, runbook, eval_candidate]

@@ -1,7 +1,7 @@
 {
   "name": "infra-harness",
-  "version": "0.3.0",
-  "description": "Cross-agent, provider-neutral infrastructure engineering harness with Infrastructure, SRE, DevOps and FinOps domain packs.",
+  "version": "0.4.0",
+  "description": "Cross-agent, provider-neutral infrastructure engineering harness with Infrastructure, SRE, DevOps, FinOps and bounded Loop Engineering.",
   "author": {"name": "BokEumEom"},
   "homepage": "https://github.com/BokEumEom/infrastructure-engineering-harness",
   "repository": "https://github.com/BokEumEom/infrastructure-engineering-harness"

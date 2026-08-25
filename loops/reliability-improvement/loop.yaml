@@ -1,0 +1,50 @@
+schema_version: '1.0'
+id: reliability-improvement
+description: Use SLO, error-budget and reliability evidence to identify, implement and verify reliability improvements.
+domains: [sre, infrastructure]
+autonomy: workflow
+trigger:
+  types: [manual, error_budget_policy, reliability_review]
+goal:
+  objective: Reduce a verified reliability risk without trading away delivery or cost constraints blindly.
+  success_criteria: [reliability_constraint_identified, improvement_tracked, post_change_reliability_verified]
+  desired_state: [SLO and error-budget policy are satisfied or risk is explicitly accepted]
+context:
+  load: [service_catalog, sre_profile, architecture, reliability_policy, incident_history, current_sli_slo_evidence]
+steps:
+  - id: baseline
+    purpose: Establish current SLI/SLO, error-budget and reliability state.
+    skill: sre-review
+    produces: [reliability_baseline]
+  - id: prioritize
+    purpose: Identify the smallest high-value reliability constraint to address.
+    skill: sre-review
+    requires: [reliability_baseline]
+    produces: [improvement_candidate]
+  - id: track
+    purpose: Create or update tracked work when policy permits.
+    skill: ticketing
+    requires: [improvement_candidate]
+    produces: [work_item]
+  - id: verify
+    purpose: Re-measure reliability after the change is executed by the authorized workflow.
+    skill: sre-review
+    produces: [post_change_reliability]
+  - id: learn
+    purpose: Persist the result and convert failures into eval candidates.
+    action: writeback
+    produces: [measurement, eval_candidate]
+terminal:
+  done: [post_change_reliability_verified]
+  escalate: [error_budget_exhausted_requires_policy_action, production_change_requires_approval, insufficient_measurement]
+  failed: [reliability_regressed]
+budgets:
+  max_iterations: 6
+  max_duration_minutes: 10080
+  max_no_progress_iterations: 2
+human_gates:
+  - condition: material_production_change
+    required_for: [execution]
+regression_obligations: [slo_not_worse_than_baseline, no_new_critical_failure_mode]
+learn:
+  writeback: [measurement, policy_candidate, eval_candidate]

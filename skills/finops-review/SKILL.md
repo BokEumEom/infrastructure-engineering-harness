@@ -20,4 +20,12 @@ Required output:
 7. Reliability, security, contractual and operational constraints.
 8. Recommendation and approval requirements.
 
+## Loop-compatible handoff
+
+When invoked by `finops-optimization`, emit the shared `loop_handoff` contract from `skills/loop-engineering/SKILL.md`.
+
+Prefer stable events such as `opportunity_verified`, `realized_value_measured`, `commitment_purchase_requires_approval`, `reliability_constraint_blocks_optimization`, or `reliability_regressed`.
+
+Expected savings are not a terminal result. A FinOps loop should compare expected and realized cost/value after the authorized change and preserve reliability and allocation traceability as regression obligations.
+
 Never infer waste from total spend growth alone. Never recommend a commitment purchase without demand evidence and organizational approval.

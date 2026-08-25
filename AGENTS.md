@@ -1,131 +1,74 @@
 # Infrastructure Engineering Harness — Agent Guide
 
-This is the cross-agent operating contract for Codex, Kiro, Claude Code adapters, and other agents that can read repository instructions.
+This is the cross-agent operating contract for Codex, Kiro, Claude Code adapters, and other repository-aware agents.
 
 ## Prime directive
 
-Treat infrastructure work as an **evidence-based engineering decision**, not a code-generation task.
+Treat infrastructure work as an evidence-based engineering decision, not a code-generation task.
 
-Before recommending a material production change:
-
-1. resolve the target service/scope and criticality;
-2. load only relevant durable context;
-3. select the engineering domain lens or lenses;
-4. separate confirmed evidence from assumptions;
-5. use current evidence when the decision depends on current state;
-6. compare with ADRs, incidents, policies and constraints;
-7. state risk, blast radius, validation and rollback/recovery;
-8. produce a reviewable proposal rather than directly mutating production.
+For one-shot analysis use the relevant Domain Skill. For work that requires repeated observation, verification, change follow-up, or learning, use the `loop-engineering` control layer and a Loop Spec under `loops/`.
 
 ## Context roots
 
-Use an explicitly supplied context path first.
-
-Otherwise:
-
-- Embedded mode: `.infra-context/`
-- Central mode: `contexts/<service-or-platform>/`
-
-A context root may contain:
-
-```text
-service-catalog.yaml
-architecture/
-adr/
-incidents/
-policies/
-runbooks/
-domains/
-  sre.yaml
-  devops.yaml
-  finops.yaml
-```
-
-Do not load the whole knowledge base by default.
+Use an explicitly supplied context path first. Otherwise use `.infra-context/` for embedded mode or `contexts/<service-or-platform>/` for central mode. Load progressively; do not load the whole knowledge base by default.
 
 ## Domain routing
-
-Load the relevant domain pack before making domain-specific recommendations:
 
 - architecture, capacity, dependencies, migration, infrastructure change → `domains/infrastructure/README.md`
 - SLI/SLO, error budget, incidents, reliability, toil → `domains/sre/README.md`
 - build, release, deployment, rollback, delivery performance → `domains/devops/README.md`
 - cost, allocation, usage efficiency, commitments, unit economics → `domains/finops/README.md`
 
-For cross-domain decisions, use multiple packs and keep conclusions separated by lens. Example: a capacity reduction may be financially attractive but violate an SRE objective; surface the trade-off instead of averaging it away.
+## Loop routing
 
-## Context loading order
+Use `skills/loop-engineering/SKILL.md` and the matching Loop Spec when the task requires repeated feedback:
 
-1. service catalog / ownership
-2. relevant architecture
-3. applicable domain profile
-4. production/security/financial policy
-5. relevant incidents and runbooks
-6. relevant ADRs
-7. current evidence from optional read-only adapters
+- incident lifecycle → `loops/incident-response/loop.yaml`
+- SLO/error-budget improvement → `loops/reliability-improvement/loop.yaml`
+- delivery bottleneck improvement → `loops/delivery-improvement/loop.yaml`
+- FinOps optimization and realized-value verification → `loops/finops-optimization/loop.yaml`
+- pre/post production change verification → `loops/change-validation/loop.yaml`
+
+Loop invariants:
+
+1. Loop state is explicit and external to model prose.
+2. Keep assumptions separate from verified facts.
+3. `verified_by: agent` is invalid; facts require environment/tool/human/test evidence.
+4. Never self-certify `done`.
+5. Enforce iteration and no-progress budgets.
+6. Preserve previous guarantees as regression obligations.
+7. Do not use repeated iterations to bypass a human or policy gate.
+8. Terminal loops emit explicit learning/writeback candidates.
 
 ## Evidence contract
 
-Material recommendations should be traceable to evidence IDs conforming to `schemas/evidence.schema.json`.
-
-Evidence may come from metrics, logs, traces, runtime state, deployments, delivery systems, SLO systems, cost/usage datasets, business metrics, incident history, or human-provided artifacts.
-
-Never invent telemetry, cost, business-volume, SLO, or delivery values.
+Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost or business values.
 
 ## MCP ticketing workflow
 
-Jira and Linear ticket writes should use connected MCP servers rather than provider REST/GraphQL calls embedded in harness logic.
-
-When analysis should become tracked work:
-
-1. build a Ticket Request conforming to `schemas/ticket-request.schema.json`;
-2. evaluate `schemas/ticket-policy.schema.json`;
-3. compute a stable fingerprint;
-4. discover the connected Jira/Linear MCP tools;
-5. search existing work by `source_ref` and fingerprint before creating;
-6. update/comment when matching work already exists;
-7. create only when policy returns `auto_create`, or when policy returns `manual` and the user explicitly asks for creation;
-8. return the created/updated ticket ID and URL to the calling workflow.
-
-Use `skills/ticketing/SKILL.md` and `workflows/ticketing.md` for the detailed process.
-
-Ticket creation is a workflow write. It never grants permission to mutate production infrastructure.
-
-## Provider and tool neutrality
-
-Core reasoning must not assume a particular cloud, container platform, database, observability product, IaC tool, CI/CD system, cost platform, or ticketing provider.
-
-Datadog, Terraform, Kubernetes, AWS, GitHub, Jira and Linear are adapters or execution choices, not core requirements.
+Jira and Linear workflow writes use connected MCP servers. Build a provider-neutral Ticket Request, apply Ticket Policy, compute a stable fingerprint, search before create, and create/update only when the policy and user authorization permit. Ticket permission never implies production mutation permission.
 
 ## Safety contract
 
-- Prefer read-only discovery and evidence collection.
-- Do not directly apply/delete infrastructure, mutate production data, broaden authorization, purchase commitments, or bypass deployment/change controls.
-- Production changes follow `workflows/change-proposal.md`.
-- Ticket writes follow `workflows/ticketing.md` and the configured ticket policy.
-- Do not auto-approve broad MCP write tool sets. Scope write access to the intended workflow.
-- Hooks are defense-in-depth, not a security boundary.
-- Real enforcement belongs in independently authorized systems: IAM/RBAC, CI/CD, change management, policy-as-code, protected branches, approval workflows, MCP provider controls, and audit controls.
+Prefer read-only discovery. Production changes follow `workflows/change-proposal.md`; ticket writes follow `workflows/ticketing.md`. Production mutation, destructive actions, authorization expansion and financial commitments remain independently authorized. Hooks are defense-in-depth, not a security boundary.
 
 ## Validation
 
 ```bash
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
-python scripts/check_eval_output.py evals/standard/incident-scenarios.json dependency-latency-001 examples/eval-output/dependency-latency-001.json
-python scripts/check_domain_eval.py evals/domains/sre.json error-budget-exhausted examples/eval-output/domain-sre-error-budget.json
+python scripts/check_loop_eval.py evals/loops/standard.json incident-recovered examples/eval-output/loop-incident-recovered.json
 python -m unittest discover -s tests
-python -m compileall scripts hooks adapters
+python -m compileall scripts hooks adapters loops
 ```
 
 ## Repository map
 
-- `domains/` — Infrastructure, SRE, DevOps, FinOps domain packs
-- `schemas/` — machine-readable context/evidence/change/ticket/eval contracts
-- `evals/` — provider-neutral regression scenarios
-- `skills/` — Claude Code skill adapter, including MCP ticketing
-- `.kiro/steering/` — Kiro steering adapter
-- `adapters/` — optional evidence and workflow action adapters
-- `mcp/` — MCP client connection guidance
+- `domains/` — Infrastructure, SRE, DevOps, FinOps lenses
+- `loops/` — bounded Engineering Loops and reference runtime helpers
+- `schemas/` — context, evidence, change, ticket, loop and eval contracts
+- `evals/` — one-shot and long-horizon regression scenarios
+- `skills/` — Claude Code skills including Loop Engineering
+- `adapters/` and `mcp/` — optional evidence/workflow integrations
 - `workflows/` — production change and ticketing workflows
-- `examples/` — embedded, central and ticketing examples
+- `docs/REFERENCE-MODELS.md` — research and operational models behind the harness

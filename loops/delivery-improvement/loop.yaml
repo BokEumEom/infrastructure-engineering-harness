@@ -1,0 +1,50 @@
+schema_version: '1.0'
+id: delivery-improvement
+description: Baseline software delivery performance, improve the dominant constraint, and verify progress without optimizing a metric in isolation.
+domains: [devops, sre]
+autonomy: workflow
+trigger:
+  types: [manual, delivery_review, retrospective]
+goal:
+  objective: Improve delivery flow or stability for one service and verify the effect against its baseline.
+  success_criteria: [baseline_recorded, constraint_identified, improvement_executed_externally, progress_verified]
+  desired_state: [delivery performance improves without unacceptable reliability regression]
+context:
+  load: [service_catalog, devops_profile, sre_profile, delivery_history, deployment_evidence, incident_history]
+steps:
+  - id: baseline
+    purpose: Establish service-level delivery throughput and instability baseline.
+    skill: delivery-review
+    produces: [delivery_baseline]
+  - id: find-constraint
+    purpose: Identify the most material delivery bottleneck or instability source.
+    skill: delivery-review
+    requires: [delivery_baseline]
+    produces: [delivery_constraint]
+  - id: plan-improvement
+    purpose: Create the smallest improvement plan and tracked work.
+    skill: ticketing
+    requires: [delivery_constraint]
+    produces: [work_item]
+  - id: remeasure
+    purpose: Compare post-change delivery and reliability evidence with baseline.
+    skill: delivery-review
+    produces: [delivery_comparison]
+  - id: learn
+    purpose: Persist measured outcomes and regression cases.
+    action: writeback
+    produces: [delivery_record, eval_candidate]
+terminal:
+  done: [progress_verified]
+  escalate: [cross_team_constraint, insufficient_delivery_evidence]
+  failed: [delivery_instability_regressed, reliability_regressed]
+budgets:
+  max_iterations: 6
+  max_duration_minutes: 43200
+  max_no_progress_iterations: 2
+human_gates:
+  - condition: production_delivery_policy_change
+    required_for: [execution]
+regression_obligations: [change_failure_not_worse, service_reliability_not_worse]
+learn:
+  writeback: [delivery_record, eval_candidate]
