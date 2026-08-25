@@ -24,7 +24,12 @@ def main() -> int:
     targets += [(p,"policy.schema.json") for p in sorted((context/"policies").glob("*.y*ml"))]
     targets += [(p,"adr.schema.json") for p in sorted((context/"adr").glob("*.y*ml"))]
     targets += [(p,"incident.schema.json") for p in sorted((context/"incidents").glob("*.y*ml"))]
-    for name,schema in {"sre.yaml":"sre-profile.schema.json","devops.yaml":"devops-profile.schema.json","finops.yaml":"finops-profile.schema.json"}.items():
+    for name,schema in {
+      "sre.yaml":"sre-profile.schema.json",
+      "devops.yaml":"devops-profile.schema.json",
+      "finops.yaml":"finops-profile.schema.json",
+      "security.yaml":"security-profile.schema.json"
+    }.items():
         path=context/"domains"/name
         if path.exists(): targets.append((path,schema))
     repository_targets=[
