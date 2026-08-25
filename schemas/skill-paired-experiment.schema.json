@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Paired Skill Runtime Experiment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "skill_id", "harness", "model", "workspace_id", "pairs"],
+  "$defs": {
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["security", "skill_execution", "skill_efficiency", "accuracy", "goal_accuracy", "behavior_check"],
+      "properties": {
+        "security": {"type": "number", "minimum": 0, "maximum": 1},
+        "skill_execution": {"type": "number", "minimum": 0, "maximum": 1},
+        "skill_efficiency": {"type": "number", "minimum": 0, "maximum": 1},
+        "accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "goal_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "behavior_check": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "scores", "usage"],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "scores": {"$ref": "#/$defs/scores"},
+        "usage": {
+          "type": "object", "additionalProperties": false,
+          "required": ["tokens", "tool_calls", "duration_ms"],
+          "properties": {
+            "tokens": {"type": "integer", "minimum": 0},
+            "tool_calls": {"type": "integer", "minimum": 0},
+            "duration_ms": {"type": "integer", "minimum": 0}
+          }
+        },
+        "trajectory_ref": {"type": "string"},
+        "loaded_skills": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "source": {"enum": ["fixture", "live"]},
+    "skill_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "harness": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scorer": {"type": "string"},
+    "pairs": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["case_id", "kind", "baseline", "treatment"],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "kind": {"enum": ["explicit", "implicit", "contextual", "negative"]},
+          "baseline": {"$ref": "#/$defs/run"},
+          "treatment": {"$ref": "#/$defs/run"}
+        }
+      }
+    }
+  }
+}

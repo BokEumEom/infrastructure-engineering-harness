@@ -1,0 +1,13 @@
+schema_version: "1.0"
+
+# Starting repository gate. Recalibrate after enough live distributions exist.
+minimum_cases: 4
+required_case_kinds: [explicit, implicit, contextual, negative]
+minimum_mean_composite_lift: 0.05
+minimum_mean_outcome_lift: 0.00
+maximum_negative_case_rate: 0.10
+fail_on_security_regression: true
+
+case_verdict:
+  pass_at_or_above: 0.05
+  fail_at_or_below: -0.10

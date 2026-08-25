@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill Runtime Evaluation Suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "skill_id", "cases"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "skill_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "description": {"type": "string"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "prompt", "expected_activation", "expected_behaviors"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "kind": {"enum": ["explicit", "implicit", "contextual", "negative"]},
+          "prompt": {"type": "string", "minLength": 1},
+          "expected_activation": {"type": "boolean"},
+          "expected_behaviors": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "prohibited_behaviors": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "expected_outcome": {"type": "object"},
+          "workspace_fixture": {"type": "string"},
+          "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}
