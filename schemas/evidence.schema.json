@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Infrastructure Evidence Bundle",
+  "title": "Engineering Evidence Bundle",
   "type": "object",
   "required": ["schema_version", "bundle_id", "observed_at", "observations"],
   "properties": {
@@ -16,7 +16,7 @@
         "required": ["id", "source_type", "source", "component", "signal"],
         "properties": {
           "id": {"type": "string"},
-          "source_type": {"enum": ["metrics", "logs", "traces", "deployment", "configuration", "runtime", "status", "incident_history", "human"]},
+          "source_type": {"enum": ["metrics", "logs", "traces", "deployment", "delivery", "configuration", "runtime", "status", "slo", "cost", "usage", "business", "incident_history", "human"]},
           "source": {"type": "string"},
           "component": {"type": "string"},
           "signal": {"type": "string"},
@@ -24,16 +24,7 @@
           "unit": {"type": "string"},
           "status": {"type": "string"},
           "observed_at": {"type": "string", "format": "date-time"},
-          "provenance": {
-            "type": "object",
-            "required": ["reference"],
-            "properties": {
-              "reference": {"type": "string"},
-              "query": {"type": "string"},
-              "resource": {"type": "string"}
-            },
-            "additionalProperties": true
-          }
+          "provenance": {"type": "object", "required": ["reference"], "properties": {"reference": {"type": "string"}, "query": {"type": "string"}, "resource": {"type": "string"}}, "additionalProperties": true}
         },
         "additionalProperties": true
       }

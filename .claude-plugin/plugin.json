@@ -1,7 +1,7 @@
 {
   "name": "infra-harness",
-  "version": "0.2.0",
-  "description": "Claude Code adapter for a provider-neutral infrastructure engineering harness with evidence-based incident, change, and architecture review.",
+  "version": "0.3.0",
+  "description": "Cross-agent, provider-neutral infrastructure engineering harness with Infrastructure, SRE, DevOps and FinOps domain packs.",
   "author": {"name": "BokEumEom"},
   "homepage": "https://github.com/BokEumEom/infrastructure-engineering-harness",
   "repository": "https://github.com/BokEumEom/infrastructure-engineering-harness"

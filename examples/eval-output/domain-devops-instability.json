@@ -1,0 +1,1 @@
+{"classification":"delivery_instability","checks":["failure_causes","release_batch_size","quality_gates"],"recommendations":["reduce_change_instability"]}

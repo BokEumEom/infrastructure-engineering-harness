@@ -1,89 +1,108 @@
 # Infrastructure Engineering Harness — Agent Guide
 
-This file is the cross-agent entry point for Codex, Kiro, and any agent that supports `AGENTS.md`.
-Keep this file short. Durable infrastructure knowledge belongs in `.infra-context/`; schemas and workflows live in this repository.
+This is the cross-agent operating contract for Codex, Kiro, Claude Code adapters, and other agents that can read repository instructions.
 
 ## Prime directive
 
-Treat infrastructure work as an evidence-based engineering decision, not a code-generation task.
+Treat infrastructure work as an **evidence-based engineering decision**, not a code-generation task.
 
-Before recommending or generating a production-impacting change:
+Before recommending a material production change:
 
-1. Identify the affected service and its criticality.
-2. Load only relevant context from `.infra-context/`.
-3. Separate confirmed evidence from assumptions.
-4. Use current/live evidence when available, normalized to `schemas/evidence.schema.json`.
-5. Compare with applicable ADRs, incidents, policies, and runbooks.
-6. State risk, blast radius, validation, and rollback.
-7. Produce a reviewed change proposal instead of directly mutating production.
+1. resolve the target service/scope and criticality;
+2. load only relevant durable context;
+3. select the engineering domain lens or lenses;
+4. separate confirmed evidence from assumptions;
+5. use current evidence when the decision depends on current state;
+6. compare with ADRs, incidents, policies and constraints;
+7. state risk, blast radius, validation and rollback/recovery;
+8. produce a reviewable proposal rather than directly mutating production.
+
+## Context roots
+
+Use an explicitly supplied context path first.
+
+Otherwise:
+
+- Embedded mode: `.infra-context/`
+- Central mode: `contexts/<service-or-platform>/`
+
+A context root may contain:
+
+```text
+service-catalog.yaml
+architecture/
+adr/
+incidents/
+policies/
+runbooks/
+domains/
+  sre.yaml
+  devops.yaml
+  finops.yaml
+```
+
+Do not load the whole knowledge base by default.
+
+## Domain routing
+
+Load the relevant domain pack before making domain-specific recommendations:
+
+- architecture, capacity, dependencies, migration, infrastructure change → `domains/infrastructure/README.md`
+- SLI/SLO, error budget, incidents, reliability, toil → `domains/sre/README.md`
+- build, release, deployment, rollback, delivery performance → `domains/devops/README.md`
+- cost, allocation, usage efficiency, commitments, unit economics → `domains/finops/README.md`
+
+For cross-domain decisions, use multiple packs and keep conclusions separated by lens. Example: a capacity reduction may be financially attractive but violate an SRE objective; surface the trade-off instead of averaging it away.
 
 ## Context loading order
 
-1. `.infra-context/service-catalog.yaml`
-2. Relevant `.infra-context/architecture/*`
-3. Relevant `.infra-context/policies/*`
-4. Relevant `.infra-context/incidents/*` and `.infra-context/runbooks/*`
-5. Relevant `.infra-context/adr/*`
-6. Live evidence from optional read-only adapters
-
-Do not load every context file by default.
-
-## Safety contract
-
-- Never assume write access is required for analysis.
-- Prefer read-only tools for discovery and evidence collection.
-- Do not directly apply infrastructure changes, delete resources, broaden IAM/authorization, or mutate production data.
-- A production change must follow `workflows/change-proposal.md` and include human approval outside the model.
-- Hooks are defense-in-depth examples, not a security boundary. Enforce real controls in IAM/RBAC, CI/CD, protected branches, policy-as-code, and deployment approvals.
+1. service catalog / ownership
+2. relevant architecture
+3. applicable domain profile
+4. production/security/financial policy
+5. relevant incidents and runbooks
+6. relevant ADRs
+7. current evidence from optional read-only adapters
 
 ## Evidence contract
 
-Every material recommendation should be traceable to evidence. Use stable evidence IDs and include source type, observation time, component, signal, and source/provenance when available. Never invent telemetry values.
+Material recommendations should be traceable to evidence IDs conforming to `schemas/evidence.schema.json`.
 
-## Provider neutrality
+Evidence may come from metrics, logs, traces, runtime state, deployments, delivery systems, SLO systems, cost/usage datasets, business metrics, incident history, or human-provided artifacts.
 
-Core reasoning must use capability categories such as `compute`, `datastore`, `messaging`, `network`, `storage`, `identity`, and `external_dependency` rather than assuming a specific cloud, container platform, database, or observability vendor.
+Never invent telemetry, cost, business-volume, SLO, or delivery values.
 
-Vendor integrations are optional adapters. Datadog is optional. Cloud-provider tools are optional. A filesystem-only workflow must still be usable.
+## Provider and tool neutrality
+
+Core reasoning must not assume a particular cloud, container platform, database, observability product, IaC tool, CI/CD system, or cost platform.
+
+Datadog, Terraform, Kubernetes, AWS, GitHub and similar products are adapters or execution choices, not core requirements.
+
+## Safety contract
+
+- Prefer read-only discovery and evidence collection.
+- Do not directly apply/delete infrastructure, mutate production data, broaden authorization, purchase commitments, or bypass deployment/change controls.
+- Production changes follow `workflows/change-proposal.md`.
+- Hooks are defense-in-depth, not a security boundary.
+- Real enforcement belongs in independently authorized systems: IAM/RBAC, CI/CD, change management, policy-as-code, protected branches, approval workflows, and audit controls.
 
 ## Validation
 
-Install validation dependencies:
-
 ```bash
 python -m pip install -r requirements.txt
-```
-
-Validate the reference context and contracts:
-
-```bash
 python scripts/validate_context.py examples/.infra-context
-```
-
-Inspect the provider-neutral eval suite:
-
-```bash
-python scripts/check_eval_output.py \
-  evals/standard/incident-scenarios.json \
-  dependency-latency-001 \
-  examples/eval-output/dependency-latency-001.json
-```
-
-Before completing harness changes, run:
-
-```bash
-python scripts/validate_context.py examples/.infra-context
+python scripts/check_eval_output.py evals/standard/incident-scenarios.json dependency-latency-001 examples/eval-output/dependency-latency-001.json
+python scripts/check_domain_eval.py evals/domains/sre.json error-budget-exhausted examples/eval-output/domain-sre-error-budget.json
 python -m compileall scripts hooks
 ```
 
 ## Repository map
 
-- `docs/ARCHITECTURE.md` — harness architecture and boundaries
-- `.infra-context/` — project-owned knowledge when adopted in a target repository
-- `schemas/` — machine-readable contracts
+- `domains/` — Infrastructure, SRE, DevOps, FinOps domain packs
+- `schemas/` — machine-readable context/evidence/change/eval contracts
+- `evals/` — provider-neutral regression scenarios
 - `skills/` — Claude Code skill adapter
 - `.kiro/steering/` — Kiro steering adapter
-- `AGENTS.md` — Codex/Kiro/cross-agent entry point
-- `adapters/` — optional live evidence integrations
-- `evals/standard/` — provider-neutral golden scenarios
+- `adapters/` — optional read-only live evidence integrations
 - `workflows/` — production change workflow
+- `examples/` — embedded and central usage examples

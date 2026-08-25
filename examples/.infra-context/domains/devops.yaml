@@ -1,0 +1,31 @@
+schema_version: "1.0"
+service: public-api
+delivery:
+  repository: public-api
+  environments:
+    - test
+    - production
+  deployment_strategy: progressive rollout
+  rollback:
+    supported: true
+    method: restore last known-good release through the deployment system
+  change_control: Production changes require a review artifact and independent approval.
+quality_gates:
+  - id: automated-tests
+    required: true
+    description: Relevant automated tests must pass before production rollout.
+  - id: security-check
+    required: true
+    description: Security checks appropriate to the change scope must pass.
+  - id: post-deploy-verification
+    required: true
+    description: User-facing and dependency health is verified after rollout.
+delivery_metrics:
+  - change_lead_time
+  - deployment_frequency
+  - failed_deployment_recovery_time
+  - change_failure_rate
+  - deployment_rework_rate
+observability_requirements:
+  - release identifier is traceable to production behavior
+  - rollback outcome is observable

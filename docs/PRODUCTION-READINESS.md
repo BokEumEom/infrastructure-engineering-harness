@@ -1,37 +1,46 @@
 # Production Readiness
 
-This repository is a reference harness for production-oriented infrastructure engineering. It is not itself a production authorization system.
+This repository is a production-oriented engineering harness reference, not an authorization system.
 
 ## Adoption levels
 
-### Level 0 — Repository context
+### Level 0 — Knowledge and review
 
-Use `AGENTS.md`, `.infra-context/`, and the schemas. No live tools. Useful for architecture and IaC review.
+Use `AGENTS.md`, structured context, domain packs and schemas without live tools. Suitable for architecture, reliability policy, delivery and FinOps reviews.
 
 ### Level 1 — Read-only evidence
 
-Add one or more adapters that collect metrics, logs, traces, deployment history, runtime state, or configuration. Normalize all results to the evidence contract.
+Connect selected metrics/logs/traces/runtime/deployment/SLO/cost/business sources. Normalize observations to the evidence contract.
 
-### Level 2 — Change proposal automation
+### Level 2 — Proposal automation
 
-Allow the agent to generate code/config changes, plans, risk summaries, and pull requests. Keep production execution outside the agent's authority.
+Allow the agent to generate code/config, change tickets, plans, runbooks or operator procedures. Keep production execution outside the agent's authority.
 
 ### Level 3 — Controlled execution
 
-If an organization chooses automated execution, require independent controls such as short-lived credentials, least privilege, environment allowlists, CI approvals, policy-as-code, protected branches, audit logging, and tested rollback.
+If execution is automated, require independent short-lived credentials, least privilege, scope allowlists, change approval, policy-as-code, audit logging, stop conditions and tested recovery.
 
-## Required controls for a production pilot
+## Production pilot checklist
 
-- schema validation in CI
-- read-only-by-default live integrations
-- evidence provenance in recommendations
-- provider-neutral regression evals
-- explicit change proposal and rollback plan
-- human approval for high-impact changes
+- validated service/domain context
+- read-only-by-default integrations
+- evidence provenance for material recommendations
+- domain eval regression suite
+- explicit risk/blast-radius/validation/recovery fields
 - independent authorization outside the model
-- secrets excluded from context files
-- context ownership and review process
+- secrets excluded from context
+- clear context owners and review cadence
+- SRE policy for reliability-impacting changes where applicable
+- delivery recovery path for production releases where applicable
+- FinOps owner/allocation and commitment approval where applicable
 
-## What hooks can and cannot do
+## Cross-domain review
 
-Agent hooks can prevent common accidental commands and improve ergonomics. They do not replace cloud authorization, Kubernetes RBAC, deployment approvals, or policy engines. Assume an agent-side regex can be bypassed and design the real control plane accordingly.
+A production decision may require more than one lens. Typical examples:
+
+- capacity reduction → Infrastructure + SRE + FinOps
+- release strategy change → DevOps + SRE
+- managed-service migration → Infrastructure + DevOps + FinOps, often SRE
+- commitment purchase → FinOps + Infrastructure, with organizational financial approval
+
+Do not allow one domain's local objective to silently override another domain's explicit constraint.

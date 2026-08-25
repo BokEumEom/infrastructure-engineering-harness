@@ -1,86 +1,65 @@
 # Architecture
 
-The harness separates **durable infrastructure knowledge**, **runtime evidence**, **agent reasoning**, and **production execution**.
+The harness separates durable knowledge, current evidence, domain reasoning and production execution.
 
 ```text
 Durable Knowledge                     Optional Live Evidence
-(service catalog, ADRs, policy,       (metrics, logs, traces, deploys,
-incidents, runbooks)                  cloud/runtime state)
+service catalog / ADR / policy        metrics / logs / traces / SLO
+incidents / runbooks / domain policy  runtime / delivery / cost / business
           │                                      │
           └──────────────┬───────────────────────┘
                          ▼
-                  Context Resolver
-               (progressive loading)
+                  Context Resolution
+                 progressive loading
                          ▼
-                 Infrastructure Agent
+                  Shared Harness Core
                          ▼
-              Evidence-based Decision
+        ┌────────────────┼────────────────┐
+        │                │                │
+Infrastructure         SRE             DevOps           FinOps
+architecture       reliability       delivery         cost/value
+capacity           SLO/budget        recovery         allocation
+failure modes      incidents         stability        unit economics
+        └────────────────┬────────────────┘
                          ▼
-                  Change Proposal
+                Evidence-based Decision
                          ▼
-             Validation / Policy / Eval
+                   Change Proposal
                          ▼
-                  Review Artifact
-        (PR / ticket / runbook / procedure)
+          Validation / Policy / Eval / Review
+                         ▼
+ PR / Change Ticket / Approved Runbook / Controlled Procedure
                          ▼
                    Human Approval
                          ▼
                    Execution System
-                         ▼
-                   Infrastructure
 ```
 
-## Core vs adapters
+## Shared core
 
-The core is vendor-neutral and delivery-method-neutral:
+The core owns contracts that should not vary by model, cloud or discipline:
 
-- `AGENTS.md`
-- structured context contract
-- JSON Schemas
-- incident / architecture / change-review workflows
-- evidence provenance
-- provider-neutral evals
-- change proposal workflow
+- context discovery and progressive loading
+- service ownership and dependency model
+- evidence/provenance
+- ADR and incident knowledge
+- safety and change-proposal contract
+- provider-neutral eval infrastructure
 
-Agent and tool integrations are adapters:
+## Domain packs
 
-- Claude Code plugin/skills/hooks
-- Kiro steering
-- Codex `AGENTS.md`
-- cloud APIs or CLIs
-- observability platforms
-- deployment systems
-- source-control and CI/CD systems
-- ITSM/change-management systems
-- approved operator procedures
+Domain packs add a lens, not a new truth source. They define domain-specific durable context, questions, workflows and evals. Cross-domain decisions preserve separate findings so reliability, delivery, architecture and cost trade-offs stay visible.
 
-No adapter is required for the core knowledge model. A team can start with repository or central context only and add live read-only evidence later.
+## Agent adapters
 
-## Embedded and central modes
+- Codex and compatible agents: `AGENTS.md`
+- Kiro: `AGENTS.md` plus `.kiro/steering/`
+- Claude Code: Skills, reviewer agent and defensive hooks
 
-The context model can be embedded in a service/infrastructure repository or stored in a central platform/SRE workspace. In central mode, service repositories and operational systems remain read-only sources and the harness owns the cross-service knowledge model.
+## Tool adapters
 
-## Progressive context loading
-
-The agent should first resolve a service or domain from the service catalog, then load only context that can change the decision. This prevents a large knowledge base from becoming an always-on prompt.
-
-## Evidence normalization
-
-Live integrations must normalize observations to `schemas/evidence.schema.json`. This makes reasoning independent of whether evidence originated from a cloud-native monitor, Prometheus, OpenTelemetry, Datadog, another APM, deployment history, a source repository, or a human-provided incident artifact.
-
-## Infrastructure delivery is optional
-
-The harness does not require Terraform or infrastructure-as-code. A proposal may be realized as:
-
-- an IaC/configuration pull request;
-- an approved change ticket;
-- a reviewed runbook;
-- a controlled console/API procedure;
-- an automation script executed by an independently authorized system;
-- a hybrid of these approaches.
-
-The invariant is the engineering control around the change: evidence, risk, blast radius, validation, recovery/rollback, and independent authorization.
+Cloud APIs, runtime systems, observability platforms, deployment systems, cost/usage sources and source control are optional adapters. Normalize current observations to `schemas/evidence.schema.json` before reasoning.
 
 ## Production boundary
 
-The default architecture ends at a **reviewable proposal and review artifact**. Direct production execution is intentionally outside the core agent loop. Organizations may automate execution separately, but should preserve independent authorization, policy checks, audit logs, and rollback/recovery controls.
+The default harness ends at a reviewable proposal or approved procedure. Direct production execution is outside the core loop. Organizations that automate execution should preserve independent authorization, policy checks, auditability and recovery controls.

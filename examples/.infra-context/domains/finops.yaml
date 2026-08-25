@@ -1,0 +1,27 @@
+schema_version: "1.0"
+scope: public-api
+owner: platform-team
+technology_category: application-platform
+allocation:
+  dimensions:
+    - product
+    - environment
+    - owner
+  shared_cost_policy: Shared platform cost is allocated using a documented usage-based driver when practical.
+  target_coverage_percent: 95
+unit_metrics:
+  - id: cost-per-million-requests
+    cost_numerator: fully loaded technology cost for the public-api scope
+    value_denominator: million successful user requests
+    business_context: Tracks cost efficiency while preserving service objectives.
+commitment_policy:
+  enabled: true
+  approval_required: true
+  minimum_demand_evidence_window: 60d
+optimization_constraints:
+  - do not violate reliability objectives for nominal savings
+  - preserve security and data-integrity controls
+  - account for migration effort and operational risk
+budget:
+  owner: platform-team
+  review_cadence: monthly

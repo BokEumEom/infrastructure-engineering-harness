@@ -2,20 +2,19 @@
 inclusion: always
 ---
 
-# Infrastructure Harness Steering
+# Infrastructure Engineering Harness
 
 Use the repository root `AGENTS.md` as the primary operating contract.
 
-Infrastructure-specific knowledge lives in `.infra-context/`. Load it progressively rather than reading the entire directory.
+Resolve the context root from the user's request. Use `.infra-context/` in embedded mode or `contexts/<scope>/` in central mode.
 
-For incidents and change reviews:
+Before making recommendations, route the task to the relevant domain pack:
 
-- evidence before action
-- distinguish facts from assumptions
-- prefer provider-neutral component categories
-- use optional live adapters only for read-only evidence collection
-- Datadog or any other observability product is optional
-- production changes require the proposal workflow in `workflows/change-proposal.md`
-- never treat an agent hook as the only production security boundary
+- Infrastructure Engineering → `domains/infrastructure/README.md`
+- SRE → `domains/sre/README.md`
+- DevOps / Software Delivery → `domains/devops/README.md`
+- FinOps → `domains/finops/README.md`
 
-When a recommendation depends on telemetry, include provenance that conforms to `schemas/evidence.schema.json`.
+Use multiple packs for cross-domain decisions and state trade-offs explicitly.
+
+Evidence before action. Prefer read-only live evidence. Datadog, Terraform, a particular cloud, or a particular runtime are optional. Production execution remains outside the default reasoning loop.
