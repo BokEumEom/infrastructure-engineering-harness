@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Security Profile",
+  "type": "object",
+  "required": ["schema_version", "service", "data_classification", "trust_boundaries", "identities", "privileged_actions", "external_integrations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "service": {"type": "string", "minLength": 1},
+    "data_classification": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["public", "internal", "confidential", "restricted", "credential", "regulated"]}
+    },
+    "trust_boundaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "from", "to"],
+        "properties": {
+          "id": {"type": "string"},
+          "from": {"type": "string"},
+          "to": {"type": "string"},
+          "data": {"type": "array", "items": {"type": "string"}},
+          "controls": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "identities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "privilege"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {"enum": ["human", "workload", "agent", "service_account", "external_system"]},
+          "privilege": {"enum": ["read", "write", "admin", "mixed"]},
+          "owner": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "privileged_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "approval_required"],
+        "properties": {
+          "id": {"type": "string"},
+          "approval_required": {"type": "boolean"},
+          "audit_required": {"type": "boolean"},
+          "allowed_actors": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "external_integrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "trust_level", "allowed_data", "write_access"],
+        "properties": {
+          "id": {"type": "string"},
+          "trust_level": {"enum": ["untrusted", "pinned_reference", "managed", "first_party"]},
+          "allowed_data": {"type": "array", "items": {"type": "string"}},
+          "write_access": {"type": "boolean"},
+          "approval_required_for_write": {"type": "boolean"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "supply_chain": {
+      "type": "object",
+      "properties": {
+        "sbom_required": {"type": "boolean"},
+        "provenance_required": {"type": "boolean"},
+        "signature_required": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "justification", "expires_at"],
+        "properties": {
+          "id": {"type": "string"},
+          "justification": {"type": "string"},
+          "expires_at": {"type": "string", "format": "date"},
+          "compensating_controls": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

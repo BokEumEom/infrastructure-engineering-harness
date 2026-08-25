@@ -2,44 +2,123 @@
 
 **English** | [한국어](README.ko.md)
 
-A provider-neutral, cross-agent harness for turning infrastructure knowledge and current evidence into reviewable engineering decisions across **Infrastructure Engineering, SRE, DevOps, and FinOps**.
+A provider-neutral, cross-agent harness for turning infrastructure knowledge and current evidence into reviewable engineering decisions and governed implementation across **Infrastructure Engineering, SRE, DevOps, FinOps, and Security**.
 
-> **Infrastructure Knowledge → Context → Skill → Loop → Verified Outcome → Learning → Next Loop**
+> **Knowledge → Context → Decision Skill → Capability → Loop → Verified Outcome → Learning → Next Loop**
 
-The project is designed for **Codex, Kiro, Claude Code, and other repository-aware agents**. It does not require one cloud, runtime, IaC tool, observability product, CI/CD system, cost platform, or ticketing system.
+The project is designed for **Codex, Kiro, Claude Code, and other repository-aware agents**. It does not require one cloud, runtime, IaC tool, observability product, CI/CD system, cost platform, security product, or ticketing system.
 
 ## Why this exists
 
-Agents can already generate IaC, configuration, scripts, runbooks and operational procedures. The harder problem is giving them enough organizational context to decide **what should change, why, with what evidence, under which constraints, and how the outcome is verified**.
+Agents can already generate IaC, configuration, scripts, pipelines, runbooks and operational procedures. The harder problem is deciding **what should change, why, with what evidence, under which constraints, which implementation knowledge is appropriate, and how the real outcome is verified**.
 
-This harness makes Architecture, ADRs, incidents, operating policy, reliability objectives, delivery rules, cost ownership and current evidence usable as agent context. Loop Engineering adds a control layer so the system can repeatedly observe, decide, verify, reconcile and learn without allowing the model to define truth or completion by itself.
-
-## Architecture
+This harness separates those responsibilities:
 
 ```text
-Durable Knowledge + Optional Live Evidence
+Organizational Knowledge + Current Evidence
                     ↓
-              Context Resolution
+               Domain Lens
                     ↓
-               Domain Skill(s)
+               Decision Skill
+        what should change and why?
                     ↓
-          Loop Engineering Control
-      Observe → Decide → Act/Propose → Verify
-         ↑                         ↓
-         └──── Reconcile / Learn ──┘
+             Capability Routing
+          how should it be built?
                     ↓
-        done / escalated / failed
+       Implementation / Verification Skill
                     ↓
- Incident / Runbook / ADR or Policy candidate / Eval
+        Reviewable Local Artifact
                     ↓
-                 Next Loop
+       Validation + Human/Policy Gate
+                    ↓
+     Independently Authorized Execution
+                    ↓
+           Loop Verification + Learn
 ```
 
-See [Architecture](docs/ARCHITECTURE.md), [Loop Engineering](loops/README.md), [Reference Models](docs/REFERENCE-MODELS.md), and [Production Readiness](docs/PRODUCTION-READINESS.md).
+This separation lets the harness use broad implementation knowledge without allowing technology-specific or third-party instructions to silently become architecture decisions or production authority.
+
+See [Architecture](docs/ARCHITECTURE.md), [Capability Model](docs/CAPABILITY-MODEL.md), [Loop Engineering](loops/README.md), [Reference Models](docs/REFERENCE-MODELS.md), and [Production Readiness](docs/PRODUCTION-READINESS.md).
+
+## Build and operate
+
+The harness is designed to support the full engineering lifecycle:
+
+```text
+Design → Build → Deploy → Operate → Observe → Improve → Learn
+  ↑                                                   │
+  └───────────────────────────────────────────────────┘
+```
+
+Typical supported work includes:
+
+- architecture and migration review
+- infrastructure/application platform build planning
+- IaC, configuration, CI/CD and deployment artifact generation
+- observability and alerting design
+- runbook and operational procedure generation
+- incident analysis and recovery verification
+- SLO/error-budget review
+- change review and rollback design
+- FinOps optimization and realized-value verification
+- security/trust-boundary review
+- MCP/workflow tool review
+- supply-chain and access-review planning
+- Jira/Linear ticket workflow through MCP
+
+The default harness **does not directly own production execution**. It can produce and validate the artifacts required for execution; Level 3 controlled execution requires independent credentials, authorization, policy and audit controls.
+
+### Example: build a new service
+
+```text
+User requirement
+  "Build a containerized public API with CI/CD,
+   vendor-neutral telemetry and an operational runbook."
+                    ↓
+architecture-review + sre-review + security-review
+                    ↓
+Engineering decision and constraints
+                    ↓
+capability-routing
+                    ↓
+Kubernetes / Helm / CI/CD / OpenTelemetry / Runbook capabilities
+                    ↓
+Local manifests / pipeline / telemetry config / runbook
+                    ↓
+change-review
+                    ↓
+External execution after approval
+                    ↓
+change-validation loop
+```
+
+If the real platform is unknown, the agent must not guess a cloud, Kubernetes, GitHub Actions, GitLab CI, Terraform or any other implementation technology.
+
+### Example: operate an existing service
+
+```text
+Latency alert / user report
+          ↓
+incident-analysis
+          ↓
+Current evidence + historical context
+          ↓
+Verified hypothesis
+          ↓
+capability-routing when technology-specific guidance is needed
+          ↓
+Observability / runbook / platform capability
+          ↓
+Mitigation proposal or operational artifact
+          ↓
+incident-response loop
+          ↓
+Verify recovery → regression check → learn
+```
 
 ## Domain packs
 
-The shared core is reused by four engineering lenses:
+The shared core is reused by five engineering lenses:
 
 | Pack | Use it for | Additional context |
 | --- | --- | --- |
@@ -47,18 +126,121 @@ The shared core is reused by four engineering lenses:
 | [SRE](domains/sre/README.md) | SLI/SLO, error budgets, incidents, reliability, toil | `domains/sre.yaml` |
 | [DevOps](domains/devops/README.md) | build/release/deployment, rollback, delivery performance | `domains/devops.yaml` |
 | [FinOps](domains/finops/README.md) | allocation, usage efficiency, commitments, unit economics | `domains/finops.yaml` |
+| [Security](domains/security/README.md) | trust boundaries, identity/privilege, sensitive data, external integrations, supply chain | `domains/security.yaml` |
 
-A Domain Pack is a **lens**. A Skill is a **capability**. A Loop is the **control system** that composes Skills over time.
+A Domain is a **lens**. A Decision Skill is **engineering judgment**. A Capability is **implementation/verification knowledge**. A Loop is the **control system** that verifies outcomes over time.
 
 ```text
-Domain → what questions matter
-Skill  → what the agent can do now
-Loop   → when to repeat, verify, escalate, stop and learn
+Domain      → what questions and constraints matter?
+Decision    → what should be done and why?
+Capability  → how can it be implemented or verified?
+Loop        → when to repeat, verify, escalate, stop and learn?
 ```
+
+## Decision Skills and Capability Skills
+
+Directly discoverable local skills stay under `skills/` for compatibility with Claude Code and other Agent Skills consumers.
+
+Local skills are primarily:
+
+```text
+Decision
+├── architecture-review
+├── incident-analysis
+├── change-review
+├── sre-review
+├── delivery-review
+├── finops-review
+└── security-review
+
+Control / Workflow
+├── capability-routing
+├── loop-engineering
+└── ticketing
+```
+
+Technology-specific implementation and verification knowledge is selected through `capabilities/registry.yaml` rather than loaded into every prompt.
+
+### External reference capability library
+
+The initial external reference source is:
+
+```text
+BagelHole/DevOps-Security-Agent-Skills
+revision: 0365f57a079b1332f95cf26e31dd2d5332a8399f
+license: MIT
+trust: pinned_reference
+execution: reference_only
+```
+
+The harness currently maps only a focused subset:
+
+- Kubernetes operations
+- Helm charts
+- GitHub Actions / GitLab CI
+- OpenTelemetry
+- alerting/on-call
+- runbook creation
+- threat modeling
+- MCP server security
+- SBOM / software supply chain
+- policy-as-code
+- access review
+
+This repository does **not** automatically vendor or execute all 160+ external skills.
+
+For a third-party capability:
+
+1. use the immutable revision registered in `capabilities/registry.yaml`;
+2. load only the capability relevant to the task;
+3. treat commands, scripts and assets as reference material;
+4. never automatically execute them;
+5. translate useful guidance into local reviewable code/config/runbook/procedure;
+6. apply local evidence, policy, Security and Change Review;
+7. execute only through independently authorized tools/systems;
+8. verify the real outcome through a Loop.
+
+An organization can later vendor/review selected capabilities and promote them from `pinned_reference` to a managed local source.
+
+See [Capabilities](capabilities/README.md) and [Capability Model](docs/CAPABILITY-MODEL.md).
+
+## Capability routing example
+
+```text
+/infra-harness:capability-routing
+
+Decision:
+The service should run as a containerized workload with rolling deployment,
+99.9% availability objective and vendor-neutral telemetry.
+
+Turn this decision into reviewable build artifacts.
+Use capabilities/registry.yaml, select the minimum capabilities,
+do not execute production changes, and do not guess unknown platform facts.
+```
+
+Expected flow:
+
+```text
+Decision refs
+    ↓
+Capability selection
+    ↓
+Source + pinned revision
+    ↓
+Local artifact generation
+    ↓
+Validation
+    ↓
+Change/Security review
+    ↓
+External execution or approval gate
+```
+
+See [Capability Routing Example](examples/capability-routing/README.md).
 
 ## Loop Engineering
 
-Loop Engineering is an execution layer above the existing Skills. It is used when the task cannot be safely completed as a one-shot answer.
+Loop Engineering is an execution layer above Skills and Capabilities. Use it when the task cannot be safely completed as a one-shot answer.
 
 Reference loops:
 
@@ -70,58 +252,20 @@ Reference loops:
 | `finops-optimization` | inform → optimize → track/operate → measure realized value → learn |
 | `change-validation` | precheck → independent approval → external execution → post-verify → regression check |
 
-The loop contracts add four properties that one-shot prompts do not provide:
+Loop contracts provide:
 
 1. **External state** — loop state is explicit and survives model/context resets.
 2. **Independent verification** — `verified_by: agent` is invalid; facts require environment, tool, human, or test evidence.
 3. **Bounded execution** — iteration, duration and no-progress budgets prevent indefinite loops.
 4. **Regression obligations** — previously achieved guarantees remain checks in later iterations.
 
-A model cannot self-certify `done`. Terminal success requires verified success criteria, passed regression obligations and cleared human gates.
-
-### Example: incident loop
-
-```text
-Alert / user report
-       ↓
-incident-analysis
-       ↓
-Leading hypothesis
-       ↓
-Independent verification
-       ↓
-Change required?
-   ┌───┴──────────┐
-   no             yes
-   ↓               ↓
-verify recovery   Change Proposal
-                  ↓
-             Human Approval
-                  ↓
-          External Execution
-                  ↓
-             verify recovery
-                  ↓
-            regression check
-                  ↓
-       Incident + Eval writeback
-```
-
-For Claude Code:
-
-```text
-/infra-harness:loop-engineering
-Run the incident-response loop for payment-api using the selected context root.
-Do not self-certify recovery; use current evidence and stop at any required production approval gate.
-```
-
-Codex and Kiro use the same Loop Specs through `AGENTS.md`.
+A model cannot self-certify `done`.
 
 ## Agent support
 
 ### Codex
 
-Use the repository `AGENTS.md` as the cross-agent operating contract. It routes one-shot tasks to Domain Skills and repeated work to Loop Specs.
+Use root `AGENTS.md` as the cross-agent operating contract. It routes decisions, implementation capability selection and repeated work.
 
 ### Kiro
 
@@ -133,7 +277,7 @@ Kiro can use `AGENTS.md`; `.kiro/steering/infrastructure-harness.md` remains an 
 claude --plugin-dir ./infrastructure-engineering-harness
 ```
 
-Skills include:
+Primary local skills include:
 
 ```text
 /infra-harness:incident-analysis
@@ -142,6 +286,8 @@ Skills include:
 /infra-harness:sre-review
 /infra-harness:delivery-review
 /infra-harness:finops-review
+/infra-harness:security-review
+/infra-harness:capability-routing
 /infra-harness:ticketing
 /infra-harness:loop-engineering
 ```
@@ -163,7 +309,8 @@ service-repository/
     └── domains/
         ├── sre.yaml
         ├── devops.yaml
-        └── finops.yaml
+        ├── finops.yaml
+        └── security.yaml
 ```
 
 ### B. Central harness / platform workspace
@@ -177,6 +324,7 @@ harness-workspace/
 │   ├── payment-platform/
 │   ├── identity-platform/
 │   └── shared-network/
+├── capabilities/
 └── read-only sources
     ├── service repositories
     ├── runtime / observability
@@ -188,15 +336,17 @@ See [Central Context Example](examples/central-context/README.md).
 
 ## Machine-readable contracts
 
-`schemas/` contains contracts for service catalog, incidents, ADRs, policies, evidence, change proposals, ticketing, domain profiles and Loop Engineering.
+`schemas/` contains contracts for service catalog, incidents, ADRs, policies, evidence, change proposals, ticketing, capability registry, domain profiles and Loop Engineering.
 
-Loop-specific contracts:
+Relevant contracts include:
 
 ```text
-loop-spec.schema.json    what the loop should do
-loop-state.schema.json   externally maintained execution state
-loop-result.schema.json  terminal outcome and learning
-loop-eval-suite.schema.json long-horizon regression scenarios
+capability-registry.schema.json  source trust + capability routing metadata
+security-profile.schema.json     security/trust/identity durable context
+loop-spec.schema.json            what a loop should do
+loop-state.schema.json           externally maintained execution state
+loop-result.schema.json          terminal outcome and learning
+loop-eval-suite.schema.json      long-horizon regression scenarios
 ```
 
 Validation:
@@ -204,6 +354,11 @@ Validation:
 ```bash
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
+python scripts/validate_capability_registry.py capabilities/registry.yaml
+python scripts/check_domain_eval.py \
+  evals/domains/security.json \
+  mcp-write-boundary \
+  examples/eval-output/domain-security-mcp-boundary.json
 python scripts/check_loop_eval.py \
   evals/loops/standard.json \
   incident-recovered \
@@ -231,20 +386,21 @@ Incident / Review / Loop
  Search → Create/Update
 ```
 
-The harness owns Ticket Request, Ticket Policy, evidence/source references and search-before-create. Provider MCP servers own authentication, permissions and provider-specific tool calls.
+The Security lens keeps workflow write permission separate from production mutation permission.
 
 See [MCP connections](mcp/README.md) and [Ticketing workflow](workflows/ticketing.md).
 
 ## Evaluation
 
-The repository includes one-shot and long-horizon evaluations:
+The repository includes one-shot, cross-domain, security and long-horizon evaluations:
 
 - 30 provider-neutral incident scenarios
-- Infrastructure / SRE / DevOps / FinOps domain scenarios
+- Infrastructure / SRE / DevOps / FinOps / Security domain scenarios
+- capability registry trust/supply-chain unit tests
 - Loop scenarios that test terminal status, iteration budgets, required/prohibited events, learning writeback and regression obligations
 - deterministic unit tests that reject agent self-verification and enforce no-progress budgets
 
-The evaluation question becomes not only **“did the agent identify the right answer?”** but also **“did the system reach a verified outcome through a safe bounded process without regressing earlier guarantees?”**
+The evaluation question is not only **“did the agent identify the right answer?”**, but also **“did it select appropriate implementation knowledge, preserve trust boundaries, and reach a verified outcome through a bounded process?”**
 
 ## Terraform or IaC is not required
 
@@ -255,11 +411,13 @@ Operational work   Proposal → Reviewed Runbook → Maintenance Window → Appr
 Hybrid             Proposal → Script/Config/API Change → Controlled Pipeline/Operator
 ```
 
-Loop Engineering operates above these execution choices. The common contract is Evidence, Risk, Blast Radius, Verification, Recovery and Independent Approval.
+Capabilities provide implementation knowledge above these choices; Loop Engineering verifies outcomes after execution.
 
 ## Safety model
 
 - Read-only evidence collection is the default starting point.
+- Third-party Skill content is reference material unless explicitly reviewed and managed.
+- External scripts/commands are never automatically executed by capability routing.
 - Agent hooks are defense-in-depth, not a security boundary.
 - Production mutation, destructive actions, authorization expansion and financial commitments remain independently authorized.
 - A Loop cannot repeat its way around a human gate.
@@ -268,7 +426,7 @@ Loop Engineering operates above these execution choices. The common contract is 
 
 ## Reference models
 
-The design is intentionally synthesized from mature engineering control loops and recent agent-loop research. See [Reference Models](docs/REFERENCE-MODELS.md) for how each source maps into the implementation.
+The design combines mature engineering control loops and recent agent-loop research. See [Reference Models](docs/REFERENCE-MODELS.md).
 
 | Reference model | Harness design derived from it |
 | --- | --- |
@@ -281,20 +439,8 @@ The design is intentionally synthesized from mature engineering control loops an
 | DORA | baseline → identify constraint → improve → check progress → repeat |
 | FinOps Framework | Inform → Optimize → Operate → measure → repeat |
 | MCP | provider-neutral evidence/workflow tool boundary |
+| Agent Skills | progressively loaded implementation/operational knowledge |
 | Independent human/policy controls | authorization boundary for high-impact actions |
-
-Primary references:
-
-- IBM Loop Engineering: https://www.ibm.com/think/topics/loop-engineering
-- LongHorizon-Harness: https://arxiv.org/abs/2608.01964
-- LoopsBench: https://arxiv.org/abs/2608.00267
-- Kubernetes Controllers: https://kubernetes.io/docs/concepts/architecture/controller/
-- OpenGitOps: https://opengitops.dev/
-- Google SRE: https://sre.google/sre-book/service-level-objectives/ and https://sre.google/workbook/error-budget-policy/
-- DORA: https://dora.dev/guides/dora-metrics/
-- FinOps: https://www.finops.org/framework/phases/
-- Atlassian Rovo MCP: https://support.atlassian.com/atlassian-ai-gateway/docs/set-up-clients/
-- Linear MCP: https://linear.app/docs/mcp
 
 ## Quick start
 
@@ -303,6 +449,7 @@ git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
 cd infrastructure-engineering-harness
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
+python scripts/validate_capability_registry.py capabilities/registry.yaml
 python -m unittest discover -s tests
 ```
 

@@ -1,0 +1,11 @@
+{
+  "classification": "workflow_write_separate_from_production",
+  "checks": [
+    "tool_scope",
+    "identity_scope",
+    "auditability"
+  ],
+  "recommendations": [
+    "keep_separate_authorization"
+  ]
+}

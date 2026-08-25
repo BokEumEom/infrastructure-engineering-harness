@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/capability-registry.schema.json",
+  "title": "Capability Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sources", "capabilities"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "trust", "license", "execution"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "type": {"enum": ["local", "github"]},
+          "trust": {"enum": ["local", "pinned_reference", "managed"]},
+          "root": {"type": "string", "minLength": 1},
+          "repository": {"type": "string", "minLength": 1},
+          "revision": {"type": "string", "minLength": 1},
+          "license": {"type": "string", "minLength": 1},
+          "execution": {"enum": ["governed", "reference_only"]},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source", "skill_path", "class", "category", "domains", "intents", "risk", "execution_policy", "requires_human_gate"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "source": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "skill_path": {"type": "string", "minLength": 1},
+          "class": {"enum": ["decision", "control", "workflow", "implementation", "verification"]},
+          "category": {"enum": ["architecture", "cloud", "orchestration", "delivery", "observability", "security", "operations", "governance", "finops", "ai"]},
+          "domains": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"enum": ["infrastructure", "sre", "devops", "finops", "security", "cross-domain"]}
+          },
+          "intents": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 2}
+          },
+          "risk": {"enum": ["low", "medium", "high", "critical"]},
+          "execution_policy": {"enum": ["governed", "reference_only", "review_required"]},
+          "requires_human_gate": {"type": "boolean"},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}
