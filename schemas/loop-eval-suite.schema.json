@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop Engineering Eval Suite",
+  "type": "object",
+  "required": ["schema_version", "scenarios"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "scenarios": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "loop_id", "description", "expected"], "properties": {"id": {"type": "string"}, "loop_id": {"type": "string"}, "description": {"type": "string"}, "expected": {"type": "object", "required": ["terminal_status", "max_iterations", "required_events", "must_not_events", "required_writeback", "regression_obligations"], "properties": {"terminal_status": {"enum": ["done", "escalated", "failed", "budget_exhausted"]}, "max_iterations": {"type": "integer", "minimum": 1}, "required_events": {"type": "array", "items": {"type": "string"}}, "must_not_events": {"type": "array", "items": {"type": "string"}}, "required_writeback": {"type": "array", "items": {"type": "string"}}, "regression_obligations": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false}}, "additionalProperties": false}}
+  }, "additionalProperties": false
+}
