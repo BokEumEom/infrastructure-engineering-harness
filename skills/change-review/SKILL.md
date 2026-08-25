@@ -49,4 +49,12 @@ Prefer the smallest safe improvement.
 ### Change proposal impact
 If production-impacting, verify that the proposal includes risk, blast radius, validation, rollback, and explicit approval.
 
+## Loop-compatible handoff
+
+When invoked by `change-validation`, emit the shared `loop_handoff` contract from `skills/loop-engineering/SKILL.md`.
+
+Use stable events such as `preconditions_verified`, `production_change_requires_approval`, `post_change_outcome_verified`, `verification_inconclusive`, `rollback_required`, or `regression_obligation_failed`.
+
+Pre-change validation and post-change verification are different phases. Do not reuse a successful plan/precheck as proof that the actual environment reached the desired state. Post-change success requires current environment evidence and passed regression obligations.
+
 Do not approve a change solely because a syntax validator or dry-run succeeds.
