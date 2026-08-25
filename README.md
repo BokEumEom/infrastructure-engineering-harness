@@ -4,15 +4,15 @@
 
 A provider-neutral, cross-agent harness for turning infrastructure knowledge and current evidence into reviewable engineering decisions across **Infrastructure Engineering, SRE, DevOps, and FinOps**.
 
-> **Infrastructure Knowledge → Context → Agent → Decision/Proposal → Human Review → Infrastructure**
+> **Infrastructure Knowledge → Context → Skill → Loop → Verified Outcome → Learning → Next Loop**
 
-The project is designed for **Codex, Kiro, Claude Code, and other repository-aware agents**. It does not require one cloud, one runtime, Terraform, Kubernetes, Datadog, or any particular CI/CD, cost, or ticketing platform.
+The project is designed for **Codex, Kiro, Claude Code, and other repository-aware agents**. It does not require one cloud, runtime, IaC tool, observability product, CI/CD system, cost platform, or ticketing system.
 
 ## Why this exists
 
-Agents can already generate IaC, configuration, scripts, runbooks and operational procedures. The harder problem is giving them enough organizational context to decide **what should change, why, with what evidence, and under which constraints**.
+Agents can already generate IaC, configuration, scripts, runbooks and operational procedures. The harder problem is giving them enough organizational context to decide **what should change, why, with what evidence, under which constraints, and how the outcome is verified**.
 
-This harness makes Architecture, ADRs, incidents, operating policy, reliability objectives, delivery rules, cost ownership and current evidence usable as agent context.
+This harness makes Architecture, ADRs, incidents, operating policy, reliability objectives, delivery rules, cost ownership and current evidence usable as agent context. Loop Engineering adds a control layer so the system can repeatedly observe, decide, verify, reconcile and learn without allowing the model to define truth or completion by itself.
 
 ## Architecture
 
@@ -21,29 +21,21 @@ Durable Knowledge + Optional Live Evidence
                     ↓
               Context Resolution
                     ↓
-               Harness Core
+               Domain Skill(s)
                     ↓
-      ┌─────────────┼─────────────┐
-Infrastructure     SRE          DevOps        FinOps
-Architecture   Reliability    Delivery      Cost/Value
-Capacity       SLO/Budget     Recovery      Allocation
-Failure modes  Incidents      Stability     Unit economics
-      └─────────────┼─────────────┘
+          Loop Engineering Control
+      Observe → Decide → Act/Propose → Verify
+         ↑                         ↓
+         └──── Reconcile / Learn ──┘
                     ↓
-          Evidence-based Decision
+        done / escalated / failed
                     ↓
-              Change Proposal
+ Incident / Runbook / ADR or Policy candidate / Eval
                     ↓
-       Validation / Eval / Review
-                    ↓
- PR / Ticket / Runbook / Controlled Procedure
-                    ↓
-              Human Approval
-                    ↓
-                Execution
+                 Next Loop
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) and [Production Readiness](docs/PRODUCTION-READINESS.md).
+See [Architecture](docs/ARCHITECTURE.md), [Loop Engineering](loops/README.md), [Reference Models](docs/REFERENCE-MODELS.md), and [Production Readiness](docs/PRODUCTION-READINESS.md).
 
 ## Domain packs
 
@@ -51,22 +43,89 @@ The shared core is reused by four engineering lenses:
 
 | Pack | Use it for | Additional context |
 | --- | --- | --- |
-| [Infrastructure](domains/infrastructure/README.md) | architecture, capacity, migration, dependency and change risk | architecture, ADR, runtime/capacity evidence |
+| [Infrastructure](domains/infrastructure/README.md) | architecture, capacity, migration, dependencies, change risk | architecture, ADR, runtime/capacity evidence |
 | [SRE](domains/sre/README.md) | SLI/SLO, error budgets, incidents, reliability, toil | `domains/sre.yaml` |
 | [DevOps](domains/devops/README.md) | build/release/deployment, rollback, delivery performance | `domains/devops.yaml` |
 | [FinOps](domains/finops/README.md) | allocation, usage efficiency, commitments, unit economics | `domains/finops.yaml` |
 
-Use multiple packs for cross-domain decisions. A cost optimization that violates an SLO should remain visible as a FinOps opportunity **and** an SRE constraint, not become an averaged generic recommendation.
+A Domain Pack is a **lens**. A Skill is a **capability**. A Loop is the **control system** that composes Skills over time.
+
+```text
+Domain → what questions matter
+Skill  → what the agent can do now
+Loop   → when to repeat, verify, escalate, stop and learn
+```
+
+## Loop Engineering
+
+Loop Engineering is an execution layer above the existing Skills. It is used when the task cannot be safely completed as a one-shot answer.
+
+Reference loops:
+
+| Loop | Purpose |
+| --- | --- |
+| `incident-response` | investigate → verify hypothesis → propose mitigation → verify recovery → learn |
+| `reliability-improvement` | baseline SLO/error budget → prioritize → track → remeasure → learn |
+| `delivery-improvement` | baseline delivery → find constraint → improve → remeasure → learn |
+| `finops-optimization` | inform → optimize → track/operate → measure realized value → learn |
+| `change-validation` | precheck → independent approval → external execution → post-verify → regression check |
+
+The loop contracts add four properties that one-shot prompts do not provide:
+
+1. **External state** — loop state is explicit and survives model/context resets.
+2. **Independent verification** — `verified_by: agent` is invalid; facts require environment, tool, human, or test evidence.
+3. **Bounded execution** — iteration, duration and no-progress budgets prevent indefinite loops.
+4. **Regression obligations** — previously achieved guarantees remain checks in later iterations.
+
+A model cannot self-certify `done`. Terminal success requires verified success criteria, passed regression obligations and cleared human gates.
+
+### Example: incident loop
+
+```text
+Alert / user report
+       ↓
+incident-analysis
+       ↓
+Leading hypothesis
+       ↓
+Independent verification
+       ↓
+Change required?
+   ┌───┴──────────┐
+   no             yes
+   ↓               ↓
+verify recovery   Change Proposal
+                  ↓
+             Human Approval
+                  ↓
+          External Execution
+                  ↓
+             verify recovery
+                  ↓
+            regression check
+                  ↓
+       Incident + Eval writeback
+```
+
+For Claude Code:
+
+```text
+/infra-harness:loop-engineering
+Run the incident-response loop for payment-api using the selected context root.
+Do not self-certify recovery; use current evidence and stop at any required production approval gate.
+```
+
+Codex and Kiro use the same Loop Specs through `AGENTS.md`.
 
 ## Agent support
 
 ### Codex
 
-Use the repository `AGENTS.md` as the operating contract. It routes tasks to the appropriate domain pack and context.
+Use the repository `AGENTS.md` as the cross-agent operating contract. It routes one-shot tasks to Domain Skills and repeated work to Loop Specs.
 
 ### Kiro
 
-Kiro can use `AGENTS.md`; `.kiro/steering/infrastructure-harness.md` provides an additional workspace steering adapter.
+Kiro can use `AGENTS.md`; `.kiro/steering/infrastructure-harness.md` remains an additional workspace adapter.
 
 ### Claude Code
 
@@ -84,13 +143,12 @@ Skills include:
 /infra-harness:delivery-review
 /infra-harness:finops-review
 /infra-harness:ticketing
+/infra-harness:loop-engineering
 ```
 
 ## Usage modes
 
 ### A. Embedded context
-
-Put the context with a service or infrastructure repository:
 
 ```text
 service-repository/
@@ -108,16 +166,9 @@ service-repository/
         └── finops.yaml
 ```
 
-Example:
-
-```text
-Analyze the latency incident using .infra-context.
-Use Infrastructure and SRE lenses. Separate evidence from assumptions and do not execute a production change.
-```
-
 ### B. Central harness / platform workspace
 
-Keep service repositories unchanged and manage organizational context centrally:
+Service repositories can remain unchanged while Platform/SRE/Infrastructure teams manage organizational knowledge centrally:
 
 ```text
 harness-workspace/
@@ -133,119 +184,69 @@ harness-workspace/
     └── cost / business data
 ```
 
-Example:
-
-```text
-Analyze payment-platform using contexts/payment-platform.
-The proposed capacity reduction affects cost and reliability, so use Infrastructure, SRE and FinOps packs.
-Treat external systems as read-only and produce a proposal only if the evidence is sufficient.
-```
-
 See [Central Context Example](examples/central-context/README.md).
 
-## Example: one decision, four lenses
+## Machine-readable contracts
 
-A service has stable traffic, high capacity headroom, a 99.9% SLO, healthy error budget, a reversible deployment path, and rising monthly cost.
+`schemas/` contains contracts for service catalog, incidents, ADRs, policies, evidence, change proposals, ticketing, domain profiles and Loop Engineering.
 
-- **Infrastructure** checks whether capacity is genuinely oversized and whether failure modes change.
-- **SRE** checks whether reduced capacity can still satisfy the SLO and error-budget policy.
-- **DevOps** checks rollout, validation, rollback and failed-deployment recovery.
-- **FinOps** checks unit cost, allocation, expected savings and whether engineering effort/risk is justified.
+Loop-specific contracts:
 
-The final proposal contains the trade-offs and evidence from each lens before approval.
+```text
+loop-spec.schema.json    what the loop should do
+loop-state.schema.json   externally maintained execution state
+loop-result.schema.json  terminal outcome and learning
+loop-eval-suite.schema.json long-horizon regression scenarios
+```
 
-## Context and schemas
-
-Machine-readable contracts live in `schemas/` for service catalog, incidents, ADRs, policy, evidence, change proposals, ticket requests/policies, domain profiles and eval suites.
+Validation:
 
 ```bash
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
+python scripts/check_loop_eval.py \
+  evals/loops/standard.json \
+  incident-recovered \
+  examples/eval-output/loop-incident-recovered.json
+python -m unittest discover -s tests
 ```
 
 ## Optional live evidence adapters
 
-The core works without live integrations. Add read-only adapters only when current state is required.
-
-Possible sources include Prometheus, OpenTelemetry backends, Datadog, cloud-native monitoring, runtime APIs, source control, deployment history, SLO tooling, cost/usage systems and business metrics. **Datadog is optional.** Normalize results to `schemas/evidence.schema.json`.
+The core works without live integrations. Add read-only adapters only when current state is required. Sources can include Prometheus, OpenTelemetry, Datadog, cloud-native monitoring, runtime APIs, source control, deployment history, SLO tooling, cost/usage systems and business metrics. **Datadog is optional.** Normalize current observations to `schemas/evidence.schema.json` before treating them as facts.
 
 ## MCP-first Jira / Linear ticket automation
 
-Ticket creation is implemented as a **workflow action through MCP**, not as Jira REST or Linear GraphQL code inside the harness.
+Ticket creation is a workflow action through MCP rather than Jira REST or Linear GraphQL code embedded in the harness.
 
 ```text
-Incident / Review / Change Proposal
-              ↓
-         Ticket Request
-              ↓
-     Policy + Deduplication
-              ↓
-     Official Remote MCP Server
-       ├─ Atlassian Rovo MCP
-       └─ Linear MCP
-              ↓
-       Search → Create/Update
+Incident / Review / Loop
+          ↓
+     Ticket Request
+          ↓
+ Policy + Deduplication
+          ↓
+   Remote MCP Server
+          ↓
+ Search → Create/Update
 ```
 
-The harness owns the provider-neutral rules:
+The harness owns Ticket Request, Ticket Policy, evidence/source references and search-before-create. Provider MCP servers own authentication, permissions and provider-specific tool calls.
 
-- `schemas/ticket-request.schema.json` — what work should be tracked
-- `schemas/ticket-policy.schema.json` — `disabled`, `manual`, or policy-based `auto_create`
-- stable SHA-256 fingerprint for deduplication
-- search-before-create
-- evidence/source references in every generated ticket
+See [MCP connections](mcp/README.md) and [Ticketing workflow](workflows/ticketing.md).
 
-The provider MCP server owns authentication, permissions and actual Jira/Linear tool calls.
+## Evaluation
 
-Example policy:
+The repository includes one-shot and long-horizon evaluations:
 
-```yaml
-mode: policy
-default_action: manual
-rules:
-  - id: high-severity-incident
-    when:
-      kinds: [incident]
-      severities: [sev1, sev2]
-    action: auto_create
-    require_evidence: true
-    min_evidence: 2
-```
+- 30 provider-neutral incident scenarios
+- Infrastructure / SRE / DevOps / FinOps domain scenarios
+- Loop scenarios that test terminal status, iteration budgets, required/prohibited events, learning writeback and regression obligations
+- deterministic unit tests that reject agent self-verification and enforce no-progress budgets
 
-This can automatically create a well-evidenced SEV1/SEV2 follow-up while leaving FinOps or architecture recommendations in manual mode.
-
-Official MCP endpoints used by the examples:
-
-```text
-Atlassian Rovo MCP  https://mcp.atlassian.com/v1/mcp/authv2
-Linear read/write  https://mcp.linear.app/mcp
-Linear read-only   https://mcp.linear.app/mcp/readonly
-```
-
-See [MCP connections](mcp/README.md), [Ticketing workflow](workflows/ticketing.md), and [Ticketing adapter](adapters/actions/ticketing/README.md).
-
-## Provider-neutral evaluation
-
-The repository includes:
-
-- 30 provider-neutral incident scenarios in `evals/standard/`
-- Infrastructure domain scenarios
-- SRE error-budget/reliability scenarios
-- DevOps delivery/recovery scenarios
-- FinOps allocation/unit-economics scenarios
-
-Example:
-
-```bash
-python scripts/check_domain_eval.py \
-  evals/domains/sre.json \
-  error-budget-exhausted \
-  examples/eval-output/domain-sre-error-budget.json
-```
+The evaluation question becomes not only **“did the agent identify the right answer?”** but also **“did the system reach a verified outcome through a safe bounded process without regressing earlier guarantees?”**
 
 ## Terraform or IaC is not required
-
-The change artifact depends on the environment:
 
 ```text
 IaC-managed        Proposal → Code/Config → Plan → PR → Approval
@@ -254,13 +255,46 @@ Operational work   Proposal → Reviewed Runbook → Maintenance Window → Appr
 Hybrid             Proposal → Script/Config/API Change → Controlled Pipeline/Operator
 ```
 
-The common contract is evidence, risk, blast radius, validation, recovery and independent approval — not Terraform.
+Loop Engineering operates above these execution choices. The common contract is Evidence, Risk, Blast Radius, Verification, Recovery and Independent Approval.
 
 ## Safety model
 
-Agent-side hooks are defense-in-depth, not a security boundary. Real production enforcement belongs outside the model in IAM/RBAC, deployment/change approvals, policy-as-code, protected branches, audit systems and other independent controls.
+- Read-only evidence collection is the default starting point.
+- Agent hooks are defense-in-depth, not a security boundary.
+- Production mutation, destructive actions, authorization expansion and financial commitments remain independently authorized.
+- A Loop cannot repeat its way around a human gate.
+- Ticket creation permission is separate from production mutation permission.
+- The model does not own truth, completion, authorization, or the production control plane.
 
-Ticket creation permission is intentionally separate from production mutation permission. Do not auto-approve broad MCP write tool sets simply because ticket automation is enabled.
+## Reference models
+
+The design is intentionally synthesized from mature engineering control loops and recent agent-loop research. See [Reference Models](docs/REFERENCE-MODELS.md) for how each source maps into the implementation.
+
+| Reference model | Harness design derived from it |
+| --- | --- |
+| IBM Loop Engineering | goal/action/observation/adjustment, explicit stopping criteria |
+| LongHorizon-Harness | external state, independently verified facts, manage/execute/audit separation |
+| LoopsBench | long-horizon evaluation and regression obligations |
+| Kubernetes Controllers | desired vs actual state reconciliation |
+| OpenGitOps | declarative/versioned state and continuous reconciliation where applicable |
+| Google SRE | SLI/SLO, error budget, reliability policy and escalation |
+| DORA | baseline → identify constraint → improve → check progress → repeat |
+| FinOps Framework | Inform → Optimize → Operate → measure → repeat |
+| MCP | provider-neutral evidence/workflow tool boundary |
+| Independent human/policy controls | authorization boundary for high-impact actions |
+
+Primary references:
+
+- IBM Loop Engineering: https://www.ibm.com/think/topics/loop-engineering
+- LongHorizon-Harness: https://arxiv.org/abs/2608.01964
+- LoopsBench: https://arxiv.org/abs/2608.00267
+- Kubernetes Controllers: https://kubernetes.io/docs/concepts/architecture/controller/
+- OpenGitOps: https://opengitops.dev/
+- Google SRE: https://sre.google/sre-book/service-level-objectives/ and https://sre.google/workbook/error-budget-policy/
+- DORA: https://dora.dev/guides/dora-metrics/
+- FinOps: https://www.finops.org/framework/phases/
+- Atlassian Rovo MCP: https://support.atlassian.com/atlassian-ai-gateway/docs/set-up-clients/
+- Linear MCP: https://linear.app/docs/mcp
 
 ## Quick start
 
@@ -271,14 +305,6 @@ python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
 python -m unittest discover -s tests
 ```
-
-## Reference models
-
-- Google SRE — SLOs and error budgets: https://sre.google/sre-book/service-level-objectives/
-- DORA software delivery performance: https://dora.dev/insights/dora-metrics-history/
-- FinOps Framework: https://www.finops.org/framework/
-- Atlassian Rovo MCP: https://support.atlassian.com/atlassian-ai-gateway/docs/set-up-clients/
-- Linear MCP: https://linear.app/docs/mcp
 
 ## License
 
