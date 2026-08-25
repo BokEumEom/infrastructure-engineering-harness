@@ -6,7 +6,7 @@ Infrastructure Knowledge와 현재 Evidence를 구조화해 **Infrastructure Eng
 
 > **Infrastructure Knowledge → Context → Agent → Decision/Proposal → Human Review → Infrastructure**
 
-**Codex, Kiro, Claude Code 및 Repository-aware Agent**에서 사용할 수 있으며 특정 Cloud, Runtime, Terraform, Kubernetes, Datadog, CI/CD 또는 Cost Platform을 전제로 하지 않습니다.
+**Codex, Kiro, Claude Code 및 Repository-aware Agent**에서 사용할 수 있으며 특정 Cloud, Runtime, Terraform, Kubernetes, Datadog, CI/CD, Cost 또는 Ticketing Platform을 전제로 하지 않습니다.
 
 ## 왜 필요한가
 
@@ -83,6 +83,7 @@ claude --plugin-dir ./infrastructure-engineering-harness
 /infra-harness:sre-review
 /infra-harness:delivery-review
 /infra-harness:finops-review
+/infra-harness:ticketing
 ```
 
 ## 사용 방식
@@ -155,7 +156,7 @@ Traffic은 안정적이고 Capacity Headroom이 크며, 99.9% SLO와 Error Budge
 
 ## Context Schema와 Validation
 
-Service Catalog, Incident, ADR, Policy, Evidence, Change Proposal, Domain Profile, Eval Suite를 Machine-readable Schema로 제공합니다.
+Service Catalog, Incident, ADR, Policy, Evidence, Change Proposal, Ticket Request/Policy, Domain Profile, Eval Suite를 Machine-readable Schema로 제공합니다.
 
 ```bash
 python -m pip install -r requirements.txt
@@ -167,6 +168,61 @@ python scripts/validate_context.py examples/.infra-context
 현재 상태가 필요한 경우에만 Read-only Adapter를 붙입니다.
 
 Prometheus, OpenTelemetry Backend, Datadog, Cloud-native Monitoring, Runtime API, Source Control, Deployment History, SLO Tool, Cost/Usage System, Business Metric 등을 사용할 수 있습니다. **Datadog은 필수가 아닙니다.** 결과는 `schemas/evidence.schema.json`으로 Normalize합니다.
+
+## MCP 기반 Jira / Linear 티켓 자동화
+
+Ticket 생성은 Harness 안에 Jira REST API나 Linear GraphQL API 코드를 넣는 방식이 아니라 **공식 Remote MCP Server를 사용하는 Workflow Action**으로 설계했습니다.
+
+```text
+Incident / Review / Change Proposal
+              ↓
+         Ticket Request
+              ↓
+      Policy + Deduplication
+              ↓
+      Official Remote MCP Server
+        ├─ Atlassian Rovo MCP
+        └─ Linear MCP
+              ↓
+        Search → Create/Update
+```
+
+Harness가 담당하는 것은 Provider-neutral 규칙입니다.
+
+- `schemas/ticket-request.schema.json` — 어떤 업무를 Ticket으로 만들 것인지
+- `schemas/ticket-policy.schema.json` — `disabled`, `manual`, Policy 기반 `auto_create`
+- 안정적인 SHA-256 Fingerprint를 이용한 중복 방지
+- 항상 Search-before-create
+- 생성 Ticket에 Evidence / Source Reference 포함
+
+실제 인증, 권한, Jira/Linear Tool 호출은 각 Provider의 MCP Server가 담당합니다.
+
+예시 Policy:
+
+```yaml
+mode: policy
+default_action: manual
+rules:
+  - id: high-severity-incident
+    when:
+      kinds: [incident]
+      severities: [sev1, sev2]
+    action: auto_create
+    require_evidence: true
+    min_evidence: 2
+```
+
+이렇게 하면 충분한 Evidence가 있는 SEV1/SEV2 Incident Follow-up은 자동 생성하면서 FinOps Optimization이나 Architecture 개선안은 Manual로 유지할 수 있습니다.
+
+예제에서 사용하는 공식 MCP Endpoint:
+
+```text
+Atlassian Rovo MCP  https://mcp.atlassian.com/v1/mcp/authv2
+Linear read/write  https://mcp.linear.app/mcp
+Linear read-only   https://mcp.linear.app/mcp/readonly
+```
+
+자세한 내용은 [MCP 연결](mcp/README.md), [Ticketing Workflow](workflows/ticketing.md), [Ticketing Adapter](adapters/actions/ticketing/README.md)를 참고하세요.
 
 ## Provider-neutral Eval
 
@@ -202,6 +258,8 @@ Hybrid          Proposal → Script/Config/API → Controlled Pipeline/Operator
 
 Agent Hook은 Defense-in-depth이며 Security Boundary가 아닙니다. 실제 Production Enforcement는 IAM/RBAC, Deployment/Change Approval, Policy-as-Code, Protected Branch, Audit System 등 모델 외부에서 독립적으로 강제해야 합니다.
 
+Ticket 생성 권한과 Production 변경 권한은 분리합니다. Ticket 자동화를 켰다는 이유로 광범위한 MCP Write Tool을 Auto-approve하지 않습니다.
+
 ## 빠른 시작
 
 ```bash
@@ -209,6 +267,7 @@ git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
 cd infrastructure-engineering-harness
 python -m pip install -r requirements.txt
 python scripts/validate_context.py examples/.infra-context
+python -m unittest discover -s tests
 ```
 
 ## 참고 모델
@@ -216,6 +275,8 @@ python scripts/validate_context.py examples/.infra-context
 - Google SRE — SLO / Error Budget: https://sre.google/sre-book/service-level-objectives/
 - DORA Software Delivery Performance: https://dora.dev/insights/dora-metrics-history/
 - FinOps Framework: https://www.finops.org/framework/
+- Atlassian Rovo MCP: https://support.atlassian.com/atlassian-ai-gateway/docs/set-up-clients/
+- Linear MCP: https://linear.app/docs/mcp
 
 ## License
 
