@@ -1,0 +1,60 @@
+schema_version: "1.0"
+service: public-api
+
+data_classification:
+  - internal
+  - confidential
+
+trust_boundaries:
+  - id: external-to-edge
+    from: public-client
+    to: public-edge
+    data: [request_metadata, authenticated_request]
+    controls: [tls, authentication, request_filtering]
+  - id: edge-to-service
+    from: public-edge
+    to: public-api
+    data: [authenticated_request]
+    controls: [service_identity, least_privilege]
+
+identities:
+  - id: operator
+    type: human
+    privilege: admin
+    owner: platform-team
+  - id: public-api-workload
+    type: workload
+    privilege: write
+    owner: api-team
+  - id: infrastructure-agent
+    type: agent
+    privilege: read
+    owner: platform-team
+
+privileged_actions:
+  - id: production-mutation
+    approval_required: true
+    audit_required: true
+    allowed_actors: [operator]
+  - id: authorization-change
+    approval_required: true
+    audit_required: true
+    allowed_actors: [operator]
+
+external_integrations:
+  - id: workflow-mcp
+    trust_level: managed
+    allowed_data: [internal]
+    write_access: true
+    approval_required_for_write: true
+  - id: external-skill-library
+    trust_level: pinned_reference
+    allowed_data: [public]
+    write_access: false
+
+supply_chain:
+  sbom_required: true
+  provenance_required: true
+  signature_required: true
+
+exceptions: []
