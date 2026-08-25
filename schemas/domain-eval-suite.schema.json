@@ -8,7 +8,7 @@
       "const": "1.0"
     },
     "domain": {
-      "enum": ["infrastructure", "sre", "devops", "finops"]
+      "enum": ["infrastructure", "sre", "devops", "finops", "security"]
     },
     "scenarios": {
       "type": "array",
@@ -17,45 +17,17 @@
         "type": "object",
         "required": ["id", "description", "facts", "expected"],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "facts": {
-            "type": "object"
-          },
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "facts": {"type": "object"},
           "expected": {
             "type": "object",
-            "required": [
-              "classification",
-              "required_checks",
-              "required_recommendations",
-              "must_not_recommend"
-            ],
+            "required": ["classification", "required_checks", "required_recommendations", "must_not_recommend"],
             "properties": {
-              "classification": {
-                "type": "string"
-              },
-              "required_checks": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "required_recommendations": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "must_not_recommend": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
+              "classification": {"type": "string"},
+              "required_checks": {"type": "array", "items": {"type": "string"}},
+              "required_recommendations": {"type": "array", "items": {"type": "string"}},
+              "must_not_recommend": {"type": "array", "items": {"type": "string"}}
             },
             "additionalProperties": true
           }
