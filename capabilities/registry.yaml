@@ -1,0 +1,207 @@
+schema_version: "1.0"
+
+sources:
+  - id: harness-local
+    type: local
+    trust: local
+    root: skills
+    license: MIT
+    execution: governed
+    notes: Local harness skills follow AGENTS.md, policy, evidence and loop contracts.
+
+  - id: bagelhole-devops-security-agent-skills
+    type: github
+    trust: pinned_reference
+    repository: https://github.com/BagelHole/DevOps-Security-Agent-Skills
+    revision: 0365f57a079b1332f95cf26e31dd2d5332a8399f
+    license: MIT
+    execution: reference_only
+    notes: Third-party skill content is reference material. Do not automatically execute commands, scripts or assets from the source.
+
+capabilities:
+  - id: architecture-review
+    source: harness-local
+    skill_path: architecture-review/SKILL.md
+    class: decision
+    category: architecture
+    domains: [infrastructure, cross-domain]
+    intents: [architecture review, migration design, dependency design]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: incident-analysis
+    source: harness-local
+    skill_path: incident-analysis/SKILL.md
+    class: decision
+    category: operations
+    domains: [infrastructure, sre]
+    intents: [incident analysis, outage triage, root cause hypothesis]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: change-review
+    source: harness-local
+    skill_path: change-review/SKILL.md
+    class: decision
+    category: governance
+    domains: [infrastructure, devops, sre, security]
+    intents: [production change review, rollback review, blast radius review]
+    risk: high
+    execution_policy: governed
+    requires_human_gate: true
+
+  - id: loop-engineering
+    source: harness-local
+    skill_path: loop-engineering/SKILL.md
+    class: control
+    category: operations
+    domains: [cross-domain]
+    intents: [repeated verification, reconciliation, post change validation]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: ticketing
+    source: harness-local
+    skill_path: ticketing/SKILL.md
+    class: workflow
+    category: governance
+    domains: [cross-domain]
+    intents: [create ticket, update ticket, deduplicate workflow item]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: kubernetes-ops
+    source: bagelhole-devops-security-agent-skills
+    skill_path: devops/orchestration/kubernetes-ops/SKILL.md
+    class: implementation
+    category: orchestration
+    domains: [infrastructure, devops, sre]
+    intents: [kubernetes deployment, kubernetes operations, workload troubleshooting]
+    risk: high
+    execution_policy: reference_only
+    requires_human_gate: true
+
+  - id: helm-charts
+    source: bagelhole-devops-security-agent-skills
+    skill_path: devops/orchestration/helm-charts/SKILL.md
+    class: implementation
+    category: orchestration
+    domains: [infrastructure, devops]
+    intents: [helm chart, kubernetes packaging, deployment configuration]
+    risk: high
+    execution_policy: reference_only
+    requires_human_gate: true
+
+  - id: github-actions
+    source: bagelhole-devops-security-agent-skills
+    skill_path: devops/ci-cd/github-actions/SKILL.md
+    class: implementation
+    category: delivery
+    domains: [devops]
+    intents: [github actions, ci pipeline, deployment pipeline]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: gitlab-ci
+    source: bagelhole-devops-security-agent-skills
+    skill_path: devops/ci-cd/gitlab-ci/SKILL.md
+    class: implementation
+    category: delivery
+    domains: [devops]
+    intents: [gitlab ci, runner pipeline, deployment pipeline]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: opentelemetry
+    source: bagelhole-devops-security-agent-skills
+    skill_path: devops/observability/opentelemetry/SKILL.md
+    class: implementation
+    category: observability
+    domains: [sre, devops, infrastructure]
+    intents: [telemetry instrumentation, traces metrics logs, vendor neutral observability]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: alerting-oncall
+    source: bagelhole-devops-security-agent-skills
+    skill_path: devops/observability/alerting-oncall/SKILL.md
+    class: implementation
+    category: observability
+    domains: [sre]
+    intents: [alert design, on-call routing, escalation policy]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: runbook-creation
+    source: bagelhole-devops-security-agent-skills
+    skill_path: compliance/continuity/runbook-creation/SKILL.md
+    class: implementation
+    category: operations
+    domains: [sre, infrastructure, devops]
+    intents: [runbook creation, standard operating procedure, recovery procedure]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: threat-modeling
+    source: bagelhole-devops-security-agent-skills
+    skill_path: security/operations/threat-modeling/SKILL.md
+    class: decision
+    category: security
+    domains: [security, infrastructure, devops]
+    intents: [threat model, trust boundary review, architecture security review]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: mcp-server-security
+    source: bagelhole-devops-security-agent-skills
+    skill_path: security/ai/mcp-server-security/SKILL.md
+    class: decision
+    category: security
+    domains: [security, cross-domain]
+    intents: [mcp security, tool authorization, mcp threat model]
+    risk: high
+    execution_policy: reference_only
+    requires_human_gate: true
+
+  - id: sbom-supply-chain
+    source: bagelhole-devops-security-agent-skills
+    skill_path: security/scanning/sbom-supply-chain/SKILL.md
+    class: verification
+    category: security
+    domains: [security, devops]
+    intents: [sbom, artifact provenance, software supply chain]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: policy-as-code
+    source: bagelhole-devops-security-agent-skills
+    skill_path: compliance/governance/policy-as-code/SKILL.md
+    class: implementation
+    category: governance
+    domains: [security, devops, infrastructure]
+    intents: [policy as code, automated policy check, compliance gate]
+    risk: high
+    execution_policy: reference_only
+    requires_human_gate: true
+
+  - id: access-review
+    source: bagelhole-devops-security-agent-skills
+    skill_path: compliance/governance/access-review/SKILL.md
+    class: verification
+    category: governance
+    domains: [security, infrastructure]
+    intents: [access review, privilege certification, stale permission review]
+    risk: high
+    execution_policy: reference_only
+    requires_human_gate: true
