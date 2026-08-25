@@ -51,6 +51,8 @@ def main() -> int:
         (ROOT / "examples/evidence/dependency-saturation.json", "evidence.schema.json"),
         (ROOT / "examples/change-proposal.json", "change-proposal.schema.json"),
         (ROOT / "evals/standard/incident-scenarios.json", "eval-suite.schema.json"),
+        (ROOT / "examples/ticketing/ticket-request.json", "ticket-request.schema.json"),
+        (ROOT / "examples/ticketing/ticket-policy.yaml", "ticket-policy.schema.json"),
     ]
     repository_targets += [(p, "domain-eval-suite.schema.json") for p in sorted((ROOT / "evals/domains").glob("*.json"))]
 
