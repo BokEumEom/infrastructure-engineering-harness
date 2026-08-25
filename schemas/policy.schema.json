@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Policy",
+  "type": "object",
+  "required": ["schema_version", "id", "priorities", "prohibited_agent_actions", "required_change_fields"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string"},
+    "priorities": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "prohibited_agent_actions": {"type": "array", "items": {"type": "string"}},
+    "required_change_fields": {"type": "array", "items": {"type": "string"}},
+    "rules": {"type": "array", "items": {"type": "object", "required": ["id", "statement"], "properties": {"id": {"type": "string"}, "statement": {"type": "string"}}, "additionalProperties": true}}
+  },
+  "additionalProperties": true
+}

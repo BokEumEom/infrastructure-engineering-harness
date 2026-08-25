@@ -1,0 +1,5 @@
+{
+  "primary_hypothesis": "dependency_saturation",
+  "checks": ["dependency_utilization", "dependency_latency", "recent_changes"],
+  "recommendations": ["reduce_dependency_pressure", "prepare_reversible_capacity_change"]
+}

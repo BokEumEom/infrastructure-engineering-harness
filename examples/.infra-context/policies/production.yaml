@@ -1,0 +1,28 @@
+schema_version: "1.0"
+id: production-safety
+priorities:
+  - availability and data integrity
+  - security
+  - operational simplicity
+  - reversibility
+  - cost efficiency
+prohibited_agent_actions:
+  - directly mutate production infrastructure
+  - delete production resources
+  - mutate production data
+  - broaden authorization without human review
+  - bypass protected deployment workflows
+required_change_fields:
+  - evidence_refs
+  - risk
+  - blast_radius
+  - validation
+  - rollback
+  - approval_required
+rules:
+  - id: evidence-before-action
+    statement: Production-impacting recommendations must cite evidence or explicitly state what evidence is missing.
+  - id: reversible-first
+    statement: Prefer the smallest reversible change that can test the leading hypothesis.
+  - id: independent-approval
+    statement: Production execution requires approval in a system outside the agent reasoning loop.

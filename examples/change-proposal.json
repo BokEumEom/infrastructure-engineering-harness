@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "id": "CHG-EXAMPLE-001",
+  "summary": "Reduce dependency connection pressure and prepare a reversible capacity adjustment if verification confirms sustained saturation.",
+  "target": "primary-datastore",
+  "evidence_refs": ["EV-EXAMPLE:obs-dependency", "EV-EXAMPLE:obs-latency"],
+  "changes": ["remove avoidable connection pressure", "apply the smallest reviewed capacity change only if saturation persists"],
+  "risk": "medium",
+  "blast_radius": "Requests that require the primary datastore may be affected during the change window.",
+  "validation": ["connection utilization returns below the alert threshold", "operation latency returns to baseline", "request error rate does not regress"],
+  "rollback": ["revert the configuration or capacity change using the deployment system", "confirm previous known-good state and telemetry"],
+  "approval_required": true,
+  "assumptions": ["the evidence bundle is current", "no concurrent deployment explains the same symptoms"]
+}

@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Validate provider-neutral infrastructure context and repository contracts."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import yaml
+from jsonschema import Draft202012Validator, FormatChecker
+
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMAS = ROOT / "schemas"
+
+
+def load(path: Path):
+    text = path.read_text(encoding="utf-8")
+    if path.suffix in {".yaml", ".yml"}:
+        return yaml.safe_load(text)
+    return json.loads(text)
+
+
+def validate(path: Path, schema_name: str) -> list[str]:
+    schema = load(SCHEMAS / schema_name)
+    data = load(path)
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    errors = sorted(validator.iter_errors(data), key=lambda e: list(e.absolute_path))
+    return [f"{path}: {'/'.join(map(str, e.absolute_path)) or '<root>'}: {e.message}" for e in errors]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("context", type=Path, help="Path to .infra-context")
+    args = parser.parse_args()
+    context = args.context
+
+    targets: list[tuple[Path, str]] = [(context / "service-catalog.yaml", "service-catalog.schema.json")]
+    targets += [(p, "policy.schema.json") for p in sorted((context / "policies").glob("*.y*ml"))]
+    targets += [(p, "adr.schema.json") for p in sorted((context / "adr").glob("*.y*ml"))]
+    targets += [(p, "incident.schema.json") for p in sorted((context / "incidents").glob("*.y*ml"))]
+
+    repository_targets = [
+        (ROOT / "examples/evidence/dependency-saturation.json", "evidence.schema.json"),
+        (ROOT / "examples/change-proposal.json", "change-proposal.schema.json"),
+        (ROOT / "evals/standard/incident-scenarios.json", "eval-suite.schema.json"),
+    ]
+
+    failures: list[str] = []
+    for path, schema in targets + repository_targets:
+        if not path.exists():
+            failures.append(f"missing required file: {path}")
+            continue
+        failures.extend(validate(path, schema))
+
+    if failures:
+        print("VALIDATION FAILED")
+        for failure in failures:
+            print(f"- {failure}")
+        return 1
+
+    print(f"VALIDATION PASSED ({len(targets) + len(repository_targets)} documents)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

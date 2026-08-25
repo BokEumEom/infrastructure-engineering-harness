@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Architecture Decision Record",
+  "type": "object",
+  "required": ["schema_version", "id", "status", "title", "context", "decision", "consequences"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string"},
+    "status": {"enum": ["proposed", "accepted", "deprecated", "superseded"]},
+    "title": {"type": "string"},
+    "context": {"type": "string"},
+    "decision": {"type": "string"},
+    "consequences": {"type": "array", "items": {"type": "string"}},
+    "revisit_when": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

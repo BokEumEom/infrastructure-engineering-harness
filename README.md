@@ -2,195 +2,175 @@
 
 **English** | [한국어](README.ko.md)
 
-An open-source Claude Code plugin that turns infrastructure knowledge into reusable agent context for safer infrastructure analysis and change proposals.
+A provider-neutral, cross-agent harness for turning infrastructure knowledge and live evidence into reviewable engineering decisions.
 
-> **Infrastructure Knowledge → Context → Agent → Code → Infrastructure**
+> **Infrastructure Knowledge → Context → Agent → Code/Proposal → Human Review → Infrastructure**
 
-The goal is not to make an agent better at typing Terraform. The goal is to give the agent enough structured context to understand **why** an infrastructure change is appropriate, what constraints apply, and what evidence should be verified before proposing code.
+The project is designed for **Codex, Kiro, Claude Code, and other agents** rather than one model or one infrastructure stack. It focuses on the layer before code: architecture knowledge, decisions, operational history, policy, evidence provenance, evaluation, and change control.
 
-## What this repository provides
+## Why this exists
 
-- **Incident analysis Skill** — analyze symptoms using architecture, incident history, runbooks, and policy before proposing remediation.
-- **Terraform review Skill** — review IaC against service criticality, architecture decisions, production policy, and maintainability standards.
-- **Architecture review Skill** — compare a proposed design with existing architecture principles and ADRs.
-- **Production guard Hook** — blocks common destructive infrastructure commands and requires an explicit human workflow instead.
-- **Example `.infra-context/`** — a portable structure for service catalog, architecture, ADRs, incidents, and policies.
-- **Eval fixture** — a small machine-readable incident case showing how agent conclusions can be checked.
+Agents can already generate Terraform, manifests, scripts, and configuration quickly. The harder problem is giving them enough context to answer:
 
-This repository intentionally keeps organization-specific knowledge **outside the plugin**. The plugin defines *how to reason*. Each project owns the knowledge the agent reasons over in `.infra-context/`.
+- Why is this change appropriate for this system?
+- What past decision or incident constrains it?
+- What current evidence supports the diagnosis?
+- What is the blast radius and rollback path?
+- What should remain under independent human/production control?
 
-## Architecture
+## Core architecture
 
 ```text
-Infrastructure Knowledge
-        │
-        ├── Service catalog
-        ├── Architecture
-        ├── ADRs
-        ├── Incident history
-        └── Policies / runbooks
-        │
-        ▼
-  .infra-context/
-        │
-        ▼
-Claude Code Skills
-        │
-        ├── incident-analysis
-        ├── terraform-review
-        └── architecture-review
-        │
-        ▼
- Evidence + judgment
-        │
-        ▼
- Change proposal / Terraform
-        │
-        ▼
-    Human review
-        │
-        ▼
- Infrastructure
+Durable Infrastructure Knowledge          Optional Live Evidence
+Service catalog / ADR / incidents         Metrics / logs / traces
+Policy / runbooks / architecture          runtime / deploy / status
+              │                                  │
+              └──────────────┬───────────────────┘
+                             ▼
+                    Progressive Context
+                             ▼
+                    Infrastructure Agent
+                             ▼
+                   Evidence-based Decision
+                             ▼
+                      Change Proposal
+                             ▼
+                  Validation / Eval / PR
+                             ▼
+                       Human Approval
+                             ▼
+                      Infrastructure
 ```
 
-## Quick start
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md).
 
-### 1. Clone the repository
+## Agent support
 
-```bash
-git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
-cd infrastructure-engineering-harness
-```
+### Codex
 
-### 2. Copy the example context into a project
+`AGENTS.md` is the primary repository instruction file. Keep durable knowledge in `.infra-context/`; `AGENTS.md` acts as a map and operating contract.
 
-```bash
-cp -R examples/.infra-context /path/to/your-project/.infra-context
-```
+### Kiro
 
-Replace the sample content with your own sanitized architecture knowledge.
+Kiro supports `AGENTS.md`; this repository also includes `.kiro/steering/infrastructure-harness.md` as a workspace steering adapter.
 
-### 3. Test the plugin locally
+### Claude Code
 
-From the parent directory of this repository:
+The repository includes a Claude Code plugin adapter with Skills, reviewer agent, and a defensive `PreToolUse` hook:
 
 ```bash
 claude --plugin-dir ./infrastructure-engineering-harness
 ```
 
-Claude Code discovers the plugin manifest, Skills, agent, and hooks automatically. Official Claude Code documentation recommends `--plugin-dir` for local plugin testing.
-
-### 4. Try the Skills
+Skills:
 
 ```text
-/infra-harness:incident-analysis API latency increased. Diagnose it before recommending any production change.
-
-/infra-harness:terraform-review Review the current Terraform changes for reliability, security, and maintainability risks.
-
-/infra-harness:architecture-review Review this proposed runtime migration against our current architecture context and ADRs.
+/infra-harness:incident-analysis
+/infra-harness:change-review
+/infra-harness:architecture-review
 ```
 
-Skills are also model-invoked when their descriptions match the task.
+## Provider-neutral context contract
 
-## Context contract
-
-A project using the harness should keep infrastructure knowledge under:
+A target project owns its knowledge:
 
 ```text
 .infra-context/
 ├── service-catalog.yaml
 ├── architecture/
-│   └── <service>.md
 ├── adr/
-│   └── ADR-<n>-<decision>.md
 ├── incidents/
-│   └── INC-<n>-<incident>.md
 ├── policies/
-│   └── production.md
 └── runbooks/
-    └── <scenario>.md
 ```
 
-The Skills use **progressive context loading**. They should not read every document up front. They start with the service catalog, then load only architecture, incident, policy, runbook, or ADR files relevant to the task.
+The reference data intentionally avoids assuming ECS, Kubernetes, a specific database, AWS, or a particular observability product. Component types are expressed as capabilities such as `compute`, `datastore`, `messaging`, `network`, `storage`, `identity`, and `external_dependency`.
 
-## Why Knowledge and Context are separate
+## Context schemas and CI validation
 
-Human knowledge might be:
+Machine-readable contracts live in `schemas/`:
 
-> "We previously had a production database latency incident caused by CPU credit exhaustion on a burstable instance."
+- service catalog
+- incident knowledge
+- ADR
+- policy
+- live evidence/provenance
+- change proposal
+- eval suite
 
-Agent-ready context turns that into durable, searchable evidence:
+Run:
 
-```yaml
-service: orders-api
-criticality: high
-known_incidents:
-  - type: cpu-credit-exhaustion
-    component: aurora-primary
-policy:
-  production_burstable_instances: avoid
+```bash
+python -m pip install -r requirements.txt
+python scripts/validate_context.py examples/.infra-context
 ```
 
-The value is not the YAML itself. The value is that a future agent can combine **current evidence + architecture + historical decisions + policy** before proposing a change.
+GitHub Actions runs the same validation on pushes and pull requests.
 
-## Guardrails
+## Live evidence: optional adapters
 
-The bundled `PreToolUse` hook blocks common destructive commands such as:
+The core works without live integrations. Add read-only adapters when you need current state.
 
-- `terraform apply`
-- `terraform destroy`
-- `aws ... delete-*`
-- destructive `kubectl delete`
-- obvious recursive filesystem deletion
+Datadog is **optional**. A team can use Prometheus, OpenTelemetry backends, cloud-native monitoring, another APM, or repository-only evidence. Cloud providers are also adapters rather than assumptions in the reasoning model.
 
-The guard is intentionally conservative and is **not a security boundary**. Production controls still belong in IAM, CI/CD approvals, protected branches, policy-as-code, and cloud-native authorization.
+All integrations should normalize data to `schemas/evidence.schema.json` before reasoning. See [adapters/README.md](adapters/README.md).
 
-## Evaluation
+## Evidence and provenance
 
-`evals/incident/aurora-saturation.json` contains a minimal incident fixture with expected conclusions and prohibited recommendations.
+A recommendation should be traceable to stable evidence IDs, including source type, observation time, signal, component, and source/query/resource reference when available. This keeps "the agent says so" from becoming an operational justification.
 
-The repository also includes a small standard-library-only checker:
+## Provider-neutral evaluation
+
+`evals/standard/incident-scenarios.json` contains **30 golden incident scenarios** spanning compute, datastore, messaging, cache, network, identity, deployment, storage, external dependencies, availability, and observability gaps.
+
+The scenarios test judgment such as "do not scale a healthy tier when the bottleneck is downstream" rather than testing a vendor-specific service name.
+
+Example:
 
 ```bash
 python scripts/check_eval_output.py \
-  evals/incident/aurora-saturation.json \
-  examples/eval-output/aurora-saturation-output.json
+  evals/standard/incident-scenarios.json \
+  dependency-latency-001 \
+  examples/eval-output/dependency-latency-001.json
 ```
 
-This is intentionally simple. It demonstrates the contract: an infrastructure agent should be evaluated on **judgment**, not merely whether it generated valid code.
+## Production change workflow
+
+The default harness stops at a reviewable proposal:
+
+```text
+Evidence → Recommendation → Change Proposal → Plan/Validation → PR → Human Approval → Deployment
+```
+
+`schemas/change-proposal.schema.json` requires evidence references, risk, blast radius, validation, rollback, and explicit approval. See [workflows/change-proposal.md](workflows/change-proposal.md).
+
+## Safety model
+
+Agent hooks are defense in depth, **not a security boundary**. Real production enforcement belongs in least-privilege IAM/RBAC, CI/CD approvals, protected branches, policy-as-code, audit logs, and deployment authorization outside the model.
+
+The bundled Claude hook blocks several common direct mutation commands, but production pilots should begin with read-only access.
+
+## Quick start
+
+```bash
+git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
+cd infrastructure-engineering-harness
+python -m pip install -r requirements.txt
+python scripts/validate_context.py examples/.infra-context
+```
+
+To adopt the context model in another repository, copy `examples/.infra-context` and adapt it to your system. Keep secrets and sensitive payloads out of agent context.
 
 ## Design principles
 
-1. **Evidence before action** — do not recommend production changes before establishing evidence.
-2. **Progressive disclosure** — load only context required for the current decision.
-3. **Decisions are first-class data** — ADRs and incident history should influence future recommendations.
-4. **Human approval for production** — the agent proposes; production control remains explicit.
-5. **Structured where useful, narrative where necessary** — service metadata benefits from YAML; architecture reasoning often belongs in Markdown.
-6. **Context stays with the project** — reusable reasoning lives in the plugin, organization knowledge lives with the infrastructure repository.
-
-## Current scope
-
-This is a minimal, usable foundation rather than a full autonomous infrastructure platform. It does **not** bundle live AWS, Datadog, or GitHub credentials or MCP servers. Those integrations should be added by adopters according to their own access model.
-
-Possible next steps include provider-neutral schemas, richer eval runners, MCP integration examples, policy-as-code adapters, and additional Skills for cost review and change-risk analysis.
-
-## Compatibility
-
-The repository follows the current Claude Code plugin layout:
-
-```text
-.claude-plugin/plugin.json
-skills/<name>/SKILL.md
-agents/
-hooks/hooks.json
-```
-
-References:
-
-- Claude Code Plugins: https://code.claude.com/docs/en/plugins
-- Claude Code Skills: https://code.claude.com/docs/en/skills
-- Claude Code Hooks: https://code.claude.com/docs/en/hooks
-- Agent Skills specification: https://agentskills.io/
+1. Evidence before action.
+2. Progressive disclosure instead of loading the whole knowledge base.
+3. Decisions and incident history are first-class context.
+4. Provider and observability vendors are adapters, not core assumptions.
+5. Recommendations carry provenance.
+6. Production changes are reviewable and reversible.
+7. Independent authorization remains outside the model.
+8. Agent judgment is regression-tested with provider-neutral evals.
 
 ## License
 

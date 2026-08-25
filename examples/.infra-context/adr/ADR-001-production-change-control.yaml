@@ -1,0 +1,16 @@
+schema_version: "1.0"
+id: ADR-001
+status: accepted
+title: Keep production execution outside the default agent loop
+context: >-
+  Infrastructure agents can accelerate analysis and generate change proposals, but model reasoning,
+  prompt instructions, and client-side hooks are not sufficient authorization boundaries.
+decision: >-
+  Agents may collect read-only evidence and produce code, plans, and pull requests. Production execution
+  remains in independently authorized CI/CD or operational workflows with human approval for material changes.
+consequences:
+  - agent workflows remain useful without broad production credentials
+  - changes are reviewable and auditable before execution
+  - teams must maintain deployment authorization outside the harness
+revisit_when:
+  - independent policy enforcement and rollback automation can provide equivalent or stronger controls

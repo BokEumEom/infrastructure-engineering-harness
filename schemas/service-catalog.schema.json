@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/infra-harness/service-catalog.schema.json",
+  "title": "Infrastructure Service Catalog",
+  "type": "object",
+  "required": ["schema_version", "services"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "services": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "owner", "criticality", "runtime", "dependencies"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "owner": {"type": "string", "minLength": 1},
+          "criticality": {"enum": ["critical", "high", "medium", "low"]},
+          "runtime": {
+            "type": "object",
+            "required": ["category"],
+            "properties": {
+              "category": {"enum": ["compute", "serverless", "container", "virtual_machine", "physical", "managed_service", "other"]},
+              "deployment_model": {"type": "string"}
+            },
+            "additionalProperties": true
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "type", "criticality"],
+              "properties": {
+                "id": {"type": "string"},
+                "type": {"enum": ["datastore", "messaging", "cache", "network", "storage", "identity", "compute", "external_dependency", "other"]},
+                "criticality": {"enum": ["critical", "high", "medium", "low"]}
+              },
+              "additionalProperties": false
+            }
+          },
+          "telemetry": {
+            "type": "object",
+            "properties": {
+              "metrics": {"type": "boolean"},
+              "logs": {"type": "boolean"},
+              "traces": {"type": "boolean"}
+            },
+            "additionalProperties": false
+          },
+          "objectives": {
+            "type": "object",
+            "properties": {
+              "availability_percent": {"type": "number", "minimum": 0, "maximum": 100},
+              "latency_p95_ms": {"type": "number", "minimum": 0}
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

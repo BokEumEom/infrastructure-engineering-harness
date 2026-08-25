@@ -1,27 +1,39 @@
+schema_version: "1.0"
 services:
-  - name: orders-api
-    owner: platform
+  - id: public-api
+    owner: platform-team
     criticality: high
     runtime:
-      platform: ecs-fargate
+      category: compute
+      deployment_model: managed
     dependencies:
-      database:
-        - aurora-orders
-      messaging:
-        - event-stream
-    observability:
-      apm: datadog
-      logs: datadog
-      infrastructure: cloudwatch
-    slo:
-      availability: 99.9
+      - id: primary-datastore
+        type: datastore
+        criticality: critical
+      - id: event-bus
+        type: messaging
+        criticality: high
+      - id: identity-service
+        type: identity
+        criticality: high
+    telemetry:
+      metrics: true
+      logs: true
+      traces: true
+    objectives:
+      availability_percent: 99.9
       latency_p95_ms: 500
 
-  - name: worker
-    owner: platform
+  - id: async-worker
+    owner: platform-team
     criticality: medium
     runtime:
-      platform: ecs-fargate
+      category: compute
     dependencies:
-      messaging:
-        - event-stream
+      - id: event-bus
+        type: messaging
+        criticality: high
+    telemetry:
+      metrics: true
+      logs: true
+      traces: false

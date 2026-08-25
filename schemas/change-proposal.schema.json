@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Change Proposal",
+  "type": "object",
+  "required": ["schema_version", "id", "summary", "target", "evidence_refs", "risk", "blast_radius", "validation", "rollback", "approval_required"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string"},
+    "summary": {"type": "string"},
+    "target": {"type": "string"},
+    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "changes": {"type": "array", "items": {"type": "string"}},
+    "risk": {"enum": ["low", "medium", "high", "critical"]},
+    "blast_radius": {"type": "string"},
+    "validation": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "rollback": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "approval_required": {"const": true},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

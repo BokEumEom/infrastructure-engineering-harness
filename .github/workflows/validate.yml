@@ -1,0 +1,18 @@
+name: validate-harness
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - run: python scripts/validate_context.py examples/.infra-context
+      - run: python scripts/check_eval_output.py evals/standard/incident-scenarios.json dependency-latency-001 examples/eval-output/dependency-latency-001.json
+      - run: python -m compileall scripts hooks

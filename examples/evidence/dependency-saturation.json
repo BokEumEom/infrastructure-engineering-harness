@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "EV-EXAMPLE",
+  "observed_at": "2026-08-25T07:00:00Z",
+  "freshness_seconds": 60,
+  "observations": [
+    {"id": "obs-compute", "source_type": "metrics", "source": "primary-metrics", "component": "request-serving-compute", "signal": "utilization", "value": 38, "unit": "percent", "provenance": {"reference": "metrics-query:compute-utilization"}},
+    {"id": "obs-dependency", "source_type": "metrics", "source": "primary-metrics", "component": "primary-datastore", "signal": "connection_utilization", "value": 96, "unit": "percent", "provenance": {"reference": "metrics-query:datastore-connections"}},
+    {"id": "obs-latency", "source_type": "metrics", "source": "primary-metrics", "component": "primary-datastore", "signal": "operation_latency_p95", "value": 880, "unit": "ms", "provenance": {"reference": "metrics-query:datastore-latency"}}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Provider-neutral Incident Eval Suite",
+  "type": "object",
+  "required": ["schema_version", "scenarios"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "scenarios": {
+      "type": "array",
+      "minItems": 30,
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "description", "signals", "expected"],
+        "properties": {
+          "id": {"type": "string"},
+          "category": {"type": "string"},
+          "description": {"type": "string"},
+          "signals": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["component", "signal", "value"], "properties": {"component": {"type": "string"}, "signal": {"type": "string"}, "value": {}, "unit": {"type": "string"}}, "additionalProperties": true}},
+          "expected": {"type": "object", "required": ["primary_hypothesis", "required_checks", "must_not_recommend"], "properties": {"primary_hypothesis": {"type": "string"}, "required_checks": {"type": "array", "items": {"type": "string"}}, "must_not_recommend": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

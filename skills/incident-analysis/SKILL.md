@@ -1,70 +1,55 @@
 ---
 name: incident-analysis
-description: Analyze infrastructure incidents using project architecture, service metadata, incident history, runbooks, and policy. Use when latency, errors, CPU, database, deployment, availability, or dependency failures are reported.
+description: Analyze infrastructure incidents using provider-neutral project context, evidence provenance, incident history, runbooks, and policy. Use for latency, errors, saturation, availability, deployment, dependency, network, storage, or identity failures.
 ---
 
 # Infrastructure Incident Analysis
 
 Analyze incidents using evidence before recommending changes.
 
-## Context contract
-
-Project-specific context lives under `.infra-context/` in the target repository.
-
-Load context progressively in this order:
+## Context loading
 
 1. `.infra-context/service-catalog.yaml`
-2. Relevant `.infra-context/architecture/*`
-3. Relevant `.infra-context/incidents/*`
-4. Relevant `.infra-context/runbooks/*`
-5. Applicable `.infra-context/policies/*`
-6. ADRs only when a remediation would change architecture or contradict an existing decision
+2. relevant architecture
+3. relevant production/security policy
+4. relevant incidents and runbooks
+5. ADRs only when the remediation changes architecture or conflicts with a recorded decision
+6. optional live evidence normalized to `schemas/evidence.schema.json`
 
-Do not load every context file by default.
+Do not require a specific cloud, runtime, datastore, or observability vendor. Datadog is optional.
 
 ## Workflow
 
-1. Identify the affected service and user impact.
-2. Determine when the incident started.
-3. Check recent deployments or infrastructure changes.
-4. Identify the service's critical dependencies.
-5. Gather infrastructure, application, database, and dependency evidence.
-6. Compare symptoms with known incidents and runbooks.
-7. Generate multiple hypotheses.
-8. Rank hypotheses by supporting and contradicting evidence.
-9. Recommend verification steps before modification.
-10. Propose remediation only when evidence is sufficient.
+1. Identify affected service, criticality, impact, and start time.
+2. Check recent deployment/configuration changes when evidence exists.
+3. Map critical dependencies.
+4. Gather service and dependency evidence.
+5. Generate multiple hypotheses.
+6. Rank them using supporting and contradicting evidence.
+7. Specify the minimum checks that can confirm/reject the leading hypothesis.
+8. Propose remediation only when evidence is sufficient.
+9. For production-impacting remediation, produce a change proposal following `workflows/change-proposal.md`.
 
 ## Required output
 
 ### Impact
-Describe affected services and likely user impact. Distinguish confirmed facts from assumptions.
+Confirmed impact vs assumptions.
 
 ### Evidence
-List the signals that materially support the analysis.
+For every material signal, include its evidence/provenance reference. Never invent values.
 
 ### Hypotheses
-Rank likely causes. For each one include supporting evidence, contradicting evidence, and confidence.
+Ranked causes with supporting evidence, contradicting evidence, and confidence.
 
 ### Verification
-Provide the smallest set of checks that can confirm or reject the leading hypotheses.
+Smallest checks needed to reduce uncertainty.
 
 ### Remediation
-Only propose remediation when the evidence supports it. Prefer reversible changes and state risk.
+Prefer reversible actions and state risk/blast radius.
 
 ### Context used
-List the context files that influenced the conclusion.
+List context and evidence IDs that materially influenced the conclusion.
 
 ## Safety
 
-Never execute or instruct automatic execution of production-changing commands as part of incident analysis.
-
-Do not:
-
-- run `terraform apply` or `terraform destroy`
-- mutate production databases
-- change IAM policies
-- delete cloud resources
-- restart critical production systems without explicit human approval
-
-If a destructive action appears necessary, produce a change proposal and verification plan instead.
+Do not directly execute production mutations as part of incident analysis.

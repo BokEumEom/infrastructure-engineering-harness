@@ -1,0 +1,22 @@
+schema_version: "1.0"
+id: INC-001
+service: public-api
+category: dependency_saturation
+summary: Request latency increased while request-serving compute remained healthy because a critical datastore dependency was saturated.
+symptoms:
+  - request latency increased above objective
+  - compute utilization remained within normal range
+  - datastore connection utilization approached capacity
+  - datastore operation latency increased
+evidence_refs:
+  - EV-EXAMPLE:obs-compute
+  - EV-EXAMPLE:obs-dependency
+root_cause:
+  component_type: datastore
+  failure_mode: connection_capacity_exhaustion
+resolution:
+  - reduce avoidable connection pressure
+  - restore capacity using a reviewed and reversible change if pressure persists
+lessons:
+  - do not scale healthy request-serving compute when the bottleneck is a downstream dependency
+  - compare service signals with dependency signals before recommending a capacity change
