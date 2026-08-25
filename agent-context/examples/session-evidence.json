@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "session_id": "session-example-001",
+  "harness": "codex",
+  "model": "example-model",
+  "project_scope": "payment-platform",
+  "occurred_at": "2026-08-25T16:00:00Z",
+  "source_reference": "local://opaque-session-id",
+  "redacted": true,
+  "losses": [
+    {
+      "type": "routing_failure",
+      "summary": "The agent loaded a broad implementation capability before resolving the engineering decision.",
+      "quote": "I will start with the Kubernetes implementation before checking the service context.",
+      "target_rule_id": "progressive-context-loading",
+      "confidence": "high"
+    }
+  ]
+}

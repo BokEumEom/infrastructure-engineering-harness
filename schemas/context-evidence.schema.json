@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Context Session Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "session_id", "harness", "project_scope", "redacted", "losses"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "session_id": {"type": "string", "minLength": 1},
+    "harness": {"type": "string", "minLength": 1},
+    "model": {"type": "string"},
+    "project_scope": {"type": "string", "minLength": 1},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "source_reference": {"type": "string", "description": "Local transcript reference or opaque session reference. Raw transcript content should not be committed."},
+    "redacted": {"const": true},
+    "losses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "summary", "quote"],
+        "properties": {
+          "type": {"enum": ["rediscovery", "correction", "missing_instruction", "stale_instruction", "instruction_conflict", "overbroad_instruction", "routing_failure", "safety_violation", "no_loss"]},
+          "summary": {"type": "string", "minLength": 1},
+          "quote": {"type": "string", "minLength": 1},
+          "target_rule_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "confidence": {"enum": ["low", "medium", "high"]}
+        }
+      }
+    }
+  }
+}

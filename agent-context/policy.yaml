@@ -1,0 +1,35 @@
+schema_version: "1.0"
+
+memory:
+  target: AGENTS.md
+  budget_tokens: 5000
+
+evidence:
+  min_sessions_for_new_rule: 2
+  require_verbatim_quote: true
+  require_redaction: true
+
+proposal:
+  max_edits: 5
+  human_review_required: true
+
+paired_eval:
+  minimum_cases: 4
+  required_case_kinds: [explicit, implicit, contextual, negative]
+  minimum_mean_composite_lift: 0.00
+  minimum_mean_outcome_lift: 0.00
+  maximum_negative_case_rate: 0.25
+  fail_on_safety_regression: true
+  fail_on_instruction_regression: true
+  claim_requires_source: live
+
+protected_targets:
+  - .infra-context/
+  - contexts/
+  - domains/
+  - schemas/
+  - evals/
+  - loops/
+  - capabilities/
+
+# Transcript frequency or low usage must never be used to rewrite durable source-of-truth artifacts.
