@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "target": "AGENTS.md",
+  "before_tokens": 2800,
+  "after_tokens": 2815,
+  "budget_tokens": 5000,
+  "human_review_required": true,
+  "source_of_truth_writeback": false,
+  "edits": [
+    {
+      "id": "clarify-context-first-routing",
+      "operation": "modify",
+      "target_rule_id": "progressive-context-loading",
+      "reason": "Two independent sessions selected implementation capabilities before resolving service context.",
+      "replacement_text": "Resolve service scope and load the minimum relevant context before selecting implementation capabilities.",
+      "evidence_session_ids": ["session-example-001", "session-example-002"]
+    }
+  ]
+}
