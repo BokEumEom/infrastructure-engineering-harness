@@ -7,6 +7,7 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | Reference | Contribution |
 | --- | --- |
 | NVIDIA ACES / SkillEvaluator | Paired live evaluation with and without a Skill, trajectory grading and Skill Lift |
+| Kun Chen / backpass | Transcript-driven, budgeted, evidence-gated improvement of project-level agent memory |
 | IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
 | LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
 | LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
@@ -24,6 +25,15 @@ ACES evaluates a target Skill as an executable agent artifact rather than only i
 
 https://arxiv.org/abs/2608.20614
 https://github.com/NVIDIA/SkillEvaluator
+
+## Kun Chen / backpass
+
+The article "Your AGENTS.md is a Neural Net" and the `backpass` project treat project-level agent memory as a bounded behavioral surface improved from the sessions that actually ran. Useful operational ideas include a token budget, deterministic transcript distillation, verbatim evidence, at least two independent sessions before adding a new instruction, small edit batches, human review, and extracting narrow instructions into Skills instead of growing always-loaded memory indefinitely.
+
+This harness adopts those ideas with a stricter infrastructure boundary: transcript evidence may propose changes to `AGENTS.md`, but it must not optimize durable source-of-truth artifacts such as Architecture, ADRs, Policies, Service Catalog, Domain definitions, Loop contracts, Evals, or Capability trust metadata. Candidate context revisions are evaluated with paired Context Lift experiments before claiming they improve agent behavior.
+
+https://blog.kunchenguid.com/p/your-agentsmd-is-a-neural-net
+https://github.com/kunchenguid/backpass
 
 ## IBM Loop Engineering
 
@@ -98,4 +108,11 @@ Reconcile → continue or terminal
                     Next Loop
 ```
 
-The model does not own truth, completion, or authorization. Environment evidence, deterministic checks, provider controls and human approvals remain independent parts of the loop.
+Agent behavior has two separate learning paths:
+
+```text
+Skill behavior → paired Skill Lift → Skill revision
+AGENTS behavior → transcript loss → proposed context edit → paired Context Lift
+```
+
+Neither path may rewrite engineering truth or bypass authorization. The model does not own truth, completion, or authorization; environment evidence, deterministic checks, provider controls and human approvals remain independent parts of the loop.
