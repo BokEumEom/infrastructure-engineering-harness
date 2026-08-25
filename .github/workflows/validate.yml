@@ -14,6 +14,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r requirements.txt
       - run: python scripts/validate_context.py examples/.infra-context
+      - run: python scripts/validate_capability_registry.py capabilities/registry.yaml
       - run: python scripts/check_eval_output.py evals/standard/incident-scenarios.json dependency-latency-001 examples/eval-output/dependency-latency-001.json
       - run: python scripts/check_domain_eval.py evals/domains/infrastructure.json dependency-bottleneck examples/eval-output/domain-infrastructure-dependency.json
       - run: python scripts/check_domain_eval.py evals/domains/sre.json error-budget-exhausted examples/eval-output/domain-sre-error-budget.json
