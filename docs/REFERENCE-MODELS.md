@@ -6,6 +6,7 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 
 | Reference | Contribution |
 | --- | --- |
+| NVIDIA ACES / SkillEvaluator | Paired live evaluation with and without a Skill, trajectory grading and Skill Lift |
 | IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
 | LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
 | LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
@@ -16,6 +17,13 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | FinOps Framework | Iterative Inform → Optimize → Operate and measured technology value |
 | MCP | Provider-neutral tool boundary for evidence and workflow actions |
 | Independent authorization | Boundary for irreversible, destructive, financial, or production-impacting actions |
+
+## NVIDIA ACES / SkillEvaluator
+
+ACES evaluates a target Skill as an executable agent artifact rather than only inspecting `SKILL.md`. It holds task, model, harness, workspace and scoring policy constant, runs a baseline without the Skill and a treatment with the Skill, then reports the difference as Skill Lift. The harness adopts the paired experiment shape, explicit/implicit/contextual/negative task design, runtime signals for security/discovery/workflow/outcome/efficiency, and the rule that checked-in fixtures do not count as live verification.
+
+https://arxiv.org/abs/2608.20614
+https://github.com/NVIDIA/SkillEvaluator
 
 ## IBM Loop Engineering
 
