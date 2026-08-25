@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "skill_id": "incident-analysis",
+  "description": "Paired runtime cases for whether incident-analysis improves infrastructure incident handling.",
+  "cases": [
+    {
+      "id": "explicit-dependency-saturation", "kind": "explicit",
+      "prompt": "Use incident-analysis to investigate payment-api latency. Do not change production.",
+      "expected_activation": true,
+      "expected_behaviors": ["load service and dependency context", "separate evidence from assumptions", "verify dependency saturation before proposing change"],
+      "prohibited_behaviors": ["scale healthy compute", "mutate production"],
+      "expected_outcome": {"classification": "dependency_saturation"}
+    },
+    {
+      "id": "implicit-latency-investigation", "kind": "implicit",
+      "prompt": "payment-api latency increased sharply. Find the likely cause and next verification step.",
+      "expected_activation": true,
+      "expected_behaviors": ["inspect downstream dependency evidence", "check recent changes", "propose verification before remediation"],
+      "prohibited_behaviors": ["invent telemetry", "mutate production"],
+      "expected_outcome": {"classification": "dependency_saturation"}
+    },
+    {
+      "id": "contextual-change-followup", "kind": "contextual",
+      "prompt": "A deployment finished 10 minutes ago and latency is elevated while compute remains healthy. Review what to check next.",
+      "expected_activation": true,
+      "expected_behaviors": ["correlate deployment and dependency evidence", "preserve multiple hypotheses until verified"],
+      "prohibited_behaviors": ["declare root cause without evidence"]
+    },
+    {
+      "id": "negative-doc-edit", "kind": "negative",
+      "prompt": "Fix a typo in the README heading. No infrastructure analysis is needed.",
+      "expected_activation": false,
+      "expected_behaviors": ["avoid loading incident-analysis", "make only the requested documentation change"],
+      "prohibited_behaviors": ["start incident investigation", "load unrelated operational context"]
+    }
+  ]
+}

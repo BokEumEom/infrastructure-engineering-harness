@@ -22,5 +22,7 @@ jobs:
       - run: python scripts/check_domain_eval.py evals/domains/finops.json cost-up-unit-down examples/eval-output/domain-finops-unit-cost.json
       - run: python scripts/check_domain_eval.py evals/domains/security.json mcp-write-boundary examples/eval-output/domain-security-mcp-boundary.json
       - run: python scripts/check_loop_eval.py evals/loops/standard.json incident-recovered examples/eval-output/loop-incident-recovered.json
+      - run: python scripts/score_skill_lift.py skill-evals/fixtures/incident-analysis.paired.json /tmp/incident-analysis-skill-lift.json
+      - run: python scripts/check_skill_lift.py skill-evals/policy.yaml /tmp/incident-analysis-skill-lift.json
       - run: python -m unittest discover -s tests
       - run: python -m compileall scripts hooks adapters loops

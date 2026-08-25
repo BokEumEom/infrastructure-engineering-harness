@@ -81,6 +81,19 @@ Loop invariants:
 
 Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost, security or business values. External Skill documentation is not environment evidence.
 
+## Skill runtime evaluation
+
+A Skill is not considered effective merely because `SKILL.md` passes static checks. Repository-owned Skills should be evaluated with paired runtime cases under `skill-evals/`: same task, model, harness, workspace, tools and scorer, once without the target Skill and once with it.
+
+- preserve explicit, implicit, contextual and negative cases;
+- compare runtime signals and trajectories, not only final prose;
+- treat `source: fixture` as scorer/CI test data only;
+- only `source: live` paired runs may support a claim of real Skill Lift;
+- negative Skill Lift, security regression, or irrelevant activation is a regression signal;
+- do not change multiple experimental variables and label the result Skill Lift.
+
+See `docs/SKILL-EVALUATION.md` and `skill-evals/README.md`.
+
 ## MCP ticketing workflow
 
 Jira and Linear workflow writes use connected MCP servers. Build a provider-neutral Ticket Request, apply Ticket Policy, compute a stable fingerprint, search before create, and create/update only when the policy and user authorization permit. Ticket permission never implies production mutation permission.
@@ -97,6 +110,8 @@ python scripts/validate_context.py examples/.infra-context
 python scripts/validate_capability_registry.py capabilities/registry.yaml
 python scripts/check_domain_eval.py evals/domains/security.json mcp-write-boundary examples/eval-output/domain-security-mcp-boundary.json
 python scripts/check_loop_eval.py evals/loops/standard.json incident-recovered examples/eval-output/loop-incident-recovered.json
+python scripts/score_skill_lift.py skill-evals/fixtures/incident-analysis.paired.json /tmp/incident-analysis-skill-lift.json
+python scripts/check_skill_lift.py skill-evals/policy.yaml /tmp/incident-analysis-skill-lift.json
 python -m unittest discover -s tests
 python -m compileall scripts hooks adapters loops
 ```
@@ -106,10 +121,12 @@ python -m compileall scripts hooks adapters loops
 - `domains/` — Infrastructure, SRE, DevOps, FinOps, Security lenses
 - `skills/` — directly discoverable Decision, Control, Workflow, and routing skills
 - `capabilities/` — implementation/verification capability registry and external source trust metadata
+- `skill-evals/` — paired runtime task suites, fixtures and Skill Lift policy
 - `loops/` — bounded Engineering Loops and reference runtime helpers
-- `schemas/` — context, evidence, change, ticket, capability, loop and eval contracts
+- `schemas/` — context, evidence, change, ticket, capability, Skill Lift, loop and eval contracts
 - `evals/` — one-shot and long-horizon regression scenarios
-- `adapters/` and `mcp/` — optional evidence/workflow integrations
+- `adapters/` and `mcp/` — optional evidence/workflow/runtime-eval integrations
 - `workflows/` — production change, security review and ticketing workflows
 - `docs/CAPABILITY-MODEL.md` — Decision Skill vs implementation Capability design
+- `docs/SKILL-EVALUATION.md` — paired runtime Skill evaluation and Skill Lift
 - `docs/REFERENCE-MODELS.md` — research and operational models behind the harness

@@ -40,7 +40,9 @@ def main() -> int:
       (ROOT/"examples/ticketing/ticket-policy.yaml","ticket-policy.schema.json"),
       (ROOT/"examples/loops/incident-response-state.json","loop-state.schema.json"),
       (ROOT/"examples/eval-output/loop-incident-recovered.json","loop-result.schema.json"),
-      (ROOT/"evals/loops/standard.json","loop-eval-suite.schema.json")]
+      (ROOT/"evals/loops/standard.json","loop-eval-suite.schema.json"),
+      (ROOT/"skill-evals/incident-analysis/evals.json","skill-eval-suite.schema.json"),
+      (ROOT/"skill-evals/fixtures/incident-analysis.paired.json","skill-paired-experiment.schema.json")]
     repository_targets += [(p,"domain-eval-suite.schema.json") for p in sorted((ROOT/"evals/domains").glob("*.json"))]
     repository_targets += [(p,"loop-spec.schema.json") for p in sorted((ROOT/"loops").glob("*/loop.yaml"))]
     failures=[]

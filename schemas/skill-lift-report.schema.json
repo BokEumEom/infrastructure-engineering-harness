@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill Lift Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "skill_id", "harness", "model", "workspace_id", "cases", "summary"],
+  "$defs": {
+    "triplet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["baseline", "treatment", "lift"],
+      "properties": {"baseline": {"type": "number"}, "treatment": {"type": "number"}, "lift": {"type": "number"}}
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "source": {"enum": ["fixture", "live"]},
+    "skill_id": {"type": "string"},
+    "harness": {"type": "string"},
+    "model": {"type": "string"},
+    "workspace_id": {"type": "string"},
+    "cases": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["case_id", "kind", "signals", "dimensions", "composite", "usage_delta", "verdict"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "kind": {"enum": ["explicit", "implicit", "contextual", "negative"]},
+          "signals": {"type": "object", "additionalProperties": {"$ref": "#/$defs/triplet"}},
+          "dimensions": {
+            "type": "object", "additionalProperties": false,
+            "required": ["security", "correctness", "discoverability", "effectiveness", "efficiency"],
+            "properties": {
+              "security": {"$ref": "#/$defs/triplet"}, "correctness": {"$ref": "#/$defs/triplet"},
+              "discoverability": {"$ref": "#/$defs/triplet"}, "effectiveness": {"$ref": "#/$defs/triplet"},
+              "efficiency": {"$ref": "#/$defs/triplet"}
+            }
+          },
+          "composite": {"$ref": "#/$defs/triplet"},
+          "usage_delta": {
+            "type": "object", "additionalProperties": false,
+            "required": ["tokens", "tool_calls", "duration_ms", "token_change_percent", "duration_change_percent"],
+            "properties": {
+              "tokens": {"type": "integer"}, "tool_calls": {"type": "integer"}, "duration_ms": {"type": "integer"},
+              "token_change_percent": {"type": ["number", "null"]}, "duration_change_percent": {"type": ["number", "null"]}
+            }
+          },
+          "verdict": {"enum": ["pass", "neutral", "fail"]}
+        }
+      }
+    },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["case_count", "case_kinds", "mean_dimension_lift", "mean_composite_lift", "mean_outcome_lift", "positive_case_rate", "negative_case_rate", "security_regressions"],
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "case_kinds": {"type": "array", "uniqueItems": true, "items": {"enum": ["explicit", "implicit", "contextual", "negative"]}},
+        "mean_dimension_lift": {
+          "type": "object", "additionalProperties": false,
+          "required": ["security", "correctness", "discoverability", "effectiveness", "efficiency"],
+          "properties": {"security": {"type": "number"}, "correctness": {"type": "number"}, "discoverability": {"type": "number"}, "effectiveness": {"type": "number"}, "efficiency": {"type": "number"}}
+        },
+        "mean_composite_lift": {"type": "number"}, "mean_outcome_lift": {"type": "number"},
+        "positive_case_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "negative_case_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "security_regressions": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
