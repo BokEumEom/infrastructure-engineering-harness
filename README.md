@@ -1,5 +1,7 @@
 # Infrastructure Engineering Harness
 
+**English** | [한국어](README.ko.md)
+
 An open-source Claude Code plugin that turns infrastructure knowledge into reusable agent context for safer infrastructure analysis and change proposals.
 
 > **Infrastructure Knowledge → Context → Agent → Code → Infrastructure**
