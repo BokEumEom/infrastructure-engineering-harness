@@ -49,8 +49,5 @@
         ]
       }
     }
-  },
-  "allOf": [
-    {"properties": {"after_tokens": {"maximum": 5000}}}
-  ]
+  }
 }
