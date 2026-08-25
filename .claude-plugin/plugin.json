@@ -1,0 +1,10 @@
+{
+  "name": "infra-harness",
+  "version": "0.1.0",
+  "description": "Infrastructure engineering harness for context-aware incident analysis, Terraform review, and architecture review.",
+  "author": {
+    "name": "BokEumEom"
+  },
+  "homepage": "https://github.com/BokEumEom/infrastructure-engineering-harness",
+  "repository": "https://github.com/BokEumEom/infrastructure-engineering-harness"
+}
