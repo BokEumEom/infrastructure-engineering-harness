@@ -6,6 +6,7 @@ The repository is preparing for a `v0.1.0` research-preview release. This status
 
 ### Available now
 
+- contributor-facing `harness` CLI for setup, demo, validation, scenario checks and local diagnostics;
 - provider-neutral Domain and Decision Skill contracts;
 - Capability Registry and third-party reference trust boundary;
 - Infrastructure/SRE/DevOps/FinOps/Security domain evals;
@@ -16,6 +17,8 @@ The repository is preparing for a `v0.1.0` research-preview release. This status
 - provider-neutral Resource Graph, Bound Capability and Evidence Adapter contracts;
 - deterministic scenario fixtures and cross-file validation;
 - community Validation Report contract.
+
+The public Quickstart interface is `./harness` on macOS/Linux and `harness.cmd` on Windows. Python 3 remains the current internal implementation/runtime dependency for the Research Preview; it is not intended to be the long-term user-facing contract.
 
 ### Experimental
 
@@ -30,6 +33,7 @@ The repository is preparing for a `v0.1.0` research-preview release. This status
 - autonomous production mutation;
 - the model acting as the production authorization boundary;
 - fixture results proving real agent effectiveness;
-- support for every cloud/tool/provider without an explicit adapter.
+- support for every cloud/tool/provider without an explicit adapter;
+- a stable live-agent `harness run` interface before runner adapters are reproducible.
 
-A `v0.1.0` tag should be cut only after the Community & Validation Ready checklist is merged and the quickstart is verified from a clean checkout.
+A `v0.1.0` tag should be cut only after the Community & Validation Ready checklist is merged and the Harness CLI Quickstart is verified from clean macOS/Linux and Windows checkouts.
