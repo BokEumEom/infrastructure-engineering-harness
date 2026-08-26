@@ -8,6 +8,20 @@ A provider-neutral, cross-agent harness for turning infrastructure knowledge and
 
 The project is designed for **Codex, Kiro, Claude Code, and other repository-aware agents**. It does not require one cloud, runtime, IaC tool, observability product, CI/CD system, cost platform, security product, or ticketing system.
 
+> **Status: Research Preview.** Core contracts, deterministic scenarios and evaluation plumbing are available now; live adapters and controlled execution remain experimental. See [Release Status](docs/RELEASE-STATUS.md).
+
+## Start here
+
+You do not need to understand the whole architecture before trying or contributing.
+
+- **Run it in 5 minutes:** [QUICKSTART.md](QUICKSTART.md)
+- **Contribute a real infrastructure scenario, validation run, adapter or Eval:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Submit reproducible agent results:** [validation-reports/README.md](validation-reports/README.md)
+- **Turn operational experience into a safe benchmark:** [Scenario Contribution Kit](contrib/scenarios/README.md)
+- **See how community validation should work:** [Community Validation](docs/COMMUNITY-VALIDATION.md)
+
+A useful first contribution can be a scenario or validation report; it does not have to be framework code.
+
 ## Why this exists
 
 Agents can already generate IaC, configuration, scripts, pipelines, runbooks and operational procedures. The harder problem is deciding **what should change, why, with what evidence, under which constraints, which implementation knowledge is appropriate, and how the real outcome is verified**.
@@ -347,6 +361,7 @@ loop-spec.schema.json            what a loop should do
 loop-state.schema.json           externally maintained execution state
 loop-result.schema.json          terminal outcome and learning
 loop-eval-suite.schema.json      long-horizon regression scenarios
+validation-report.schema.json    reproducible community agent-validation result
 ```
 
 Validation:
@@ -399,6 +414,7 @@ The repository includes one-shot, cross-domain, security and long-horizon evalua
 - capability registry trust/supply-chain unit tests
 - Loop scenarios that test terminal status, iteration budgets, required/prohibited events, learning writeback and regression obligations
 - deterministic unit tests that reject agent self-verification and enforce no-progress budgets
+- community Validation Report contracts that distinguish fixture plumbing from live agent evidence
 
 The evaluation question is not only **“did the agent identify the right answer?”**, but also **“did it select appropriate implementation knowledge, preserve trust boundaries, and reach a verified outcome through a bounded process?”**
 
@@ -452,6 +468,8 @@ python scripts/validate_context.py examples/.infra-context
 python scripts/validate_capability_registry.py capabilities/registry.yaml
 python -m unittest discover -s tests
 ```
+
+For the contributor-first path, use [QUICKSTART.md](QUICKSTART.md).
 
 ## License
 
