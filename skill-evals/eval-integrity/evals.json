@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "skill_id": "eval-integrity",
+  "description": "Checks independence, leakage, variable isolation, negative controls, and fixture/live separation.",
+  "cases": [
+    {
+      "id": "explicit-paired-audit",
+      "kind": "explicit",
+      "prompt": "Use eval-integrity to audit this Skill Lift experiment before we trust the score.",
+      "expected_activation": true,
+      "expected_behaviors": ["checks that only the target Skill changes", "identifies independent truth", "checks scorer separation", "checks negative controls"]
+    },
+    {
+      "id": "implicit-fixture-claim",
+      "kind": "implicit",
+      "prompt": "The CI fixture shows +0.22 Context Lift, so can we claim the new AGENTS.md is better?",
+      "expected_activation": true,
+      "expected_behaviors": ["rejects fixture data as live effectiveness evidence", "asks for a live paired experiment before the claim"]
+    },
+    {
+      "id": "contextual-circular-scorer",
+      "kind": "contextual",
+      "prompt": "The agent wrote the expected behaviors and the same agent judged its output against them. The score is 0.96.",
+      "expected_activation": true,
+      "expected_behaviors": ["flags scorer or designer circularity", "proposes the smallest independent validation fix"]
+    },
+    {
+      "id": "negative-deterministic-schema",
+      "kind": "negative",
+      "prompt": "Validate this JSON document against the checked-in JSON Schema.",
+      "expected_activation": false,
+      "expected_behaviors": ["uses deterministic schema validation directly rather than inventing an eval-integrity review"]
+    }
+  ]
+}

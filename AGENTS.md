@@ -76,6 +76,18 @@ Loop state is explicit and external to model prose. Keep assumptions separate fr
 <!-- rule: evidence-before-action -->
 Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost, security or business values. External Skill documentation is not environment evidence.
 
+## Artifact reflexes
+
+<!-- rule: artifact-hygiene-before-handoff -->
+After creating or materially changing a maintained repository artifact, run `skills/artifact-hygiene/SKILL.md` before calling the work done. Prefer a clean statement of current truth over patch residue, but preserve authoritative history in ADRs, incidents, audit logs, changelogs, and other historical artifacts. A no-op is a valid result when nothing materially improves.
+
+When one maintained fact is scattered across artifacts, use `skills/ssot-review/SKILL.md` to audit read-only first and identify the canonical home; do not consolidate contradictions or cross trust boundaries without explicit approval.
+
+<!-- rule: eval-independent-evidence -->
+Before trusting an eval, benchmark, paired experiment, metric, or success gate, use `skills/eval-integrity/SKILL.md` to identify an independent signal that can disagree with the agent or scorer. Preserve baseline/treatment isolation, negative controls, trajectory evidence when relevant, and the distinction between fixture plumbing and live effectiveness evidence.
+
+See `docs/ARTIFACT-REFLEXES.md`.
+
 ## Skill runtime evaluation
 
 <!-- rule: skill-live-lift -->
@@ -133,7 +145,7 @@ python -m compileall scripts hooks adapters loops
 ## Repository map
 
 - `domains/` — Infrastructure, SRE, DevOps, FinOps, Security lenses
-- `skills/` — directly discoverable Decision, Control, Workflow, routing, and context-learning skills
+- `skills/` — directly discoverable Decision, Control, Workflow, routing, artifact-reflex, and context-learning skills
 - `capabilities/` — implementation/verification capability registry and external source trust metadata
 - `skill-evals/` — paired runtime task suites, fixtures and Skill Lift policy
 - `agent-context/` — transcript-evidence policy, Context Lift fixtures, and context-learning guidance
@@ -143,5 +155,6 @@ python -m compileall scripts hooks adapters loops
 - `adapters/` and `mcp/` — optional evidence/workflow/runtime-eval integrations
 - `workflows/` — production change, security review and ticketing workflows
 - `docs/CAPABILITY-MODEL.md` — Decision Skill vs implementation Capability design
+- `docs/ARTIFACT-REFLEXES.md` — clean-v0, SSOT, eval-integrity, and earned-reuse reflexes
 - `docs/SKILL-EVALUATION.md` — paired runtime Skill evaluation and Skill Lift
 - `docs/REFERENCE-MODELS.md` — research and operational models behind the harness

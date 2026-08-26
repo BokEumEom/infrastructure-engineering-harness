@@ -8,6 +8,7 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | --- | --- |
 | NVIDIA ACES / SkillEvaluator | Paired live evaluation with and without a Skill, trajectory grading and Skill Lift |
 | Kun Chen / backpass | Transcript-driven, budgeted, evidence-gated improvement of project-level agent memory |
+| Paperthin | Artifact restraint, clean-current-state rewrites, SSOT repair, eval independence, earned reuse, and cross-lens disagreement |
 | IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
 | LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
 | LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
@@ -34,6 +35,21 @@ This harness adopts those ideas with a stricter infrastructure boundary: transcr
 
 https://blog.kunchenguid.com/p/your-agentsmd-is-a-neural-net
 https://github.com/kunchenguid/backpass
+
+## Paperthin
+
+Paperthin packages low-level agentic design patterns around restraint: clean an artifact instead of layering patches, consolidate duplicated truth into one canonical home, check a newly changed artifact with fresh verification, audit evaluations for circularity, preserve lessons and negative corpus across iterations, and surface disagreement across genuinely different lenses rather than averaging it away.
+
+The harness does not install Paperthin as an execution dependency. A pinned MIT-licensed revision is registered as `reference_only`, while the reusable principles are implemented through local governed Skills:
+
+- `artifact-hygiene` — clean current-state artifacts, preserve authoritative history, and allow a no-op when nothing improves;
+- `ssot-review` — read-only scatter/contradiction audit before any consolidation;
+- `eval-integrity` — independent-ground-truth and leakage review for Skill Lift, Context Lift, benchmarks, metrics, and experiments;
+- `loop-engineering` learning — preserve earned reuse, negative corpus, anti-patterns, and next-cycle quality gates instead of copying accidental architecture forward.
+
+The external `prism` pattern also reinforces an existing cross-domain rule: reliability, security, delivery, cost, and infrastructure constraints should not be averaged into one blended score when their disagreement is the material engineering fact.
+
+https://github.com/LilMGenius/paperthin
 
 ## IBM Loop Engineering
 
@@ -97,13 +113,15 @@ Independent Action or Human Gate
        ↓
 Independent Verification
        ↓
+Artifact Hygiene / Eval Integrity as applicable
+       ↓
 Regression Check
        ↓
 Reconcile → continue or terminal
                        ↓
                       Learn
                        ↓
- Incident / Runbook / ADR or Policy candidate / Measurement / Eval
+ Incident / Runbook / ADR or Policy candidate / Measurement / Eval / Negative corpus
                        ↓
                     Next Loop
 ```

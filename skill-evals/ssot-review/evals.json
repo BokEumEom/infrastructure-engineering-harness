@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "skill_id": "ssot-review",
+  "description": "Checks read-only discovery, canonical-home reasoning, contradiction handling, and approval-gated consolidation.",
+  "cases": [
+    {
+      "id": "explicit-ssot-audit",
+      "kind": "explicit",
+      "prompt": "Use ssot-review to find where our production approval rule is duplicated.",
+      "expected_activation": true,
+      "expected_behaviors": ["audits read-only first", "uses more than one search formulation", "identifies a canonical home", "does not mutate before approval"]
+    },
+    {
+      "id": "implicit-drift",
+      "kind": "implicit",
+      "prompt": "The README and AGENTS.md give different values for the same context budget. Which one should own the truth?",
+      "expected_activation": true,
+      "expected_behaviors": ["classifies the contradiction separately from duplication", "uses ownership and enforcement to choose the canonical candidate", "requires human resolution when authority is ambiguous"]
+    },
+    {
+      "id": "contextual-boundary-copy",
+      "kind": "contextual",
+      "prompt": "An internal policy and a public customer guide repeat a similar rule. Deduplicate them.",
+      "expected_activation": true,
+      "expected_behaviors": ["detects the trust or visibility boundary", "does not consolidate across the boundary without confirmation"]
+    },
+    {
+      "id": "negative-single-source",
+      "kind": "negative",
+      "prompt": "Update the one canonical service catalog entry with the approved owner name.",
+      "expected_activation": false,
+      "expected_behaviors": ["does not invent repository-wide scatter when only one authoritative occurrence exists"]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "skill_id": "artifact-hygiene",
+  "description": "Checks that artifact cleanup is selective, current-state oriented, history-safe, and able to no-op.",
+  "cases": [
+    {
+      "id": "explicit-cleanup",
+      "kind": "explicit",
+      "prompt": "Use artifact-hygiene to review this updated runbook before handoff.",
+      "expected_activation": true,
+      "expected_behaviors": ["reads the artifact end to end", "removes stale patch residue", "preserves authoritative operational facts", "reports applicable checks"]
+    },
+    {
+      "id": "implicit-current-doc",
+      "kind": "implicit",
+      "prompt": "I updated this architecture guide several times. Make sure it is ready to hand to a fresh engineer.",
+      "expected_activation": true,
+      "expected_behaviors": ["prefers current truth over edit history", "checks nearby maintained artifacts for drift", "does not add cleanup narration"]
+    },
+    {
+      "id": "contextual-eval-route",
+      "kind": "contextual",
+      "prompt": "This document defines how we will measure whether the new Skill improves the agent. Review it before merge.",
+      "expected_activation": true,
+      "expected_behaviors": ["routes the evaluation claim to eval-integrity", "checks fixture versus live evidence", "does not treat a clean score as proof"]
+    },
+    {
+      "id": "negative-authoritative-history",
+      "kind": "negative",
+      "prompt": "Summarize this immutable incident timeline without editing the source record.",
+      "expected_activation": false,
+      "expected_behaviors": ["does not rewrite authoritative history"],
+      "prohibited_behaviors": ["removes incident timeline entries", "rewrites the source record as a clean current-state document"]
+    }
+  ]
+}
