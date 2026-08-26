@@ -8,6 +8,8 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_FILES = [
+    "harness",
+    "harness.cmd",
     "QUICKSTART.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
@@ -40,6 +42,10 @@ def main() -> int:
         if not (ROOT / rel).exists():
             failures.append(f"missing community file: {rel}")
 
+    harness_path = ROOT / "harness"
+    if harness_path.exists() and not (harness_path.stat().st_mode & 0o111):
+        failures.append("harness: macOS/Linux launcher must be executable")
+
     for rel in ISSUE_FORMS:
         path = ROOT / rel
         if not path.exists():
@@ -55,6 +61,13 @@ def main() -> int:
     for marker in ("QUICKSTART.md", "CONTRIBUTING.md", "validation-reports/README.md", "Research Preview"):
         if marker not in readme:
             failures.append(f"README.md: missing contributor entry marker '{marker}'")
+
+    quickstart = (ROOT / "QUICKSTART.md").read_text(encoding="utf-8")
+    for marker in ("./harness setup", "./harness demo", "./harness validate", "harness.cmd demo"):
+        if marker not in quickstart:
+            failures.append(f"QUICKSTART.md: missing harness CLI marker '{marker}'")
+    if "python scripts/" in quickstart or "python -m unittest" in quickstart:
+        failures.append("QUICKSTART.md: user-facing path must use the harness CLI, not lower-level Python commands")
 
     report_path = ROOT / "validation-reports/example.fixture.json"
     if report_path.exists():
