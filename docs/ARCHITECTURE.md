@@ -1,6 +1,6 @@
 # Architecture
 
-The harness separates durable knowledge, current evidence, engineering judgment, technology implementation knowledge, loop control and production execution.
+The harness separates durable knowledge, current evidence, engineering judgment, technology implementation knowledge, loop control, runtime execution mechanics and production execution.
 
 ```text
 Durable Knowledge + Optional Live Evidence
@@ -20,6 +20,10 @@ Durable Knowledge + Optional Live Evidence
           Reviewable Local Artifact
                     ↓
           Validation / Human Gate
+                    ↓
+          Runtime Kernel Boundary
+ Event Log / Skill Registry / Tool Pipeline
+ Guard / Approval / Sandbox / Persistence
                     ↓
         Independently Authorized Execution
                     ↓
@@ -47,6 +51,7 @@ These layers have different responsibilities:
 Domain      → which engineering questions and constraints matter
 Decision    → what should be done and why
 Capability  → how to implement or verify using technology-specific knowledge
+Runtime     → how model context, Skills, tools, policy, approval and durable execution events are mediated
 Loop        → when to repeat, verify, escalate, stop and learn
 ```
 
@@ -71,16 +76,40 @@ Third-party sources are `pinned_reference` by default:
 
 An organization can vendor/review selected capabilities and register them as managed/local sources.
 
+## Runtime Kernel
+
+`runtime/` defines the initial provider-neutral execution contract. It is a reference kernel, not yet a production daemon.
+
+The Runtime Kernel adopts several strong agent-runtime patterns while keeping infrastructure-specific hard invariants outside replaceable plugin seams:
+
+- append-only typed Runtime Event Log;
+- **model-visible means logged** reconstructability;
+- revisioned run state with stale-update rejection;
+- lazy Runtime Skill Registry over the trusted Capability Registry;
+- guarded Tool Execution Pipeline;
+- monotonic hard-deny guards;
+- fail-closed one-shot approval;
+- explicit sandbox enforcement facts;
+- normalized tool result before Evidence promotion.
+
+Runtime plugins/providers may vary model adapters, persistence backends, tool implementations, sandboxes and remote execution systems. They must not replace Evidence provenance, independent production authorization, auditability or source-of-truth protection.
+
+Runtime events answer what the Agent actually saw/requested/executed. They are not automatically engineering truth. Environment/tool/human/test verification is still required before a claim enters Loop `verified_facts`.
+
 ## Loop state
 
 Loop state is explicit outside agent prose and is updated only with independently verified facts. A successful condition can remain a regression obligation in later iterations.
 
+Runtime state and Loop state are intentionally separate. Runtime state reconstructs agent execution; Loop state reconciles an engineering objective against independently verified world state.
+
 ## Production boundary
 
-The default harness may analyze, design, generate code/config/pipelines/runbooks, verify available checks and create workflow artifacts, but production execution remains independently authorized. `change-validation` can orchestrate precheck → approval → external execution → post-verification without making the model the authorization boundary.
+The default harness may analyze, design, generate code/config/pipelines/runbooks, verify available checks and create workflow artifacts, but production execution remains independently authorized. `change-validation` can orchestrate precheck → approval → external execution → post-verification without making the model or runtime the authorization boundary.
 
 ## Agent and tool adapters
 
 Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud/runtime/observability/delivery/cost systems are optional evidence adapters. Jira/Linear workflow actions use MCP. External Skill libraries are optional capability references. Tool output must be normalized before it is treated as evidence.
 
-See `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
+Future execution adapters should implement the contracts under `runtime/` instead of bypassing them with direct model-to-provider mutation.
+
+See `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
