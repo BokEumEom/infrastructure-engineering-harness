@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "binding_id": "kubernetes-ops:payment-prod-20260826",
+  "capability_id": "kubernetes-ops",
+  "resource_graph_id": "payment-prod-20260826",
+  "resource_scope": ["svc:payment-api"],
+  "evidence_sources": ["kubernetes-discovery", "observability-discovery"],
+  "permission_scope": {
+    "mode": "read_only",
+    "allowed_operations": ["inspect_workload", "read_events", "read_logs"],
+    "prohibited_operations": ["unapproved_production_mutation", "delete_resource", "change_identity"]
+  },
+  "execution_authority": "none",
+  "human_gate_required": true,
+  "notes": "Reference-only capability bound to the production payment workload for diagnosis; binding does not grant execution authority."
+}

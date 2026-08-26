@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "adapter_id": "datadog-payment-readonly",
+  "observed_at": "2026-08-26T13:32:00Z",
+  "collection_mode": "read_only",
+  "scope": {"service": "payment-api", "environment": "production"},
+  "source_revision": "query-set-v1",
+  "observations": [
+    {
+      "id": "ev:db-wait",
+      "source_type": "traces",
+      "source": "datadog",
+      "component": "db:orders",
+      "signal": "db_wait_time_ms",
+      "value": 680,
+      "unit": "ms",
+      "status": "elevated",
+      "provenance": {
+        "reference": "service/payment-api/span/db.query",
+        "query": "service:payment-api resource:db.query",
+        "resource": "db:orders"
+      }
+    },
+    {
+      "id": "ev:cpu",
+      "source_type": "metrics",
+      "source": "datadog",
+      "component": "svc:payment-api",
+      "signal": "cpu_utilization_percent",
+      "value": 72,
+      "unit": "percent",
+      "status": "elevated-but-not-saturated",
+      "provenance": {
+        "reference": "metric/container.cpu.usage/payment-api",
+        "query": "service:payment-api env:production",
+        "resource": "svc:payment-api"
+      }
+    }
+  ]
+}

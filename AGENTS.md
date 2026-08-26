@@ -14,6 +14,9 @@ For one-shot analysis use the relevant Domain/Decision Skill. When a reviewed de
 <!-- rule: progressive-context-loading -->
 Use an explicitly supplied context path first. Otherwise use `.infra-context/` for embedded mode or `contexts/<service-or-platform>/` for central mode. Load progressively; do not load the whole knowledge base by default.
 
+<!-- rule: environment-discovery-before-binding -->
+When live infrastructure is available, prefer read-only discovery into the provider-neutral Resource Graph before broad exploration. Discovery may enrich current context but must not rewrite Service Catalog, ADRs, Policies, or other durable truth. Bind a Capability only to explicit resource ids, evidence sources, and permission scope; binding may narrow authority but never increase it. See `environment/README.md` and `adapters/evidence/README.md`.
+
 ## Domain routing
 
 - architecture, capacity, dependencies, migration, infrastructure change → `domains/infrastructure/README.md`
@@ -37,7 +40,7 @@ Engineering Decision
       ↓
 Capability Routing
       ↓
-Implementation / Verification Capability
+Bound Implementation / Verification Capability
       ↓
 Reviewable Artifact
       ↓
@@ -86,7 +89,7 @@ Loop state is explicit and external to model prose. Keep assumptions separate fr
 ## Evidence contract
 
 <!-- rule: evidence-before-action -->
-Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost, security or business values. External Skill documentation and Runtime Event records are not automatically environment evidence.
+Material recommendations must be traceable to evidence IDs conforming to `schemas/evidence.schema.json`. Never invent telemetry, SLO, delivery, cost, security or business values. External Skill documentation, Resource Graph discovery, Evidence Adapter results and Runtime Event records are not automatically Loop verified facts. Provider observations must preserve provenance and be normalized before independent verification.
 
 ## Artifact reflexes
 
@@ -105,7 +108,7 @@ See `docs/ARTIFACT-REFLEXES.md`.
 <!-- rule: skill-live-lift -->
 A Skill is not considered effective merely because `SKILL.md` passes static checks. Repository-owned Skills should be evaluated with paired runtime cases under `skill-evals/`: same task, model, harness, workspace, tools and scorer, once without the target Skill and once with it. `source: fixture` validates scorer/CI plumbing only; only `source: live` paired runs may support a real Skill Lift claim.
 
-Preserve explicit, implicit, contextual and negative cases. Negative Skill Lift, security regression, or irrelevant activation is a regression signal. See `docs/SKILL-EVALUATION.md` and `skill-evals/README.md`.
+Preserve explicit, implicit, contextual and negative cases. Negative Skill Lift, security regression, or irrelevant activation is a regression signal. Infrastructure scenarios under `evals/scenarios/` add ground truth, required evidence, red herrings, prohibited actions and success conditions. See `docs/SKILL-EVALUATION.md` and `skill-evals/README.md`.
 
 ## Agent context learning
 
@@ -151,7 +154,7 @@ python scripts/check_skill_lift.py skill-evals/policy.yaml /tmp/incident-analysi
 python scripts/score_context_lift.py agent-context/fixtures/agents-context.paired.json /tmp/agents-context-lift.json
 python scripts/check_context_lift.py agent-context/policy.yaml /tmp/agents-context-lift.json
 python -m unittest discover -s tests
-python -m compileall scripts hooks adapters loops runtime
+python -m compileall scripts hooks adapters environment loops runtime
 ```
 
 ## Repository map
@@ -159,13 +162,14 @@ python -m compileall scripts hooks adapters loops runtime
 - `domains/` — Infrastructure, SRE, DevOps, FinOps, Security lenses
 - `skills/` — directly discoverable Decision, Control, Workflow, routing, artifact-reflex, and context-learning skills
 - `capabilities/` — implementation/verification capability registry and external source trust metadata
+- `environment/` — read-only discovery, Resource Graph and Bound Capability reference contracts
 - `runtime/` — provider-neutral reference Runtime Kernel, invocation policy, event/tool/approval invariants
 - `skill-evals/` — paired runtime task suites, fixtures and Skill Lift policy
 - `agent-context/` — transcript-evidence policy, Context Lift fixtures, and context-learning guidance
 - `loops/` — bounded Engineering Loops and reference runtime helpers
-- `schemas/` — context, evidence, change, ticket, capability, Runtime, Skill/Context Lift, loop and eval contracts
-- `evals/` — one-shot and long-horizon regression scenarios
-- `adapters/` and `mcp/` — optional evidence/workflow/runtime-eval integrations
+- `schemas/` — context, evidence, environment, change, ticket, capability, Runtime, Skill/Context Lift, loop and eval contracts
+- `evals/` — one-shot, scenario and long-horizon regression specifications
+- `adapters/` and `mcp/` — optional discovery/evidence/workflow/runtime-eval integrations
 - `workflows/` — production change, security review and ticketing workflows
 - `docs/CAPABILITY-MODEL.md` — Decision Skill vs implementation Capability design
 - `docs/ARTIFACT-REFLEXES.md` — clean-v0, SSOT, eval-integrity, and earned-reuse reflexes
