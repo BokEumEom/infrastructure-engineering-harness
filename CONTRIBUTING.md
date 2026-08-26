@@ -9,6 +9,7 @@ Pick the smallest useful contribution:
 3. **Adapter** — add read-only environment discovery or evidence normalization.
 4. **Skill/Eval** — add or improve a Skill together with explicit, implicit, contextual and negative evaluation cases.
 5. **Research reference** — propose a well-grounded external pattern and explain which local contract it should strengthen.
+6. **Localization** — review or improve Korean, Japanese, or Simplified Chinese entry documentation without changing technical semantics.
 
 ## Start with the Harness CLI
 
@@ -32,6 +33,7 @@ Python remains the current internal Research Preview runtime, but contributors s
 - add a scenario fixture;
 - add a validation report from a reproducible local run;
 - improve Quickstart or platform setup documentation;
+- review a Korean / Japanese / Simplified Chinese translation;
 - add a negative Skill Eval case.
 
 ### Intermediate
@@ -73,6 +75,20 @@ Validate a scenario with:
 A validation report must distinguish deterministic fixture validation from a real live agent run. Do not claim Skill Lift or Context Lift from a fixture-only result. Preserve enough metadata for another contributor to understand the agent, harness revision, scenario and result without exposing secrets.
 
 See `validation-reports/README.md`.
+
+## Localization rules
+
+English is canonical for schemas, Skills, architecture contracts, policies and evaluation definitions. Localized README and Quickstart files are first-class entry documentation.
+
+When reviewing a translation:
+
+- preserve command names, paths, schema names and rule identifiers exactly;
+- do not weaken safety, authorization or fixture-vs-live language;
+- prefer stable technical terms over awkward literal translation;
+- update the localization contract when a new supported language is added;
+- run `./harness validate` before opening a PR.
+
+See `docs/LOCALIZATION.md`.
 
 ## Engineering rules
 

@@ -10,7 +10,13 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = [
     "harness",
     "harness.cmd",
+    "README.ko.md",
+    "README.ja.md",
+    "README.zh-CN.md",
     "QUICKSTART.md",
+    "QUICKSTART.ko.md",
+    "QUICKSTART.ja.md",
+    "QUICKSTART.zh-CN.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
     "CODE_OF_CONDUCT.md",
@@ -25,6 +31,7 @@ REQUIRED_FILES = [
     "contrib/scenarios/README.md",
     "docs/COMMUNITY-VALIDATION.md",
     "docs/RELEASE-STATUS.md",
+    "docs/LOCALIZATION.md",
 ]
 
 ISSUE_FORMS = [
@@ -58,9 +65,17 @@ def main() -> int:
             failures.append(f"{rel}: use Issue Form 'description', not legacy 'about'")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    for marker in ("QUICKSTART.md", "CONTRIBUTING.md", "validation-reports/README.md", "Research Preview"):
+    for marker in (
+        "QUICKSTART.md",
+        "CONTRIBUTING.md",
+        "validation-reports/README.md",
+        "Research Preview",
+        "README.ko.md",
+        "README.ja.md",
+        "README.zh-CN.md",
+    ):
         if marker not in readme:
-            failures.append(f"README.md: missing contributor entry marker '{marker}'")
+            failures.append(f"README.md: missing contributor/localization marker '{marker}'")
 
     quickstart = (ROOT / "QUICKSTART.md").read_text(encoding="utf-8")
     for marker in ("./harness setup", "./harness demo", "./harness validate", "harness.cmd demo"):
