@@ -13,6 +13,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r requirements.txt
+      - run: ./harness doctor
+      - run: ./harness demo
       - run: python scripts/validate_context.py examples/.infra-context
       - run: python scripts/check_community_contract.py
       - run: python scripts/check_infra_scenario.py evals/scenarios/sre-dependency-saturation.json
