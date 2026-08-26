@@ -54,7 +54,8 @@ def main() -> int:
       (ROOT/"examples/environment/resource-graph.json","resource-graph.schema.json"),
       (ROOT/"examples/environment/evidence-adapter-result.json","evidence-adapter-result.schema.json"),
       (ROOT/"examples/environment/bound-capability.json","bound-capability.schema.json"),
-      (ROOT/"evals/scenarios/sre-dependency-saturation.json","infra-scenario-eval.schema.json")]
+      (ROOT/"evals/scenarios/sre-dependency-saturation.json","infra-scenario-eval.schema.json"),
+      (ROOT/"validation-reports/example.fixture.json","validation-report.schema.json")]
     repository_targets += [(p,"domain-eval-suite.schema.json") for p in sorted((ROOT/"evals/domains").glob("*.json"))]
     repository_targets += [(p,"loop-spec.schema.json") for p in sorted((ROOT/"loops").glob("*/loop.yaml"))]
     repository_targets += [(p,"skill-eval-suite.schema.json") for p in sorted((ROOT/"skill-evals").glob("*/evals.json"))]
