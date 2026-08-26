@@ -17,6 +17,7 @@ jobs:
       - run: ./harness demo
       - run: python scripts/validate_context.py examples/.infra-context
       - run: python scripts/check_community_contract.py
+      - run: python scripts/check_localization.py
       - run: python scripts/check_infra_scenario.py evals/scenarios/sre-dependency-saturation.json
       - run: python scripts/validate_capability_registry.py capabilities/registry.yaml
       - run: python scripts/check_agents_contract.py AGENTS.md agent-context/policy.yaml
