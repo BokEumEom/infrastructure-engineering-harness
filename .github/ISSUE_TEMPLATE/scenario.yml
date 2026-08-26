@@ -1,5 +1,5 @@
 name: Infrastructure scenario
-about: Propose a real failure pattern or evaluation scenario
+description: Propose a real failure pattern or evaluation scenario
 title: "[Scenario] "
 body:
   - type: markdown
