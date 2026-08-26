@@ -6,6 +6,7 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 
 | Reference | Contribution |
 | --- | --- |
+| DeepSeek Harness | Plugin-composed runtime, append-only session events, model-visible/logged reconstructability, guarded tool pipeline, scoped Skill discovery, fail-closed approval, sandbox and persistence seams |
 | NVIDIA ACES / SkillEvaluator | Paired live evaluation with and without a Skill, trajectory grading and Skill Lift |
 | Kun Chen / backpass | Transcript-driven, budgeted, evidence-gated improvement of project-level agent memory |
 | Paperthin | Artifact restraint, clean-current-state rewrites, SSOT repair, eval independence, earned reuse, and cross-lens disagreement |
@@ -19,6 +20,26 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | FinOps Framework | Iterative Inform → Optimize → Operate and measured technology value |
 | MCP | Provider-neutral tool boundary for evidence and workflow actions |
 | Independent authorization | Boundary for irreversible, destructive, financial, or production-impacting actions |
+
+## DeepSeek Harness
+
+DeepSeek Harness is a developer-preview general Agent Runtime built around a plugin-composed architecture. Its strongest reusable runtime ideas are different from this project's engineering-domain semantics:
+
+- the append-only Session Event Log is the runtime source of truth;
+- anything model-visible must be reconstructable from logged state;
+- prompt sections, dynamic context and tool schemas are assembled through scoped providers;
+- Skills are discovered through provider registries, shown initially as bounded summaries and loaded lazily;
+- tool calls pass through pre-execute policy, monotonic guards, approval, execution wrappers, post-execute policy and authoritative normalized results;
+- approval is audited and fail closed; only a one-shot explicit grant permits the gated action;
+- sandbox policy is resolved per call and reports enforcement completeness instead of treating `sandbox=true` as proof;
+- persistence preserves committed events and represents interruption/recovery rather than erasing an incomplete execution;
+- same-session Goal state uses revisions so stale mutations can be rejected.
+
+The harness adopts these ideas as a **Runtime Kernel reference**, not as a replacement for Infrastructure Engineering control-plane semantics. `runtime/` therefore adds append-only Runtime Events, revisioned state, Runtime Skill invocation policy, guarded Tool Pipeline contracts, one-shot Approval, sandbox evidence fields and deterministic tests.
+
+One important boundary is intentionally stricter here: not everything is a replaceable plugin. Evidence provenance, independent production authorization, auditability and source-of-truth protection remain hard invariants. A runtime event records what the Agent saw or did; it becomes engineering evidence only after the appropriate environment/tool/human/test verification.
+
+https://github.com/deepseek-ai/deepseek-harness
 
 ## NVIDIA ACES / SkillEvaluator
 
@@ -109,6 +130,9 @@ Domain Skill(s)
        ↓
 Decision / Proposal
        ↓
+Runtime Kernel
+ Event Log / Skill Registry / Tool Guard / Approval / Sandbox
+       ↓
 Independent Action or Human Gate
        ↓
 Independent Verification
@@ -133,4 +157,4 @@ Skill behavior → paired Skill Lift → Skill revision
 AGENTS behavior → transcript loss → proposed context edit → paired Context Lift
 ```
 
-Neither path may rewrite engineering truth or bypass authorization. The model does not own truth, completion, or authorization; environment evidence, deterministic checks, provider controls and human approvals remain independent parts of the loop.
+Neither path may rewrite engineering truth or bypass authorization. The model does not own truth, completion, or authorization; environment evidence, deterministic checks, runtime guards, provider controls and human approvals remain independent parts of the loop.

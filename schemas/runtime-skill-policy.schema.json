@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Skill Invocation Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "defaults", "rules"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_invocable", "user_invocable", "catalog_visible"],
+      "properties": {
+        "model_invocable": {"type": "boolean"},
+        "user_invocable": {"type": "boolean"},
+        "catalog_visible": {"type": "boolean"}
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id"],
+        "properties": {
+          "skill_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "model_invocable": {"type": "boolean"},
+          "user_invocable": {"type": "boolean"},
+          "catalog_visible": {"type": "boolean"},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

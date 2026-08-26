@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Approval Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "approval_id", "run_id", "subject_ref", "outcome", "decided_by", "timestamp"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "approval_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject_ref": {"type": "string", "minLength": 1},
+    "action_digest": {"type": "string", "minLength": 1},
+    "reason": {"type": "string"},
+    "outcome": {"enum": ["allowed_once", "rejected", "cancelled", "unavailable"]},
+    "decided_by": {"enum": ["human", "policy", "external_authorizer"]},
+    "decider_ref": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

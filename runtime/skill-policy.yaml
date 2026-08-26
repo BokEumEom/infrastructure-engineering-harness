@@ -1,0 +1,19 @@
+schema_version: "1.0"
+
+defaults:
+  model_invocable: true
+  user_invocable: true
+  catalog_visible: true
+
+rules:
+  - skill_id: context-backpass
+    model_invocable: false
+    user_invocable: true
+    catalog_visible: true
+    reason: AGENTS.md learning proposals require explicit human intent; background self-modification is not a default model capability.
+
+  - skill_id: ticketing
+    model_invocable: true
+    user_invocable: true
+    catalog_visible: true
+    reason: Invocation can prepare or route a ticket request, but write authorization remains governed separately.

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "seq", "timestamp", "type", "model_visible", "data"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "seq": {"type": "integer", "minimum": 0},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "type": {
+      "enum": [
+        "run/started", "run/interrupted", "run/ended",
+        "context/snapshot", "skill/catalog", "skill/loaded",
+        "model/request", "model/response",
+        "tool/requested", "tool/result",
+        "policy/advisory", "policy/guard_decided",
+        "approval/requested", "approval/decided",
+        "verification/result", "loop/transition", "writeback/proposed"
+      ]
+    },
+    "model_visible": {"type": "boolean"},
+    "ignorable": {"type": "boolean", "default": false},
+    "source": {"type": "string"},
+    "data": {"type": "object"},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

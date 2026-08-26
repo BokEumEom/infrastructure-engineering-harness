@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "approval_id": "approval-example-001",
+  "run_id": "run-example-001",
+  "subject_ref": "call-example-001",
+  "action_digest": "sha256:action-example",
+  "reason": "Production-impacting change requires independent authorization.",
+  "outcome": "allowed_once",
+  "decided_by": "human",
+  "decider_ref": "change-approver",
+  "timestamp": "2026-08-26T13:31:00Z",
+  "evidence_refs": ["change/CHG-001"]
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Run State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "revision", "status", "last_seq"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 0},
+    "status": {"enum": ["initialized", "running", "waiting_approval", "waiting_external", "verifying", "done", "escalated", "failed", "interrupted"]},
+    "last_seq": {"type": "integer", "minimum": -1},
+    "session_id": {"type": "string", "minLength": 1},
+    "loop_id": {"type": "string", "minLength": 1},
+    "context_digest": {"type": "string", "minLength": 1},
+    "active_skill_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"}},
+    "pending_tool_call_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "pending_approval_id": {"type": ["string", "null"]},
+    "event_log_ref": {"type": "string", "minLength": 1}
+  }
+}

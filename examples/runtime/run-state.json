@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-example-001",
+  "revision": 3,
+  "status": "waiting_approval",
+  "last_seq": 7,
+  "session_id": "session-example-001",
+  "loop_id": "change-validation",
+  "context_digest": "sha256:context-example",
+  "active_skill_ids": ["change-review", "security-review"],
+  "pending_tool_call_ids": ["call-example-001"],
+  "pending_approval_id": "approval-example-001",
+  "event_log_ref": "runtime://run-example-001/events"
+}

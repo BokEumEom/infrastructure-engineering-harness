@@ -63,6 +63,27 @@ def validate_registry(data: dict) -> list[str]:
         if capability.get("risk") in {"high", "critical"} and not capability.get("requires_human_gate"):
             errors.append(f"invariant: high-risk capability {capability.get('id')} must require a human gate")
 
+    local_capabilities = {
+        c.get("id"): c
+        for c in capabilities
+        if isinstance(c, dict) and c.get("source") == "harness-local" and c.get("id")
+    }
+    local_skill_dirs = {
+        path.parent.name: path
+        for path in (ROOT / "skills").glob("*/SKILL.md")
+    }
+
+    missing_registry = sorted(set(local_skill_dirs) - set(local_capabilities))
+    for skill_id in missing_registry:
+        errors.append(f"invariant: local Skill {skill_id} must be registered as harness-local capability")
+
+    for skill_id, capability in local_capabilities.items():
+        expected_path = ROOT / "skills" / str(capability.get("skill_path", ""))
+        if skill_id not in local_skill_dirs:
+            errors.append(f"invariant: harness-local capability {skill_id} has no skills/{skill_id}/SKILL.md")
+        elif not expected_path.exists():
+            errors.append(f"invariant: harness-local capability {skill_id} skill_path does not exist: {capability.get('skill_path')}")
+
     return errors
 
 

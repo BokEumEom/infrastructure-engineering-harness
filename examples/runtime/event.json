@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-example-001",
+  "seq": 4,
+  "timestamp": "2026-08-26T13:30:00Z",
+  "type": "approval/requested",
+  "model_visible": false,
+  "source": "runtime-tool-pipeline",
+  "data": {
+    "approval_id": "approval-example-001",
+    "call_id": "call-example-001",
+    "tool_name": "cloud.change"
+  }
+}
