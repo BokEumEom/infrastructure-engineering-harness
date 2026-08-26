@@ -1,6 +1,8 @@
 from pathlib import Path
 import unittest
 
+import yaml
+
 from runtime.kernel import (
     ApprovalOutcome,
     GuardDecision,
@@ -83,6 +85,13 @@ class RuntimeKernelTests(unittest.TestCase):
         self.assertIn("context-backpass", user_ids)
         with self.assertRaises(PermissionError):
             registry.get("context-backpass", actor="model")
+
+    def test_runtime_skill_policy_only_targets_registered_capabilities(self):
+        capability_data = yaml.safe_load((ROOT / "capabilities" / "registry.yaml").read_text(encoding="utf-8"))
+        policy_data = yaml.safe_load((ROOT / "runtime" / "skill-policy.yaml").read_text(encoding="utf-8"))
+        capability_ids = {item["id"] for item in capability_data["capabilities"]}
+        for rule in policy_data["rules"]:
+            self.assertIn(rule["skill_id"], capability_ids)
 
     def test_reference_skill_has_no_execution_authority(self):
         registry = RuntimeSkillRegistry.from_files(
