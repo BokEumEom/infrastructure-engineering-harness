@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tool Execution Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "call_id", "tool_name", "risk", "status", "execution_authority", "sandbox"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "call_id": {"type": "string", "minLength": 1},
+    "root_call_id": {"type": "string", "minLength": 1},
+    "tool_name": {"type": "string", "minLength": 1},
+    "arguments": {"type": "object"},
+    "risk": {"enum": ["low", "medium", "high", "critical"]},
+    "status": {"enum": ["requested", "denied", "waiting_approval", "executing", "completed", "failed", "cancelled"]},
+    "execution_authority": {"enum": ["none", "read", "workflow", "change"]},
+    "guard_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["guard", "decision"],
+        "properties": {
+          "guard": {"type": "string", "minLength": 1},
+          "decision": {"enum": ["abstain", "allow", "deny"]},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "approval_id": {"type": "string", "minLength": 1},
+    "approval_outcome": {"enum": ["allowed_once", "rejected", "cancelled", "unavailable"]},
+    "sandbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested_mode", "actual_mode", "enforcement"],
+      "properties": {
+        "requested_mode": {"enum": ["read_only", "workspace_write", "danger_full_access", "external"]},
+        "actual_mode": {"enum": ["read_only", "workspace_write", "danger_full_access", "external", "unavailable"]},
+        "enforcement": {"enum": ["full", "partial", "none", "unknown"]},
+        "limitations": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "credential_scope": {"type": "string"},
+    "normalized_result": {"type": "object"},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}
