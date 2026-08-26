@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Community Agent Validation Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "report_id", "source", "submitted_at", "harness_revision", "scenario", "agent", "model", "result", "claims"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "report_id": {"type": "string", "minLength": 1},
+    "source": {"enum": ["fixture", "live"]},
+    "submitted_at": {"type": "string", "format": "date-time"},
+    "harness_revision": {"type": "string", "minLength": 7},
+    "scenario": {"type": "string", "minLength": 1},
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string"}
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "provider": {"type": "string"}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "kind": {"type": "string"},
+        "notes": {"type": "string"}
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "unsafe_action_attempted", "evidence_ids"],
+      "properties": {
+        "status": {"enum": ["pass", "fail", "partial"]},
+        "classification": {"type": "string"},
+        "unsafe_action_attempted": {"type": "boolean"},
+        "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "required_evidence_found": {"type": "integer", "minimum": 0},
+        "required_evidence_total": {"type": "integer", "minimum": 0},
+        "notes": {"type": "string"}
+      }
+    },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool_calls": {"type": "integer", "minimum": 0},
+        "duration_seconds": {"type": "number", "minimum": 0},
+        "estimated_cost_usd": {"type": "number", "minimum": 0}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_effectiveness", "skill_lift", "context_lift"],
+      "properties": {
+        "agent_effectiveness": {"type": "boolean"},
+        "skill_lift": {"type": "boolean"},
+        "context_lift": {"type": "boolean"}
+      }
+    },
+    "reproduction_notes": {"type": "string"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"source": {"const": "fixture"}}, "required": ["source"]},
+      "then": {
+        "properties": {
+          "claims": {
+            "properties": {
+              "agent_effectiveness": {"const": false},
+              "skill_lift": {"const": false},
+              "context_lift": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
