@@ -45,7 +45,12 @@ def main() -> int:
       (ROOT/"agent-context/policy.yaml","context-policy.schema.json"),
       (ROOT/"agent-context/examples/session-evidence.json","context-evidence.schema.json"),
       (ROOT/"agent-context/examples/update-proposal.json","context-update-proposal.schema.json"),
-      (ROOT/"agent-context/fixtures/agents-context.paired.json","context-paired-experiment.schema.json")]
+      (ROOT/"agent-context/fixtures/agents-context.paired.json","context-paired-experiment.schema.json"),
+      (ROOT/"runtime/skill-policy.yaml","runtime-skill-policy.schema.json"),
+      (ROOT/"examples/runtime/event.json","runtime-event.schema.json"),
+      (ROOT/"examples/runtime/run-state.json","runtime-run-state.schema.json"),
+      (ROOT/"examples/runtime/approval-decision.json","approval-decision.schema.json"),
+      (ROOT/"examples/runtime/tool-execution.json","tool-execution.schema.json")]
     repository_targets += [(p,"domain-eval-suite.schema.json") for p in sorted((ROOT/"evals/domains").glob("*.json"))]
     repository_targets += [(p,"loop-spec.schema.json") for p in sorted((ROOT/"loops").glob("*/loop.yaml"))]
     repository_targets += [(p,"skill-eval-suite.schema.json") for p in sorted((ROOT/"skill-evals").glob("*/evals.json"))]
