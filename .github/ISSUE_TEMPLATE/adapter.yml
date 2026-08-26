@@ -1,0 +1,51 @@
+name: Environment / evidence adapter
+about: Propose or implement a read-only discovery or evidence adapter
+title: "[Adapter] "
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Adapter kind
+      options:
+        - Environment discovery
+        - Evidence collection
+        - Execution backend proposal
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider / system
+      placeholder: Kubernetes, AWS, Prometheus, Datadog...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Read-only scope
+      description: Which resources/signals should be collected and which must remain out of scope?
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Provenance and freshness
+      description: How can the adapter preserve source reference, resource identity and observation time?
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test strategy
+      description: Mock/unit, local integration and optional live verification plans.
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Invariants
+      options:
+        - label: Discovery/evidence collection is read-only by default.
+          required: true
+        - label: Provider output will not be promoted directly to Loop verified facts.
+          required: true
