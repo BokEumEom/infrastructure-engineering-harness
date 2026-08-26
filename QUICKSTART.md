@@ -1,5 +1,7 @@
 # 5-minute Quickstart
 
+**English** | [한국어](QUICKSTART.ko.md) | [日本語](QUICKSTART.ja.md) | [简体中文](QUICKSTART.zh-CN.md)
+
 You do not need cloud credentials or a production environment to try the harness. You also do not need to write or invoke Python commands directly.
 
 > **Current Research Preview runtime:** Python 3 is still used internally. The public quickstart interface is the `harness` command so the implementation runtime can change later without changing the user workflow.
@@ -22,20 +24,20 @@ harness.cmd setup
 harness.cmd demo
 ```
 
-`setup` installs the small Research Preview dependency set. `demo` uses only checked-in fixtures: it does not connect to a cloud account, Kubernetes cluster, observability system or production environment.
+`setup` installs the small Research Preview dependency set. `demo` uses only checked-in fixtures: it does not connect to a cloud account, Kubernetes cluster, observability system, or production environment.
 
 ## What `demo` does
 
 ```text
 Infrastructure Engineering Harness
         ↓
-Reference context validation
+Reference Context Validation
         ↓
-Resource Graph + Evidence fixture
+Resource Graph + Evidence Fixture
         ↓
-SRE dependency-saturation scenario
+SRE Dependency Saturation Scenario
         ↓
-Safety / consistency checks
+Safety / Consistency Check
         ↓
 DEMO PASS / FAIL
 ```
@@ -63,23 +65,6 @@ A successful demo confirms that the deterministic Harness contracts and scenario
 
 On Windows, replace `./harness` with `harness.cmd`.
 
-## Try another scenario
-
-```bash
-./harness scenario evals/scenarios/sre-dependency-saturation.json
-```
-
-A scenario can include:
-
-- ground truth;
-- required evidence;
-- plausible red herrings;
-- prohibited actions;
-- expected behavior;
-- success conditions.
-
-It also cross-checks that referenced environment and evidence fixtures exist.
-
 ## Contributor validation
 
 Before opening a PR:
@@ -88,15 +73,11 @@ Before opening a PR:
 ./harness validate
 ```
 
-This runs the contributor-facing contract checks and unit tests through one stable entry point. Maintainers may still use the lower-level scripts directly in CI when debugging a specific contract.
-
 ## Next steps
 
-- Add a real incident pattern: see `contrib/scenarios/README.md`.
-- Submit a reproducible agent run: see `validation-reports/README.md`.
-- Add an evidence/discovery adapter: see `CONTRIBUTING.md`.
-- Read the architecture after trying the harness: `docs/ARCHITECTURE.md`.
+- Add a real incident pattern: `contrib/scenarios/README.md`
+- Submit a reproducible agent run: `validation-reports/README.md`
+- Add an evidence/discovery adapter: `CONTRIBUTING.md`
+- Read the architecture: `docs/ARCHITECTURE.md`
 
-## Live agent execution
-
-The current `demo` is deterministic by design. A later CLI layer will provide a stable command such as `harness run --agent ... --scenario ...` once live Agent adapters are mature enough to make that command reproducible across runtimes. Until then, live runs are submitted through the Validation Report contract rather than pretending the fixture demo is a live-agent benchmark.
+The current `demo` is deterministic by design. Live agent execution is recorded separately through `source: live` Validation Reports; fixture results must not be presented as live-agent benchmarks.
