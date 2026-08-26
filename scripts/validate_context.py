@@ -41,7 +41,6 @@ def main() -> int:
       (ROOT/"examples/loops/incident-response-state.json","loop-state.schema.json"),
       (ROOT/"examples/eval-output/loop-incident-recovered.json","loop-result.schema.json"),
       (ROOT/"evals/loops/standard.json","loop-eval-suite.schema.json"),
-      (ROOT/"skill-evals/incident-analysis/evals.json","skill-eval-suite.schema.json"),
       (ROOT/"skill-evals/fixtures/incident-analysis.paired.json","skill-paired-experiment.schema.json"),
       (ROOT/"agent-context/policy.yaml","context-policy.schema.json"),
       (ROOT/"agent-context/examples/session-evidence.json","context-evidence.schema.json"),
@@ -49,6 +48,7 @@ def main() -> int:
       (ROOT/"agent-context/fixtures/agents-context.paired.json","context-paired-experiment.schema.json")]
     repository_targets += [(p,"domain-eval-suite.schema.json") for p in sorted((ROOT/"evals/domains").glob("*.json"))]
     repository_targets += [(p,"loop-spec.schema.json") for p in sorted((ROOT/"loops").glob("*/loop.yaml"))]
+    repository_targets += [(p,"skill-eval-suite.schema.json") for p in sorted((ROOT/"skill-evals").glob("*/evals.json"))]
     failures=[]
     for path,schema in targets+repository_targets:
         if not path.exists(): failures.append(f"missing required file: {path}")
