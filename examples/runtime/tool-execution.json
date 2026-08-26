@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-example-001",
+  "call_id": "call-example-001",
+  "root_call_id": "call-example-001",
+  "tool_name": "cloud.change",
+  "arguments": {"resource": "service/example"},
+  "risk": "high",
+  "status": "waiting_approval",
+  "execution_authority": "change",
+  "guard_decisions": [
+    {"guard": "production-authorization", "decision": "allow", "reason": "Eligible for explicit approval, not pre-authorized."}
+  ],
+  "approval_id": "approval-example-001",
+  "sandbox": {
+    "requested_mode": "external",
+    "actual_mode": "external",
+    "enforcement": "unknown",
+    "limitations": ["Runtime does not itself prove the external executor's confinement."]
+  },
+  "credential_scope": "external-authorized-executor"
+}
