@@ -59,6 +59,14 @@ The handoff is not authoritative evidence. Only independent observations may ent
 
 Before `done`, all required success criteria must be independently verified, required regression obligations must pass, no required human gate may remain pending, and the loop must still be within its budget.
 
-## Learning
+## Learning and earned reuse
 
-Terminal loops should explicitly propose durable learning: Incident, Runbook change, ADR candidate, Policy candidate, Eval candidate, Measurement, Delivery record, Optimization record, or Change record. Do not silently overwrite organizational source-of-truth documents.
+Terminal or abandoned loops should propose durable learning without defending the implementation that produced it.
+
+- Separate **earned reuse** from accidental architecture. Preserve contracts, schemas, verified procedures, quality gates, vocabulary, real-surface tests, runbooks, and other artifacts only when evidence shows they remain useful.
+- Preserve the **negative corpus**: failed hypotheses, prohibited paths, misleading signals, and regression cases that should stop the next cycle from repeating the same class of failure.
+- Generalize specific complaints or failures into an anti-pattern and a gate that catches the broader class; keep the concrete event as evidence, not as the whole lesson.
+- If the foundation is wrong, a controlled restart may discard implementation while retaining earned lessons and gates. Existing code does not earn reuse merely by existing.
+- Name the next cycle's first quality gate when learning implies another iteration.
+- Propose Incident, Runbook change, ADR candidate, Policy candidate, Eval candidate, Measurement, Delivery record, Optimization record, Change record, negative corpus entry, or restart plan as appropriate.
+- Do not silently overwrite organizational source-of-truth documents.
