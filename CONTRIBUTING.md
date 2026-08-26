@@ -10,6 +10,20 @@ Pick the smallest useful contribution:
 4. **Skill/Eval** — add or improve a Skill together with explicit, implicit, contextual and negative evaluation cases.
 5. **Research reference** — propose a well-grounded external pattern and explain which local contract it should strengthen.
 
+## Start with the Harness CLI
+
+Contributor-facing commands use one stable interface:
+
+```bash
+./harness setup
+./harness demo
+./harness validate
+```
+
+On Windows, use `harness.cmd` instead of `./harness`.
+
+Python remains the current internal Research Preview runtime, but contributors should not need to memorize individual Python script paths for normal validation. Maintainers can still run lower-level scripts when debugging a specific contract.
+
 ## Contribution levels
 
 ### Good first contribution
@@ -48,6 +62,12 @@ Do not submit proprietary telemetry, secrets, customer identifiers or internal i
 
 See `contrib/scenarios/README.md`.
 
+Validate a scenario with:
+
+```bash
+./harness scenario evals/scenarios/<scenario>.json
+```
+
 ## Validation run rules
 
 A validation report must distinguish deterministic fixture validation from a real live agent run. Do not claim Skill Lift or Context Lift from a fixture-only result. Preserve enough metadata for another contributor to understand the agent, harness revision, scenario and result without exposing secrets.
@@ -77,12 +97,10 @@ Keep PRs focused. State:
 Run before opening a PR:
 
 ```bash
-python -m pip install -r requirements.txt
-python scripts/validate_context.py examples/.infra-context
-python scripts/check_infra_scenario.py evals/scenarios/sre-dependency-saturation.json
-python -m unittest discover -s tests
-python -m compileall scripts hooks adapters environment loops runtime
+./harness validate
 ```
+
+If validation fails, `./harness doctor` shows the local runtime/dependency state. Use the lower-level command reported by the failing check only when deeper debugging is needed.
 
 ## Security
 
