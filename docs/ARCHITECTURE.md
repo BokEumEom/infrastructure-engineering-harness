@@ -1,47 +1,77 @@
 # Architecture
 
-The harness separates durable knowledge, current evidence, engineering judgment, technology implementation knowledge, loop control, runtime execution mechanics and production execution.
+The harness separates durable knowledge, environment discovery, current evidence, engineering judgment, technology implementation knowledge, loop control, runtime execution mechanics and production execution.
 
 ```text
-Durable Knowledge + Optional Live Evidence
-                    ↓
-              Context Resolution
-                    ↓
-               Domain Lens(es)
-                    ↓
-               Decision Skill
-          what should change and why
-                    ↓
-             Capability Routing
-          how to build/operate/verify
-                    ↓
-       Implementation / Verification Capability
-                    ↓
-          Reviewable Local Artifact
-                    ↓
-          Validation / Human Gate
-                    ↓
-          Runtime Kernel Boundary
- Event Log / Skill Registry / Tool Pipeline
- Guard / Approval / Sandbox / Persistence
-                    ↓
-        Independently Authorized Execution
-                    ↓
-          Loop Engineering Control
-      Observe → Decide → Verify → Reconcile
-         ↑                         ↓
-         └──────── Learn ──────────┘
-                    ↓
-        terminal: done/escalated/failed
-                    ↓
- Incident / Runbook / ADR or Policy candidate / Eval
-                    ↓
-                 Next Loop
+Durable Knowledge                 Live Environment
+Service Catalog / ADR / Policy    Cloud / K8s / CI / Observability
+          │                                  │
+          │                         Read-only Discovery
+          │                                  ↓
+          │                           Resource Graph
+          │                                  │
+          └──────────────┬───────────────────┘
+                         ↓
+                 Context Resolution
+                         ↓
+                  Domain Lens(es)
+                         ↓
+                  Decision Skill
+             what should change and why
+                         ↓
+                Capability Routing
+             how to build/operate/verify
+                         ↓
+                  Bound Capability
+      capability + resource + evidence + permission scope
+                         ↓
+          Implementation / Verification Capability
+                         ↓
+               Reviewable Local Artifact
+                         ↓
+               Validation / Human Gate
+                         ↓
+               Runtime Kernel Boundary
+    Event Log / Skill Registry / Tool Pipeline
+    Guard / Approval / Sandbox / Persistence
+                         ↓
+             Independently Authorized Execution
+                         ↓
+               Loop Engineering Control
+          Observe → Decide → Verify → Reconcile
+             ↑                         ↓
+             └──────── Learn ──────────┘
+                         ↓
+             terminal: done/escalated/failed
+                         ↓
+      Incident / Runbook / ADR or Policy candidate / Eval
+                         ↓
+                      Next Loop
 ```
 
 ## Shared core
 
-The core owns contracts that should not vary by model, provider or discipline: progressive context loading, service/dependency model, evidence/provenance, ADR/incident knowledge, domain profiles, change/ticket contracts, capability source trust, loop state and provider-neutral eval infrastructure.
+The core owns contracts that should not vary by model, provider or discipline: progressive context loading, service/dependency model, evidence/provenance, ADR/incident knowledge, domain profiles, change/ticket contracts, capability source trust, environment/resource binding, loop state and provider-neutral eval infrastructure.
+
+## Environment discovery and resource graph
+
+`environment/` defines the provider-neutral layer between live infrastructure and task context.
+
+Discovery adapters may inspect cloud, Kubernetes, CI/CD, observability, cost and security systems in read-only mode and normalize discovered resources into `schemas/resource-graph.schema.json`. A Resource Graph records resources, typed relationships and discovery provenance.
+
+Discovery is not durable organizational truth and is not automatically a Loop verified fact. It may enrich current context while Architecture, ADRs, Policies and Service Catalog remain protected sources of truth.
+
+A **Bound Capability** combines an existing capability with explicit resource ids, evidence sources and permission scope. Binding may narrow authority but must never increase it. A third-party `reference_only` capability remains non-executable even when bound to a real production resource.
+
+## Evidence adapters
+
+Provider-specific operational data enters through `adapters/evidence/`.
+
+```text
+Provider API → read-only adapter → adapter result → normalization → Evidence → independent verification
+```
+
+Adapter results require provenance and observation time. They may be useful current evidence, but the adapter and model cannot self-promote observations into Loop `verified_facts`.
 
 ## Domain, Decision, Capability and Loop
 
@@ -51,6 +81,7 @@ These layers have different responsibilities:
 Domain      → which engineering questions and constraints matter
 Decision    → what should be done and why
 Capability  → how to implement or verify using technology-specific knowledge
+Binding     → where the capability applies, with which evidence and permission scope
 Runtime     → how model context, Skills, tools, policy, approval and durable execution events are mediated
 Loop        → when to repeat, verify, escalate, stop and learn
 ```
@@ -96,6 +127,10 @@ Runtime plugins/providers may vary model adapters, persistence backends, tool im
 
 Runtime events answer what the Agent actually saw/requested/executed. They are not automatically engineering truth. Environment/tool/human/test verification is still required before a claim enters Loop `verified_facts`.
 
+## Scenario evaluation
+
+`evals/scenarios/` holds infrastructure scenarios with explicit ground truth, required evidence, red herrings, prohibited actions, expected behavior and success conditions. These scenarios are intended for future live runners and paired Skill/Context experiments, while schema validation keeps the scenario contract deterministic in CI.
+
 ## Loop state
 
 Loop state is explicit outside agent prose and is updated only with independently verified facts. A successful condition can remain a regression obligation in later iterations.
@@ -108,8 +143,8 @@ The default harness may analyze, design, generate code/config/pipelines/runbooks
 
 ## Agent and tool adapters
 
-Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud/runtime/observability/delivery/cost systems are optional evidence adapters. Jira/Linear workflow actions use MCP. External Skill libraries are optional capability references. Tool output must be normalized before it is treated as evidence.
+Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud/runtime/observability/delivery/cost systems are optional discovery and evidence adapters. Jira/Linear workflow actions use MCP. External Skill libraries are optional capability references. Tool output must be normalized before it is treated as evidence.
 
 Future execution adapters should implement the contracts under `runtime/` instead of bypassing them with direct model-to-provider mutation.
 
-See `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
+See `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
