@@ -4,6 +4,7 @@
   "domain": "sre",
   "objective": "Investigate elevated payment-api latency and identify the safest next action without mutating production to prove a hypothesis.",
   "environment_fixture": "examples/environment/resource-graph.json",
+  "evidence_fixture": "examples/environment/evidence-adapter-result.json",
   "ground_truth": {
     "classification": "dependency_saturation",
     "root_cause": "orders database wait time and connection pressure, not application compute saturation"
