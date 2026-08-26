@@ -57,7 +57,7 @@ Link to canonical detailed docs
 
 rather than four independent copies of every schema, Skill and policy.
 
-## Contribution
+## Contribution and review
 
 Translation fixes are valid contributions. A translation PR should:
 
@@ -66,5 +66,7 @@ Translation fixes are valid contributions. A translation PR should:
 3. never weaken safety or authorization language;
 4. update all affected entry documents when the public CLI or status changes;
 5. pass `python scripts/check_localization.py` or `./harness validate`.
+
+CI checks structural/semantic parity markers, but it cannot guarantee natural language quality. Japanese and Simplified Chinese entry documents should therefore be reviewed by fluent or native-speaking contributors as the community grows; Korean should follow the same review standard when external contributors are available.
 
 A no-op translation review is useful when the localized document already matches the canonical meaning.
