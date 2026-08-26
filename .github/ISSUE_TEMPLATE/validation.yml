@@ -1,5 +1,5 @@
 name: Agent validation run
-about: Share a reproducible run against a harness scenario
+description: Share a reproducible run against a harness scenario
 title: "[Validation] "
 body:
   - type: markdown
