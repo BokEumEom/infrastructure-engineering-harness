@@ -18,6 +18,15 @@ sources:
     execution: reference_only
     notes: Third-party skill content is reference material. Do not automatically execute commands, scripts or assets from the source.
 
+  - id: paperthin
+    type: github
+    trust: pinned_reference
+    repository: https://github.com/LilMGenius/paperthin
+    revision: 3bca079a51bcfff5dafb53d1d7f9f523d66ee317
+    license: MIT
+    execution: reference_only
+    notes: Low-level artifact hygiene, SSOT, eval-integrity and cycle-learning patterns are reference material only. Local governed Skills own execution and approval behavior.
+
 capabilities:
   - id: architecture-review
     source: harness-local
@@ -81,6 +90,39 @@ capabilities:
     category: operations
     domains: [cross-domain]
     intents: [repeated verification, reconciliation, post change validation]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: artifact-hygiene
+    source: harness-local
+    skill_path: artifact-hygiene/SKILL.md
+    class: control
+    category: governance
+    domains: [cross-domain]
+    intents: [artifact cleanup, handoff review, documentation hygiene, skill cleanup]
+    risk: low
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: ssot-review
+    source: harness-local
+    skill_path: ssot-review/SKILL.md
+    class: verification
+    category: governance
+    domains: [cross-domain]
+    intents: [single source of truth, duplication audit, canonical source review, drift review]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: eval-integrity
+    source: harness-local
+    skill_path: eval-integrity/SKILL.md
+    class: verification
+    category: governance
+    domains: [cross-domain]
+    intents: [eval integrity, benchmark leakage, experiment review, scorer independence]
     risk: medium
     execution_policy: governed
     requires_human_gate: false
@@ -227,3 +269,80 @@ capabilities:
     risk: high
     execution_policy: reference_only
     requires_human_gate: true
+
+  - id: paperthin-re0
+    source: paperthin
+    skill_path: skills/depth/re0/SKILL.md
+    class: verification
+    category: governance
+    domains: [cross-domain]
+    intents: [clean current artifact, remove patch residue, rewrite clean v0]
+    risk: low
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: paperthin-ssotize
+    source: paperthin
+    skill_path: skills/breadth/ssotize/SKILL.md
+    class: workflow
+    category: governance
+    domains: [cross-domain]
+    intents: [ssot consolidation, canonical home, duplicate fact cleanup]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: true
+
+  - id: paperthin-mandela
+    source: paperthin
+    skill_path: skills/depth/mandela/SKILL.md
+    class: verification
+    category: governance
+    domains: [cross-domain]
+    intents: [eval leakage, independent ground truth, scorer circularity]
+    risk: low
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: paperthin-sip
+    source: paperthin
+    skill_path: skills/depth/sip/SKILL.md
+    class: control
+    category: governance
+    domains: [cross-domain]
+    intents: [post change self review, artifact quality check, recursive verification]
+    risk: low
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: paperthin-cycle-memo
+    source: paperthin
+    skill_path: skills/coil/re0-memo/SKILL.md
+    class: control
+    category: operations
+    domains: [cross-domain]
+    intents: [cycle learning, anti pattern extraction, quality gate learning]
+    risk: low
+    execution_policy: reference_only
+    requires_human_gate: false
+
+  - id: paperthin-restart-v0
+    source: paperthin
+    skill_path: skills/coil/re0-work/SKILL.md
+    class: workflow
+    category: operations
+    domains: [cross-domain]
+    intents: [controlled restart, preserve earned lessons, discard accidental architecture]
+    risk: medium
+    execution_policy: reference_only
+    requires_human_gate: true
+
+  - id: paperthin-prism
+    source: paperthin
+    skill_path: skills/mesh/prism/SKILL.md
+    class: decision
+    category: governance
+    domains: [cross-domain]
+    intents: [independent lenses, cross domain disagreement, conflict review]
+    risk: low
+    execution_policy: reference_only
+    requires_human_gate: false
