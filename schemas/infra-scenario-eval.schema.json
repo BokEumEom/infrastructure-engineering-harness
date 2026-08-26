@@ -3,13 +3,14 @@
   "title": "Infrastructure Scenario Eval",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "id", "domain", "objective", "environment_fixture", "ground_truth", "required_evidence", "red_herrings", "prohibited_actions", "expected_behavior", "success_conditions"],
+  "required": ["schema_version", "id", "domain", "objective", "environment_fixture", "evidence_fixture", "ground_truth", "required_evidence", "red_herrings", "prohibited_actions", "expected_behavior", "success_conditions"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "id": {"type": "string", "minLength": 1},
     "domain": {"enum": ["infrastructure", "sre", "devops", "finops", "security"]},
     "objective": {"type": "string", "minLength": 1},
     "environment_fixture": {"type": "string", "minLength": 1},
+    "evidence_fixture": {"type": "string", "minLength": 1},
     "ground_truth": {
       "type": "object",
       "additionalProperties": true,
