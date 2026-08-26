@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Contributor-facing CLI for Infrastructure Engineering Harness.
+
+The CLI intentionally hides implementation details from the quickstart. Python remains
+an internal runtime for the current Research Preview, while users interact with
+`./harness` (or `harness.cmd` on Windows).
+"""
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parent
+DEFAULT_CONTEXT = ROOT / "examples" / ".infra-context"
+DEFAULT_SCENARIO = ROOT / "evals" / "scenarios" / "sre-dependency-saturation.json"
+
+
+def _run(label: str, args: list[str], *, quiet: bool = False) -> bool:
+    if not quiet:
+        print(f"\n→ {label}")
+    result = subprocess.run(args, cwd=ROOT, text=True, capture_output=True)
+    if result.returncode == 0:
+        if not quiet and result.stdout.strip():
+            print(result.stdout.strip())
+        if not quiet:
+            print(f"✓ {label}")
+        return True
+
+    print(f"✗ {label}")
+    if result.stdout.strip():
+        print(result.stdout.strip())
+    if result.stderr.strip():
+        print(result.stderr.strip(), file=sys.stderr)
+    return False
+
+
+def _python(*parts: str) -> list[str]:
+    return [sys.executable, *parts]
+
+
+def _deps_ready() -> bool:
+    return all(importlib.util.find_spec(name) is not None for name in ("yaml", "jsonschema"))
+
+
+def command_setup(_: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Harness · setup")
+    print("Installing the Research Preview dependencies into the current Python environment.")
+    ok = _run(
+        "install dependencies",
+        _python("-m", "pip", "install", "-r", str(ROOT / "requirements.txt")),
+    )
+    if ok:
+        print("\n✓ Ready. Run: ./harness demo")
+    return 0 if ok else 1
+
+
+def _require_deps() -> bool:
+    if _deps_ready():
+        return True
+    print("Harness dependencies are not installed.")
+    print("Run `./harness setup` first (Windows: `harness.cmd setup`).")
+    return False
+
+
+def command_demo(_: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Harness · demo")
+    print("No cloud credentials or production access are used.")
+    if not _require_deps():
+        return 2
+
+    checks = [
+        (
+            "reference context",
+            _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT)),
+        ),
+        (
+            "SRE dependency-saturation scenario",
+            _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(DEFAULT_SCENARIO)),
+        ),
+    ]
+    passed = 0
+    for label, args in checks:
+        if _run(label, args):
+            passed += 1
+        else:
+            break
+
+    print("\n────────────────────────────────────────")
+    if passed == len(checks):
+        print("✓ DEMO PASS")
+        print("  Context contract: valid")
+        print("  Resource/Evidence scenario: consistent")
+        print("  Production mutation: none")
+        print("\nThis proves the deterministic harness plumbing, not live agent effectiveness.")
+        print("Next: add a scenario or submit a live validation report.")
+        return 0
+
+    print("✗ DEMO FAIL")
+    print("See the failing check above.")
+    return 1
+
+
+def command_scenario(args: argparse.Namespace) -> int:
+    if not _require_deps():
+        return 2
+    scenario = Path(args.path)
+    if not scenario.is_absolute():
+        scenario = ROOT / scenario
+    if not scenario.exists():
+        print(f"Scenario not found: {scenario}", file=sys.stderr)
+        return 2
+    return 0 if _run("scenario", _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(scenario))) else 1
+
+
+def command_validate(_: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Harness · validate")
+    if not _require_deps():
+        return 2
+
+    commands = [
+        ("context contracts", _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT))),
+        ("community contract", _python(str(ROOT / "scripts" / "check_community_contract.py"))),
+        ("capability registry", _python(str(ROOT / "scripts" / "validate_capability_registry.py"), str(ROOT / "capabilities" / "registry.yaml"))),
+        ("reference infrastructure scenario", _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(DEFAULT_SCENARIO))),
+        ("unit tests", _python("-m", "unittest", "discover", "-s", "tests")),
+    ]
+    for label, command in commands:
+        if not _run(label, command):
+            return 1
+    print("\n✓ HARNESS VALIDATION PASS")
+    return 0
+
+
+def command_doctor(_: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Harness · doctor")
+    print(f"Repository: {ROOT}")
+    print(f"Python runtime: {sys.version.split()[0]} ({sys.executable})")
+    print(f"Dependencies: {'ready' if _deps_ready() else 'missing'}")
+    print(f"Default scenario: {'found' if DEFAULT_SCENARIO.exists() else 'missing'}")
+    print(f"Platform: {os.name}")
+    return 0 if DEFAULT_SCENARIO.exists() else 1
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="harness",
+        description="Infrastructure Engineering Harness CLI (Research Preview)",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    setup = sub.add_parser("setup", help="install local Research Preview dependencies")
+    setup.set_defaults(func=command_setup)
+
+    demo = sub.add_parser("demo", help="run the credential-free 5-minute harness demo")
+    demo.set_defaults(func=command_demo)
+
+    validate = sub.add_parser("validate", help="run contributor-facing deterministic validation")
+    validate.set_defaults(func=command_validate)
+
+    scenario = sub.add_parser("scenario", help="validate one infrastructure scenario and its fixtures")
+    scenario.add_argument("path", help="scenario path relative to the repository or absolute")
+    scenario.set_defaults(func=command_scenario)
+
+    doctor = sub.add_parser("doctor", help="show local runtime and dependency status")
+    doctor.set_defaults(func=command_doctor)
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    return int(args.func(args))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
