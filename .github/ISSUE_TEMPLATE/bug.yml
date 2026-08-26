@@ -1,5 +1,5 @@
 name: Bug report
-about: Report a reproducible contract, validator, runtime or documentation bug
+description: Report a reproducible contract, validator, runtime or documentation bug
 title: "[Bug] "
 body:
   - type: input
