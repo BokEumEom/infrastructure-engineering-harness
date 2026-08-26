@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bound Capability",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "binding_id", "capability_id", "resource_graph_id", "resource_scope", "evidence_sources", "permission_scope", "execution_authority", "human_gate_required"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "binding_id": {"type": "string", "minLength": 1},
+    "capability_id": {"type": "string", "minLength": 1},
+    "resource_graph_id": {"type": "string", "minLength": 1},
+    "resource_scope": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "evidence_sources": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "permission_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "allowed_operations", "prohibited_operations"],
+      "properties": {
+        "mode": {"enum": ["read_only", "workflow", "change"]},
+        "allowed_operations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "prohibited_operations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "execution_authority": {"enum": ["none", "governed"]},
+    "human_gate_required": {"type": "boolean"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "notes": {"type": "string"}
+  }
+}

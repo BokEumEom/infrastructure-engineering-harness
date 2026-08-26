@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evidence Adapter Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "adapter_id", "observed_at", "collection_mode", "scope", "observations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "adapter_id": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "collection_mode": {"const": "read_only"},
+    "scope": {"type": "object", "additionalProperties": true},
+    "source_revision": {"type": "string"},
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source_type", "source", "component", "signal", "provenance"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "source_type": {"enum": ["metrics", "logs", "traces", "deployment", "delivery", "configuration", "runtime", "status", "slo", "cost", "usage", "business", "incident_history", "human"]},
+          "source": {"type": "string", "minLength": 1},
+          "component": {"type": "string", "minLength": 1},
+          "signal": {"type": "string", "minLength": 1},
+          "value": {},
+          "unit": {"type": "string"},
+          "status": {"type": "string"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "provenance": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["reference"],
+            "properties": {
+              "reference": {"type": "string", "minLength": 1},
+              "query": {"type": "string"},
+              "resource": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
