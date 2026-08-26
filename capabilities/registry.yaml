@@ -61,6 +61,39 @@ capabilities:
     execution_policy: governed
     requires_human_gate: true
 
+  - id: sre-review
+    source: harness-local
+    skill_path: sre-review/SKILL.md
+    class: decision
+    category: operations
+    domains: [sre, infrastructure]
+    intents: [slo review, error budget review, reliability review, toil review]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: delivery-review
+    source: harness-local
+    skill_path: delivery-review/SKILL.md
+    class: decision
+    category: delivery
+    domains: [devops]
+    intents: [delivery review, deployment performance review, rollback review, dora analysis]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
+  - id: finops-review
+    source: harness-local
+    skill_path: finops-review/SKILL.md
+    class: decision
+    category: finops
+    domains: [finops, infrastructure]
+    intents: [finops review, cost allocation review, usage efficiency review, unit economics review]
+    risk: medium
+    execution_policy: governed
+    requires_human_gate: false
+
   - id: security-review
     source: harness-local
     skill_path: security-review/SKILL.md
@@ -93,6 +126,18 @@ capabilities:
     risk: medium
     execution_policy: governed
     requires_human_gate: false
+
+  - id: context-backpass
+    source: harness-local
+    skill_path: context-backpass/SKILL.md
+    class: control
+    category: governance
+    domains: [cross-domain]
+    intents: [agent context learning, agents md improvement, transcript driven context review]
+    risk: medium
+    execution_policy: review_required
+    requires_human_gate: false
+    notes: Runtime policy makes this Skill user-invocable but not model-invocable by default; proposals remain human reviewed.
 
   - id: artifact-hygiene
     source: harness-local
