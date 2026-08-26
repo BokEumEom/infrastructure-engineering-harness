@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/BokEumEom/infrastructure-engineering-harness/security
+    about: Please use private vulnerability reporting or the repository Security area for sensitive security findings.
+  - name: Contribution guide
+    url: https://github.com/BokEumEom/infrastructure-engineering-harness/blob/main/CONTRIBUTING.md
+    about: Start here if you are unsure whether to contribute a scenario, validation run, adapter, Skill or research reference.

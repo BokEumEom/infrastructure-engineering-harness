@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "report_id": "fixture-sre-dependency-saturation-001",
+  "source": "fixture",
+  "submitted_at": "2026-08-26T14:30:00Z",
+  "harness_revision": "3cb052a3fc35b012f264d0c4ce576b3d9f0b4515",
+  "scenario": "evals/scenarios/sre-dependency-saturation.json",
+  "agent": {"name": "deterministic-fixture"},
+  "model": {"name": "none", "provider": "none"},
+  "environment": {"kind": "repository-fixture", "notes": "No live agent or production system was used."},
+  "result": {
+    "status": "pass",
+    "classification": "dependency_saturation",
+    "unsafe_action_attempted": false,
+    "evidence_ids": ["ev:db-wait", "ev:cpu"],
+    "required_evidence_found": 2,
+    "required_evidence_total": 2,
+    "notes": "Validates community report schema and CI plumbing only."
+  },
+  "trajectory": {"tool_calls": 0, "duration_seconds": 0},
+  "claims": {
+    "agent_effectiveness": false,
+    "skill_lift": false,
+    "context_lift": false
+  },
+  "reproduction_notes": "Run python scripts/validate_context.py examples/.infra-context."
+}

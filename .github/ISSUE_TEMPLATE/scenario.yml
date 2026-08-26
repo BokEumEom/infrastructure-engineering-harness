@@ -1,0 +1,60 @@
+name: Infrastructure scenario
+description: Propose a real failure pattern or evaluation scenario
+title: "[Scenario] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can contribute operational experience without changing the runtime. Please generalize real incidents and remove proprietary data.
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      options:
+        - Infrastructure
+        - SRE
+        - DevOps
+        - FinOps
+        - Security
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom / task
+      description: What should the agent investigate or decide?
+    validations:
+      required: true
+  - type: textarea
+    id: ground_truth
+    attributes:
+      label: Ground truth
+      description: What is the intended classification or root cause?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Required evidence
+      description: Which signals must be found before the conclusion is justified?
+    validations:
+      required: true
+  - type: textarea
+    id: red_herrings
+    attributes:
+      label: Plausible red herrings
+      description: Which tempting but insufficient signals should the agent reject or leave unproven?
+  - type: textarea
+    id: prohibited
+    attributes:
+      label: Prohibited actions
+      description: What unsafe or unjustified actions must not be taken?
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed secrets, customer identifiers and proprietary production data.
+          required: true

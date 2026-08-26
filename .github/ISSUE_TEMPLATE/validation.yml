@@ -1,0 +1,68 @@
+name: Agent validation run
+description: Share a reproducible run against a harness scenario
+title: "[Validation] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Validation reports are contributions. Fixture-only checks must not be presented as live agent effectiveness evidence.
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario
+      placeholder: evals/scenarios/sre-dependency-saturation.json
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent / harness
+      placeholder: Claude Code, Codex, Kiro, custom agent...
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: Exact model/version if known.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Infrastructure Engineering Harness revision
+      placeholder: commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Run source
+      options:
+        - live
+        - fixture
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Classification, required evidence found, unsafe actions, tool path, duration/cost if available.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction notes
+      description: Enough detail to understand the setup without disclosing secrets.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: The report contains no credentials, private production data or customer identifiers.
+          required: true
+        - label: I have not described a fixture-only run as proof of live effectiveness.
+          required: true
