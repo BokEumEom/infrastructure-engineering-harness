@@ -1,85 +1,93 @@
 # Loop Engineering
 
-Loop Engineering is the control layer above domain Skills.
+Loop Engineering is the control layer for long-running infrastructure work.
+
+The default model is **adaptive**: a Loop defines the goal, state, hard constraints, terminal conditions, budgets, and useful actions. It does not force a capable model through a static reasoning sequence.
 
 ```text
-Knowledge + Evidence
-        ↓
-  Context Pack + Gaps
-        ↓
-      Skill
-        ↓
-       Loop
- Observe → Decide → Act/Propose → Verify
-   ↑                           ↓
-   └────── Reconcile / Learn ─┘
+Goal + External State + Constraints
+              ↓
+      Model Judgment
+              ↓
+       Next useful action
+              ↓
+ Runtime / authorization / evidence boundary
+              ↓
+     Independent observation
+              ↓
+          Reconcile
+              ↓
+ continue / wait / verify / escalate / fail / done
 ```
 
-A **Skill** defines what an agent can do. A **Loop** defines when to invoke skills, what must be independently verified, when to stop, when to escalate, and what learning must be written back.
+A **Skill** provides optional task-specific guidance. A **Loop** decides whether the work remains within authority and budget, what is independently verified, and whether terminal conditions are actually satisfied.
 
 ## Invariants
 
-1. **External state** — loop state is explicit and lives outside model prose.
+1. **External state** — Loop state is explicit and lives outside model prose.
 2. **Verified facts only** — `verified_facts` may be updated only from environment, tool, human, or test evidence.
 3. **No self-certified done** — an agent statement is never sufficient to satisfy a terminal condition.
-4. **Bounded execution** — every loop has iteration, duration, and no-progress budgets.
-5. **Regression obligations** — previously established guarantees remain obligations in later iterations.
+4. **Bounded execution** — every Loop has iteration, duration, and no-progress budgets.
+5. **Regression obligations** — previously established guarantees may remain obligations.
 6. **Human gates** — production mutation, authorization changes, destructive actions, and financial commitments remain independently authorized.
-7. **Learning is explicit** — incidents, runbooks, measurements, policies, ADR candidates, and eval candidates are declared writebacks.
-8. **Epistemic classes stay separate** — Observation, Verified Fact, Engineering Assessment, Learning Candidate, and Durable Knowledge are never silently collapsed into one another.
+7. **Learning is explicit** — durable learning is proposed as governed writeback, not silently promoted.
+8. **Epistemic classes stay separate** — Observation, Verified Fact, Engineering Assessment, Learning Candidate, and Durable Knowledge are not collapsed.
+9. **Reasoning order is not a hard invariant** — investigation/checkpoint order is left to model judgment unless the real process requires sequencing.
 
-## Reference loops
+## Adaptive vs sequential
 
-- `incident-response` — investigate → verify → mitigate/propose → verify recovery → learn
-- `reliability-improvement` — baseline SLO/error budget → prioritize → track → remeasure → learn
-- `delivery-improvement` — baseline delivery → identify constraint → improve → remeasure → learn
-- `finops-optimization` — inform → optimize → track/operate → measure realized value → learn
-- `change-validation` — precheck → approval → external execution → post-verify → regression check → learn
+### Adaptive
 
-## Autonomy levels
+Use for reasoning-heavy work such as incident investigation where the best next check depends on current evidence.
 
-- `observe` — read, analyze, verify, report.
-- `workflow` — may create/update workflow artifacts such as tickets when policy permits; no production mutation.
-- `change` — can orchestrate a change workflow but execution is delegated to an independently authorized system and human gates apply.
+An adaptive Loop exposes `actions` with `when_useful` hints. They are affordances, not a required order.
+
+### Sequential
+
+Use when ordering itself is part of the engineering contract: for example a regulated rollout, a migration with irreversible phase boundaries, or a reproducible operational procedure.
+
+Sequential Loops may continue to use `steps`.
+
+## Context
+
+Adaptive Loops should prefer pull-based context:
+
+```text
+minimal seed
+    ↓
+information need
+    ↓
+bounded retrieval
+    ↓
+freshness / permission / authority filter
+    ↓
+updated Context Pack
+```
+
+The model may request more context, but retrieval cannot expand execution authority.
 
 ## Runtime contract
 
 Loop definitions conform to `schemas/loop-spec.schema.json`. Execution state conforms to `schemas/loop-state.schema.json`. Terminal output conforms to `schemas/loop-result.schema.json`.
 
-A runtime should execute **one iteration at a time**: load the Loop Spec and external state, assemble only the current step's bounded Context Pack, invoke the current Skill/action, collect independent observations, update verified facts, check evidence gaps, regression obligations and budgets, then continue/wait/escalate/fail/done.
+The reference runtime executes one reconciliation iteration at a time. It does not prescribe the model's reasoning path.
 
-`loops/runtime.py` contains deterministic reference helpers for state transitions, verified facts, progress budgets, and regression status. It is intentionally not a production workflow engine.
+## Reference loops
+
+- `incident-response` — adaptive evidence/mitigation/recovery reconciliation
+- `reliability-improvement`
+- `delivery-improvement`
+- `finops-optimization`
+- `change-validation`
+
+Existing reference Loops may be sequential until migrated. Sequential is supported, but no longer assumed to be inherently better.
 
 ## Done means verified
 
-An agent statement is not a completion check. Success criteria must be independently verified, regression obligations must pass, required human gates must be clear, and the loop must remain within its budget.
+Success criteria must be independently verified, required regression obligations must pass, required human gates must be clear, and the Loop must remain within budget.
 
 ## Learning boundary
 
-A terminal or abandoned Loop may emit one or more `knowledge-candidate` proposals. These proposals preserve source run ids, supporting/contradicting evidence, epistemic class and governance owner.
+A terminal or abandoned Loop may emit Knowledge Candidates. A candidate never becomes authoritative merely because another agent retrieves it.
 
-```text
-Loop Result
-    ↓
-Learning Candidate
-    ↓
-Consolidation
-    ↓
-Review / Promote
-    ↓
-Durable Knowledge
-    ↓
-Next Loop
-```
-
-Loop state may consume a reviewed knowledge artifact or a clearly marked provisional candidate through a Context Pack, but a candidate never becomes authoritative merely because another agent retrieved it.
-
-See `docs/KNOWLEDGE-CONSOLIDATION.md` and `schemas/knowledge-candidate.schema.json`.
-
-## Evaluation
-
-Loop evals judge the execution trace, not just a final classification.
-
-```bash
-python scripts/check_loop_eval.py evals/loops/standard.json incident-recovered examples/eval-output/loop-incident-recovered.json
-```
+See `docs/HARNESS-UNHOBBLING.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, and `schemas/knowledge-candidate.schema.json`.
