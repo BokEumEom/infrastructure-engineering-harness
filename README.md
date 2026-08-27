@@ -112,6 +112,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ./harness demo
 ./harness validate
 ./harness scenario evals/scenarios/sre-dependency-saturation.json
+# Harness Lift is included in ./harness validate
 ./harness doctor
 ./harness setup
 ```
