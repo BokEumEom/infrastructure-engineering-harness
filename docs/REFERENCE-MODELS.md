@@ -10,6 +10,8 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | NVIDIA ACES / SkillEvaluator | Paired live evaluation with and without a Skill, trajectory grading and Skill Lift |
 | Kun Chen / backpass | Transcript-driven, budgeted, evidence-gated improvement of project-level agent memory |
 | Paperthin | Artifact restraint, clean-current-state rewrites, SSOT repair, eval independence, earned reuse, and cross-lens disagreement |
+| gstack | Workflow-composed Agent UX, progressive Skill routing, chained artifacts, review/test/ship/reflect sequencing, and cross-session learning surface |
+| GBrain | Persistent agent memory, bounded context packs, explicit gaps, hot/cold knowledge separation, fact/opinion distinction, synthesis, and governed retrieval surfaces |
 | IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
 | LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
 | LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
@@ -72,6 +74,46 @@ The external `prism` pattern also reinforces an existing cross-domain rule: reli
 
 https://github.com/LilMGenius/paperthin
 
+## gstack
+
+gstack is used as a **workflow composition and Agent UX reference**, not as an infrastructure authority model. Its most relevant idea is that Skills are experienced as a connected process rather than an unstructured menu: upstream thinking/planning artifacts feed downstream review, QA, shipping and reflection.
+
+The harness adopts this in a provider-neutral form:
+
+- simple user intents route into Domain + Loop + Skill composition;
+- users do not need to manually select every internal Skill;
+- workflow steps pass explicit artifacts/evidence forward;
+- review, verification and reflection remain distinct stages;
+- the simple workflow surface does not bypass internal policy, human gates or independent production authorization.
+
+This is documented in `docs/WORKFLOW-SURFACE.md`. Unlike gstack's software-shipping focus, this harness keeps infrastructure outcome verification and production control-plane authorization as independent hard boundaries.
+
+https://github.com/garrytan/gstack
+
+## GBrain
+
+GBrain is used as a **persistent memory, retrieval, context-pack and knowledge-consolidation reference**. Particularly reusable ideas are bounded context assembly, explicit knowledge gaps, cross-session persistence, and separating fast/recent memory from more durable consolidated knowledge.
+
+The harness translates those ideas into a stricter engineering epistemic model:
+
+```text
+Observation
+    ↓ independent verification
+Verified Fact
+    ↓ engineering reasoning
+Engineering Assessment
+    ↓ outcome evidence
+Learning Candidate
+    ↓ governance
+Durable Organizational Knowledge
+```
+
+The harness therefore does **not** import a generic memory item directly as engineering truth. It keeps observations, verified facts, assessments and durable organizational knowledge separate; confidence is never a substitute for verification. `schemas/context-pack.schema.json` defines bounded task context with freshness and evidence gaps, while `schemas/knowledge-candidate.schema.json` defines the review boundary for learned material.
+
+GBrain's distinction between hot facts and cold/retrospective knowledge also motivates explicit consolidation after a Loop rather than uncontrolled growth of always-loaded context. The resulting model is documented in `docs/KNOWLEDGE-CONSOLIDATION.md`.
+
+https://github.com/garrytan/gbrain
+
 ## IBM Loop Engineering
 
 IBM describes loop engineering as designing agentic workflows that iteratively guide agents through goals, action, observation and adjustment. This harness adopts bounded loops but adds infrastructure-specific reconciliation, independent authorization and provenance.
@@ -126,6 +168,8 @@ Observe Actual State
        ↓
 Resolve Organizational Context
        ↓
+Bounded Context Pack + Evidence Gaps
+       ↓
 Domain Skill(s)
        ↓
 Decision / Proposal
@@ -145,7 +189,13 @@ Reconcile → continue or terminal
                        ↓
                       Learn
                        ↓
- Incident / Runbook / ADR or Policy candidate / Measurement / Eval / Negative corpus
+                Learning Candidate
+                       ↓
+          Consolidate / Contradiction Check
+                       ↓
+      Reviewed Incident / Runbook / ADR or Policy / Eval
+                       ↓
+              Governed Knowledge
                        ↓
                     Next Loop
 ```
