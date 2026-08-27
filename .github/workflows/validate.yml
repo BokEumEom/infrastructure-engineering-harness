@@ -33,5 +33,7 @@ jobs:
       - run: python scripts/check_skill_lift.py skill-evals/policy.yaml /tmp/incident-analysis-skill-lift.json
       - run: python scripts/score_context_lift.py agent-context/fixtures/agents-context.paired.json /tmp/agents-context-lift.json
       - run: python scripts/check_context_lift.py agent-context/policy.yaml /tmp/agents-context-lift.json
+      - run: python scripts/score_harness_lift.py harness-evals/fixtures/plumbing.triple.json /tmp/harness-lift.json
+      - run: python scripts/check_harness_lift.py harness-evals/policy.yaml /tmp/harness-lift.json
       - run: python -m unittest discover -s tests
       - run: python -m compileall scripts hooks adapters environment loops runtime
