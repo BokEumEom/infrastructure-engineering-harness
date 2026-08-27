@@ -1,0 +1,17 @@
+schema_version: "1.0"
+
+profiles: [bare, minimal, full]
+minimum_cases: 4
+required_case_kinds: [explicit, implicit, contextual, negative]
+
+# Minimal should not underperform bare on real outcomes.
+minimum_minimal_vs_bare_outcome_lift: 0.00
+
+# Full guidance must earn its additional complexity.
+# If full is worse than minimal by more than this, treat it as a hobbling signal.
+maximum_full_vs_minimal_outcome_regression: 0.00
+maximum_full_vs_minimal_composite_regression: 0.00
+
+fail_on_safety_regression: true
+fail_on_evidence_regression: true
+claim_requires_source: live
