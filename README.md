@@ -4,7 +4,7 @@
 
 A provider-neutral, cross-agent harness for turning infrastructure knowledge and current evidence into reviewable engineering decisions and governed implementation across **Infrastructure Engineering / SRE / DevOps / FinOps / Security**.
 
-> **Knowledge → Context Pack → Decision Skill → Capability → Loop → Verified Outcome → Learning Candidate → Governed Knowledge → Next Loop**
+> **Knowledge + Environment → Minimal Context → Model Judgment → Action → Harness Enforcement → Verified Outcome → Learning**
 
 > **Status: Research Preview.** Core contracts, deterministic scenarios, evaluation plumbing, and the Harness CLI are available now. Live adapters, persistent runtime, and controlled execution remain experimental.
 
@@ -43,45 +43,39 @@ Agents can already generate IaC, configuration, scripts, pipelines, and runbooks
 ```text
 Organizational Knowledge + Live Environment
                     ↓
-              Resource Graph
+              Minimal Context
                     ↓
-             Context Resolution
+              Model Judgment
+                ↙         ↘
+       Pull Context       Use Tools/Skills
+                ↘         ↙
+                   Action
                     ↓
-        Bounded Context Pack + Gaps
+            Harness Enforcement
+     Evidence / State / Permission / Verification
                     ↓
-                Domain Lens
+             Verified Outcome
                     ↓
-              Decision Skill
-                    ↓
-             Capability Routing
-                    ↓
-              Bound Capability
-                    ↓
-               Runtime Kernel
-                    ↓
-        Authorized External Execution
-                    ↓
-           Independent Verification
-                    ↓
-            Engineering Loop + Learn
+                  Learn
 ```
 
 ## Core building blocks
 
-- **Workflow Surface** — simple incident / reliability / delivery / FinOps / security / change / learn entry intents that route into the rigorous internal control plane
-- **Context Pack** — budgeted task-specific bundle of durable knowledge, live evidence, freshness metadata, and explicit evidence gaps
-- **Domain** — Infrastructure / SRE / DevOps / FinOps / Security engineering lens
-- **Decision Skill** — decides what should be done and why
+- **Minimal Agent Contract** — small always-loaded set of truth, authorization, and verified-completion invariants
+- **Workflow Surface** — user intent entrypoints that suggest useful workflows without forcing a reasoning path
+- **Context Pack** — pull-oriented, budgeted task context with provenance, freshness, and explicit evidence gaps
+- **Model Judgment** — the model chooses the next useful reasoning/action path within hard boundaries
+- **Domain / Skill** — optional progressive guidance loaded when it materially helps
 - **Capability** — selects implementation or verification knowledge
 - **Resource Graph** — provider-neutral model of real resources and dependencies
 - **Bound Capability** — Capability + Resource Scope + Permission Scope + Evidence Source
 - **Runtime Kernel** — reference Session/Event Log, Tool Pipeline, Guard, Approval, and Sandbox runtime
-- **Engineering Loop** — Observe → Decide → Act/Propose → Verify → Learn
+- **Engineering Loop** — goal + external state + hard constraints + terminal conditions; adaptive by default where reasoning order is not itself a requirement
 - **Knowledge Consolidation** — separates Observation → Verified Fact → Engineering Assessment → Learning Candidate → governed Durable Knowledge
-- **Skill Lift / Context Lift** — paired evaluation of actual Skill / Context contribution
+- **Skill Lift / Context Lift / Harness Lift** — paired/triple evaluation of whether guidance actually helps or hobbles the model
 - **Artifact Reflex** — Paperthin-inspired artifact hygiene, SSOT, and eval-integrity rules
 
-Detailed architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md), [docs/WORKFLOW-SURFACE.md](docs/WORKFLOW-SURFACE.md), [docs/KNOWLEDGE-CONSOLIDATION.md](docs/KNOWLEDGE-CONSOLIDATION.md), [loops/README.md](loops/README.md), and [docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md).
+Detailed architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/HARNESS-UNHOBBLING.md](docs/HARNESS-UNHOBBLING.md), [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md), [docs/WORKFLOW-SURFACE.md](docs/WORKFLOW-SURFACE.md), [docs/KNOWLEDGE-CONSOLIDATION.md](docs/KNOWLEDGE-CONSOLIDATION.md), [loops/README.md](loops/README.md), and [docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md).
 
 ## Safety model
 
@@ -91,7 +85,8 @@ Detailed architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [do
 - Third-party `reference_only` Skills do not gain execution authority.
 - Production mutation, destructive actions, permission expansion, and financial commitments require independent authorization.
 - Fixture validation and live-agent effectiveness are explicitly separated.
-- The model does not own truth, completion, authorization, or the production control plane.
+- Hard safety/truth constraints should be implemented in runtime/schema/policy boundaries rather than duplicated as prompt prose.
+- The model may own reasoning and next-action judgment; it does not own independent truth, authorization, or the production control plane.
 
 ## External references
 
@@ -106,7 +101,7 @@ A useful contribution can be operational knowledge or validation evidence:
 - turn a sanitized real-world failure pattern into a [Scenario](contrib/scenarios/README.md);
 - run an agent and submit a reproducible [Validation Report](validation-reports/README.md);
 - add a read-only Kubernetes / Prometheus / cloud adapter;
-- add a Skill Eval or negative case;
+- add a Skill Eval, Harness Lift case, or negative case;
 - propose a well-grounded Reference Model.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
