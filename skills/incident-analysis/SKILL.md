@@ -1,63 +1,49 @@
 ---
 name: incident-analysis
-description: Analyze infrastructure incidents using provider-neutral project context, evidence provenance, incident history, runbooks, and policy. Use for latency, errors, saturation, availability, deployment, dependency, network, storage, or identity failures.
+description: Analyze infrastructure incidents using provider-neutral project context and current evidence. Use for latency, errors, saturation, availability, deployment, dependency, network, storage, or identity failures.
 ---
 
 # Infrastructure Incident Analysis
 
-Analyze incidents using evidence before recommending changes.
+## Goal
 
-## Context loading
+Produce the most defensible explanation of the incident and the safest useful next action.
 
-1. service catalog
-2. relevant architecture
-3. relevant production/security policy
-4. relevant incidents and runbooks
-5. ADRs only when remediation changes architecture or conflicts with a recorded decision
-6. optional live evidence normalized to `schemas/evidence.schema.json`
+Use your own engineering judgment about investigation order. Do not follow a fixed checklist when a different path is better supported by the evidence.
 
-Do not require a specific cloud, runtime, datastore, or observability vendor.
+## Requirements
 
-## Workflow
+- distinguish confirmed impact from assumptions;
+- cite material evidence and provenance; never invent current values;
+- consider meaningful competing explanations when uncertainty matters;
+- record evidence that supports and contradicts important hypotheses;
+- expose material unknowns and the smallest useful evidence needed next;
+- avoid production mutation as a way to test an unverified hypothesis;
+- if remediation may impact production, prepare/review the change behind the applicable authorization boundary;
+- do not claim recovery without current independent evidence.
 
-1. Identify affected service, criticality, impact and start time.
-2. Check recent deployment/configuration changes when evidence exists.
-3. Map critical dependencies.
-4. Gather service and dependency evidence.
-5. Generate multiple hypotheses.
-6. Rank them using supporting and contradicting evidence.
-7. Specify the minimum checks that can confirm/reject the leading hypothesis.
-8. Propose remediation only when evidence is sufficient.
-9. For production-impacting remediation, produce a change proposal rather than executing it.
+## Useful context
 
-## Required output
+Load only when relevant:
 
-- Impact: confirmed impact vs assumptions.
-- Evidence: material signals with provenance references; never invent values.
-- Hypotheses: ranked causes with supporting/contradicting evidence and confidence.
-- Verification: smallest checks needed to reduce uncertainty.
-- Remediation: reversible actions with risk/blast radius.
-- Context used: context and evidence IDs that materially influenced the conclusion.
+- service/dependency information;
+- current telemetry, traces, logs, or provider state;
+- recent changes;
+- architecture/ADRs when the hypothesis or remediation depends on them;
+- incidents/runbooks when they materially reduce uncertainty;
+- production/security policy when an action or boundary is relevant.
 
-## Loop-compatible handoff
+## Output contract
 
-When invoked by `loop-engineering`, also emit:
+Return the substance needed by the task, and when used in a Loop make these fields explicit:
 
-```yaml
-loop_handoff:
-  event: <stable event such as impact_confirmed or hypothesis_verified>
-  outcome: progress | no_progress | blocked | verified | failed | escalated
-  evidence_refs: []
-  verified_conditions: []
-  assumptions: []
-  next_action:
-    type: skill | action | wait | human_gate | terminal
-    target: <next target>
-  writeback_candidates: []
-```
+- impact — confirmed vs assumed;
+- assessment — leading explanation(s), confidence, and contradiction;
+- evidence — identifiers/provenance for material claims;
+- unknowns — evidence gaps that affect the decision;
+- next action — the highest-value safe next step;
+- remediation — only when evidence is sufficient, with risk/blast radius as applicable.
 
-The handoff is a control signal, not authoritative evidence. Do not place an assumption in `verified_conditions`, and do not declare incident recovery without an independent recovery check.
+## Loop handoff
 
-## Safety
-
-Do not directly execute production mutations as part of incident analysis.
+When invoked by Loop Engineering, emit the shared `loop_handoff` contract. The handoff is a control signal, not authoritative evidence. The model may select the next useful action; the Loop/Runtime decides whether authority, evidence, budget, regression, or terminal conditions permit it.
