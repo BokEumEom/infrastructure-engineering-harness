@@ -25,7 +25,7 @@ Treat `AGENTS.md` as a bounded behavioral control surface. Analyze repeated sess
 3. Group repeated losses by rule or missing rule.
 4. Require verbatim evidence for every proposed edit.
 5. A new instruction requires at least two independent session IDs.
-6. Prefer modify/remove/extract-to-skill over append-only growth.
+6. Prefer delete/modify/extract-to-skill over append-only growth. A rule that duplicates Runtime enforcement or no longer improves strong models is a removal candidate.
 7. Keep the proposal within the configured token budget and edit limit.
 8. Produce a proposal conforming to `schemas/context-update-proposal.schema.json`.
 9. Require human review before any write.
@@ -42,7 +42,7 @@ Treat `AGENTS.md` as a bounded behavioral control surface. Analyze repeated sess
 
 ## Routing rule
 
-Broad, frequent, cross-task behavior belongs in `AGENTS.md`. Narrow behavior with a detectable trigger should be extracted to an appropriate Skill. Narrow behavior without repeated evidence should normally remain out of always-loaded context.
+Only broad, frequent, cross-task behavior that demonstrably benefits the agent belongs in `AGENTS.md`. Hard Runtime invariants do not need verbose prompt duplication. Narrow behavior with a detectable trigger should be extracted to a Skill. Compare materially different always-loaded surfaces with Context Lift and, when the whole Harness changes, Harness Lift.
 
 ## Output
 
