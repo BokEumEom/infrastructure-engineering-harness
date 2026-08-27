@@ -127,6 +127,8 @@ def command_validate(_: argparse.Namespace) -> int:
         ("localization contract", _python(str(ROOT / "scripts" / "check_localization.py"))),
         ("capability registry", _python(str(ROOT / "scripts" / "validate_capability_registry.py"), str(ROOT / "capabilities" / "registry.yaml"))),
         ("reference infrastructure scenario", _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(DEFAULT_SCENARIO))),
+        ("Harness Lift fixture", _python(str(ROOT / "scripts" / "score_harness_lift.py"), str(ROOT / "harness-evals" / "fixtures" / "plumbing.triple.json"), "/tmp/harness-lift.json")),
+        ("Harness Lift policy", _python(str(ROOT / "scripts" / "check_harness_lift.py"), str(ROOT / "harness-evals" / "policy.yaml"), "/tmp/harness-lift.json")),
         ("unit tests", _python("-m", "unittest", "discover", "-s", "tests")),
     ]
     for label, command in commands:

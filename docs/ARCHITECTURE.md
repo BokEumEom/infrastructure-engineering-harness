@@ -1,63 +1,38 @@
 # Architecture
 
-The harness separates durable knowledge, environment discovery, current evidence, bounded context assembly, engineering judgment, technology implementation knowledge, loop control, runtime execution mechanics, production execution, and governed knowledge consolidation.
+The harness separates durable knowledge, environment discovery, current evidence, bounded context retrieval, model judgment, optional domain/Skill guidance, runtime enforcement, production execution, and governed knowledge consolidation. Its core rule is: **constrain authority and truth, not intelligence**.
 
 ```text
 Durable Knowledge                 Live Environment
 Service Catalog / ADR / Policy    Cloud / K8s / CI / Observability
           │                                  │
-          │                         Read-only Discovery
-          │                                  ↓
-          │                           Resource Graph
-          │                                  │
           └──────────────┬───────────────────┘
                          ↓
-                 Context Resolution
+                  Minimal Seed Context
                          ↓
-                 Bounded Context Pack
-             knowledge + evidence + gaps
-                         ↓
-                  Domain Lens(es)
-                         ↓
-                  Decision Skill
-             what should change and why
-                         ↓
-                Capability Routing
-             how to build/operate/verify
-                         ↓
-                  Bound Capability
-      capability + resource + evidence + permission scope
-                         ↓
-          Implementation / Verification Capability
-                         ↓
-               Reviewable Local Artifact
-                         ↓
-               Validation / Human Gate
-                         ↓
-               Runtime Kernel Boundary
-    Event Log / Skill Registry / Tool Pipeline
-    Guard / Approval / Sandbox / Persistence
-                         ↓
-             Independently Authorized Execution
-                         ↓
-               Loop Engineering Control
-          Observe → Decide → Verify → Reconcile
-             ↑                         ↓
-             └──────── Learn ──────────┘
-                         ↓
-             terminal: done/escalated/failed
-                         ↓
+                    Model Judgment
+                  ↙                   ↘
+          Pull Context            Tools / Skills
+                  ↘                   ↙
+                         Action
+                           ↓
+                Runtime / Harness Boundary
+       Evidence / State / Guard / Approval / Permission
+                           ↓
+              Independently Authorized Execution
+                           ↓
+                Independent Verification
+                           ↓
+                    Reconciliation Loop
+        goal + constraints + terminal conditions + budget
+                           ↓
+                   Verified Outcome
+                           ↓
                   Learning Candidate
- Observation / Verified Fact / Assessment kept distinct
-                         ↓
+                           ↓
               Knowledge Consolidation
-        dedupe / contradiction / owner review
-                         ↓
- Incident / Runbook / ADR or Policy candidate / Eval
-                         ↓
-           Governed Durable Knowledge
-                         ↓
-                      Next Loop
+                           ↓
+                Governed Knowledge
 ```
 
 ## Shared core
@@ -86,9 +61,9 @@ Adapter results require provenance and observation time. They may be useful curr
 
 ## Context Pack and evidence gaps
 
-Context resolution should produce a bounded, task-specific Context Pack conforming to `schemas/context-pack.schema.json` instead of dumping all available knowledge into the model.
+Context Pack is a retrieval interface and materialized task context, not a prompt dump. Start from minimal seed context and let the model/runtime pull additional material when uncertainty or the task requires it.
 
-A Context Pack combines only the information required for the current workflow/Loop step:
+A Context Pack may combine only the information needed for the current decision:
 
 - authoritative or governed organizational knowledge;
 - current evidence and verified facts;
@@ -101,23 +76,22 @@ A missing signal is represented as a `gap`, not hidden behind confidence languag
 
 Context Pack assembly does not change authority. A provisional learning candidate remains provisional even when included in context, and stale evidence remains stale.
 
-## Domain, Decision, Capability and Loop
+## Model judgment, Domain, Skill, Capability and Loop
 
 These layers have different responsibilities:
 
 ```text
-Context Pack→ what bounded knowledge/evidence/gaps the current step may use
-Domain      → which engineering questions and constraints matter
-Decision    → what should be done and why
-Capability  → how to implement or verify using technology-specific knowledge
-Binding     → where the capability applies, with which evidence and permission scope
-Runtime     → how model context, Skills, tools, policy, approval and durable execution events are mediated
-Loop        → when to repeat, verify, escalate, stop and learn
+Model       → chooses the next useful reasoning/action path
+Context     → supplies bounded knowledge/evidence/gaps on demand
+Domain      → optional lens for relevant engineering constraints
+Skill       → optional task-specific guidance/interface
+Capability  → implementation or verification knowledge/tooling
+Binding     → narrows resource/evidence/permission scope
+Runtime     → enforces hard execution, approval, audit, and state rules
+Loop        → reconciles goal/state/constraints/terminal conditions
 ```
 
-The current domain lenses are Infrastructure, SRE, DevOps, FinOps and Security.
-
-Decision Skills remain provider-neutral. Capability Skills may be technology-specific. A technology-specific capability must not silently replace an Architecture/SRE/Security/FinOps decision.
+The current domain lenses are Infrastructure, SRE, DevOps, FinOps and Security. Domain and Skill guidance should be progressively disclosed rather than forced through a universal routing chain.
 
 ## Capability trust boundary
 
@@ -162,7 +136,7 @@ Runtime events answer what the Agent actually saw/requested/executed. They are n
 
 ## Loop state
 
-Loop state is explicit outside agent prose and is updated only with independently verified facts. A successful condition can remain a regression obligation in later iterations.
+Loop state is explicit outside agent prose and is updated only with independently verified facts. Adaptive Loops define goals, hard constraints, terminal conditions, budgets, and available actions while leaving next-action selection to model judgment. Sequential steps remain supported when ordering is itself an engineering requirement. A successful condition can remain a regression obligation in later iterations.
 
 Runtime state and Loop state are intentionally separate. Runtime state reconstructs agent execution; Loop state reconciles an engineering objective against independently verified world state.
 
@@ -204,4 +178,4 @@ Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud
 
 Future execution adapters should implement the contracts under `runtime/` instead of bypassing them with direct model-to-provider mutation.
 
-See `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `docs/WORKFLOW-SURFACE.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
+See `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `docs/HARNESS-UNHOBBLING.md`, `docs/WORKFLOW-SURFACE.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.

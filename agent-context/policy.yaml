@@ -2,7 +2,7 @@ schema_version: "1.0"
 
 memory:
   target: AGENTS.md
-  budget_tokens: 5000
+  budget_tokens: 1200
 
 evidence:
   min_sessions_for_new_rule: 2
@@ -32,4 +32,6 @@ protected_targets:
   - loops/
   - capabilities/
 
-# Transcript frequency or low usage must never be used to rewrite durable source-of-truth artifacts.
+# Always-loaded guidance is intentionally small. Prefer deletion or progressive
+# disclosure when a rule duplicates runtime enforcement or narrow Skill guidance.
+# Transcript frequency or low usage must never rewrite durable source-of-truth artifacts.

@@ -1,6 +1,6 @@
 # Agent Context Learning
 
-`AGENTS.md` is the always-loaded behavioral control surface for this harness. Treat it as a bounded, evidence-driven context artifact rather than an append-only notebook.
+`AGENTS.md` is the always-loaded behavioral control surface for this harness. Treat it as a minimal, evidence-driven context artifact rather than an append-only notebook. The target is not the largest useful prompt; it is the smallest always-loaded guidance that still improves real outcomes.
 
 The optimization loop is:
 
@@ -66,7 +66,7 @@ Rule IDs make transcript loss and proposals traceable without duplicating the fu
 
 Always-loaded context has a recurring cost. The default project budget is 5,000 estimated tokens, checked by `scripts/check_agents_contract.py` using a harness-neutral bytes/4 estimate. The budget is a guardrail, not a precise tokenizer measurement.
 
-At or above budget, additions should be zero-sum: rewrite, remove, or extract narrow procedures into a Skill rather than append indefinitely.
+The project budget is intentionally small. Additions should normally be zero-sum: rewrite, remove, or extract narrow procedures into a Skill rather than append. If a behavior is already enforced by Runtime/schema/policy, prefer deleting duplicate prompt prose.
 
 ## Context Lift
 
@@ -98,3 +98,5 @@ Loop Eval
 ```
 
 These are complementary regression layers, not substitutes for one another.
+
+Harness Lift adds a third question: does the richer Harness improve on a minimal Harness, or is it hobbling model judgment? See `harness-evals/README.md` and `docs/HARNESS-UNHOBBLING.md`.

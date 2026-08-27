@@ -1,54 +1,96 @@
 schema_version: '1.0'
 id: incident-response
-description: Investigate an incident, restore reliability, verify recovery, and capture durable learning.
+mode: adaptive
+description: Reconcile an incident toward restored and independently verified service reliability without prescribing a fixed investigation order.
 domains: [infrastructure, sre]
 autonomy: workflow
+
 trigger:
   types: [manual, alert, incident_event]
+
 goal:
-  objective: Identify the leading cause, restore service reliability, verify recovery from independent evidence, and capture learning.
-  success_criteria: [impact_confirmed, leading_hypothesis_verified, service_recovered]
+  objective: Restore service reliability, maintain authorization boundaries, and leave the incident state more certain than it started.
+  success_criteria:
+    - impact_resolved
+    - recovery_independently_verified
   desired_state:
     - service health is within agreed reliability objectives
-    - no unverified production mutation is performed
+    - material incident claims are evidence-backed
+    - no unverified or unauthorized production mutation is performed
+
 context:
-  load: [service_catalog, architecture, sre_profile, production_policy, recent_incidents, runbooks, current_evidence]
-steps:
-  - id: observe
-    purpose: Confirm impact and collect current service/dependency evidence.
+  strategy: pull
+  seed: [service_identity, current_incident_signal]
+  available:
+    - service_catalog
+    - architecture
+    - sre_profile
+    - production_policy
+    - recent_incidents
+    - runbooks
+    - current_evidence
+    - resource_graph
+    - recent_changes
+
+constraints:
+  must_hold:
+    - assumptions_remain_distinct_from_verified_facts
+    - production_mutation_requires_independent_authorization
+    - recovery_requires_current_independent_evidence
+    - missing_evidence_is_not_filled_by_confidence
+  must_not:
+    - mutate_production_to_test_an_unverified_hypothesis
+    - claim_root_cause_beyond_available_evidence
+    - self_certify_recovery
+
+actions:
+  - id: investigate
+    purpose: Reduce uncertainty about impact, dependencies, changes, or plausible causes.
     skill: incident-analysis
-    produces: [impact, evidence, hypotheses]
-  - id: verify-hypothesis
-    purpose: Verify the leading hypothesis with the minimum independent checks.
-    skill: incident-analysis
-    requires: [leading_hypothesis]
-    produces: [verified_hypothesis]
-  - id: propose-mitigation
-    purpose: Prepare the smallest reversible mitigation when evidence is sufficient.
+    when_useful: [impact_unclear, hypothesis_uncertain, evidence_gap]
+    produces: [assessment, evidence_gap, candidate_next_action]
+
+  - id: collect-evidence
+    purpose: Obtain the smallest useful read-only evidence needed for the current decision.
+    action: evidence_collection
+    when_useful: [blocking_evidence_gap, stale_evidence, contradiction]
+    produces: [observation]
+
+  - id: review-change
+    purpose: Review a proposed mitigation or rollback when an environment change is justified.
     skill: change-review
-    requires: [verified_hypothesis]
+    when_useful: [mitigation_candidate, rollback_candidate]
     produces: [change_proposal]
     human_gate: true
-  - id: verify-recovery
-    purpose: Observe actual service state after mitigation or external recovery.
+
+  - id: verify-outcome
+    purpose: Independently verify recovery and retained regression obligations after change or external recovery.
     skill: sre-review
+    when_useful: [environment_changed, recovery_claimed, external_recovery]
     produces: [recovery_verification]
-  - id: learn
-    purpose: Capture incident learning and regression obligations.
+
+  - id: capture-learning
+    purpose: Preserve durable or negative learning after terminal or abandoned work.
     action: writeback
-    requires: [recovery_verification]
-    produces: [incident_record, eval_candidate]
+    when_useful: [done, escalated, failed, budget_exhausted]
+    produces: [knowledge_candidate]
+
 terminal:
-  done: [service_recovered, leading_hypothesis_verified]
+  done: [impact_resolved, recovery_independently_verified]
   escalate: [production_change_requires_approval, insufficient_evidence, cross_team_dependency]
   failed: [safety_policy_violation, regression_detected_after_recovery]
+
 budgets:
   max_iterations: 8
   max_duration_minutes: 60
   max_no_progress_iterations: 2
+
 human_gates:
   - condition: production_mutation
     required_for: [apply_change, destructive_action, authorization_change]
-regression_obligations: [recovered_service_remains_within_objective]
+
+regression_obligations:
+  - recovered_service_remains_within_objective
+
 learn:
-  writeback: [incident, runbook, eval_candidate]
+  writeback: [incident, runbook, eval_candidate, knowledge_candidate]

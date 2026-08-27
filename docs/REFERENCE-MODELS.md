@@ -12,6 +12,7 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | Paperthin | Artifact restraint, clean-current-state rewrites, SSOT repair, eval independence, earned reuse, and cross-lens disagreement |
 | gstack | Workflow-composed Agent UX, progressive Skill routing, chained artifacts, review/test/ship/reflect sequencing, and cross-session learning surface |
 | GBrain | Persistent agent memory, bounded context packs, explicit gaps, hot/cold knowledge separation, fact/opinion distinction, synthesis, and governed retrieval surfaces |
+| Anthropic Context Engineering (Claude 5) | Unhobbling: remove redundant/prescriptive always-loaded guidance, prefer progressive disclosure, interfaces, and model judgment as capability improves |
 | IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
 | LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
 | LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
@@ -80,7 +81,7 @@ gstack is used as a **workflow composition and Agent UX reference**, not as an i
 
 The harness adopts this in a provider-neutral form:
 
-- simple user intents route into Domain + Loop + Skill composition;
+- simple user intents expose useful Loop/Skill composition without forcing a universal routing chain;
 - users do not need to manually select every internal Skill;
 - workflow steps pass explicit artifacts/evidence forward;
 - review, verification and reflection remain distinct stages;
@@ -113,6 +114,23 @@ The harness therefore does **not** import a generic memory item directly as engi
 GBrain's distinction between hot facts and cold/retrospective knowledge also motivates explicit consolidation after a Loop rather than uncontrolled growth of always-loaded context. The resulting model is documented in `docs/KNOWLEDGE-CONSOLIDATION.md`.
 
 https://github.com/garrytan/gbrain
+
+## Anthropic Context Engineering / Unhobbling
+
+Anthropic reported in July 2026 that it removed more than 80% of Claude Code's system prompt for newer Claude models without measurable loss on its coding evaluations, and described the previous context as overconstraining the model. The broader lesson is not "short prompts always win"; it is that accumulated rules must continue to earn their place as model capability changes.
+
+The Harness adopts this as an **unhobbling reference**:
+
+- keep always-loaded agent guidance small;
+- move narrow procedures to progressively disclosed Skills or references;
+- prefer interface/contract descriptions over fixed reasoning recipes;
+- let the model choose investigation order and next action when ordering is not itself a requirement;
+- enforce authority, evidence, state, approval, and verification through Runtime/schema/policy boundaries;
+- measure bare vs minimal vs richer Harness profiles instead of assuming more guidance is better.
+
+This motivates `docs/HARNESS-UNHOBBLING.md` and `harness-evals/`.
+
+https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models
 
 ## IBM Loop Engineering
 
@@ -164,47 +182,35 @@ https://www.finops.org/framework/phases/
 ```text
 Desired Outcome
        ↓
-Observe Actual State
+Minimal Seed Context
        ↓
-Resolve Organizational Context
-       ↓
-Bounded Context Pack + Evidence Gaps
-       ↓
-Domain Skill(s)
-       ↓
-Decision / Proposal
-       ↓
-Runtime Kernel
- Event Log / Skill Registry / Tool Guard / Approval / Sandbox
-       ↓
-Independent Action or Human Gate
-       ↓
+Model Judgment
+   ↙          ↘
+Pull Context   Use Tools / Skills / Capabilities
+   ↘          ↙
+      Proposed Action
+            ↓
+Runtime / Evidence / Permission / Approval Boundary
+            ↓
+Independently Authorized Action
+            ↓
 Independent Verification
-       ↓
-Artifact Hygiene / Eval Integrity as applicable
-       ↓
-Regression Check
-       ↓
-Reconcile → continue or terminal
-                       ↓
-                      Learn
-                       ↓
-                Learning Candidate
-                       ↓
-          Consolidate / Contradiction Check
-                       ↓
-      Reviewed Incident / Runbook / ADR or Policy / Eval
-                       ↓
-              Governed Knowledge
-                       ↓
-                    Next Loop
+            ↓
+Reconcile Goal + State + Constraints + Regression
+            ↓
+continue / terminal
+            ↓
+Learning Candidate → Governance → Durable Knowledge
 ```
 
-Agent behavior has two separate learning paths:
+The model is free to choose a better reasoning path. The Harness remains strict about what the model cannot self-assert: independent truth, protected authority, production control, and verified completion.
+
+Guidance itself is evaluated:
 
 ```text
-Skill behavior → paired Skill Lift → Skill revision
-AGENTS behavior → transcript loss → proposed context edit → paired Context Lift
+Skill behavior   → paired Skill Lift
+AGENTS behavior  → paired Context Lift
+Whole Harness    → bare / minimal / full Harness Lift
 ```
 
-Neither path may rewrite engineering truth or bypass authorization. The model does not own truth, completion, or authorization; environment evidence, deterministic checks, runtime guards, provider controls and human approvals remain independent parts of the loop.
+Neither evaluation path may rewrite engineering truth or bypass authorization. Richer guidance must earn its complexity; deletion is a valid optimization when live evidence shows equal or better outcomes without safety or evidence regression.
