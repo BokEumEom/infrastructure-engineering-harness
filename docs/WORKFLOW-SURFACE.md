@@ -1,6 +1,6 @@
 # Workflow Surface
 
-The Harness has a deliberately simple user-facing workflow surface and a more rigorous internal control plane.
+The Harness has a deliberately simple user-facing workflow surface and a rigorous internal control plane. The surface provides entrypoints and discoverability; it does not prescribe the model's reasoning path.
 
 The design is influenced by workflow-composed agent systems such as gstack: the user should not need to manually select every Skill when the intent already identifies the engineering workflow.
 
@@ -37,24 +37,21 @@ Natural-language requests may route to the same entrypoints.
 ```text
 User Intent
     ↓
-Workflow Router
+Minimal seed context
     ↓
-Domain Lens
-    ↓
-Loop Selection
-    ↓
-Context Pack
-    ↓
-Decision Skill / Capability
-    ↓
-Runtime Kernel
-    ↓
-Verify / Reconcile / Learn
+Model Judgment
+   ↙        ↘
+suggested      pull additional
+Loop/Skill     context/capability
+   ↘        ↙
+      Action
+        ↓
+Runtime / verification boundary
 ```
 
-The workflow surface does not weaken internal boundaries. It is only a routing and composition layer.
+Mappings are recommendations for discovery, not a mandatory chain. The model may skip irrelevant layers or choose another relevant Skill/Capability while hard Runtime, evidence, permission, and verification boundaries remain unchanged.
 
-## Default mapping
+## Suggested mapping
 
 | Intent | Primary Loop / workflow | Typical Skills |
 | --- | --- | --- |
