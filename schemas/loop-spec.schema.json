@@ -2,22 +2,133 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Infrastructure Engineering Loop Specification",
   "type": "object",
-  "required": ["schema_version", "id", "description", "domains", "autonomy", "goal", "steps", "terminal", "budgets", "learn"],
+  "required": ["schema_version", "id", "description", "domains", "autonomy", "goal", "terminal", "budgets", "learn"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
     "description": {"type": "string", "minLength": 1},
-    "domains": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["infrastructure", "sre", "devops", "finops"]}},
+    "mode": {"enum": ["adaptive", "sequential"]},
+    "domains": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["infrastructure", "sre", "devops", "finops", "security"]}},
     "autonomy": {"enum": ["observe", "workflow", "change"]},
     "trigger": {"type": "object", "properties": {"types": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true},
-    "goal": {"type": "object", "required": ["objective", "success_criteria"], "properties": {"objective": {"type": "string", "minLength": 1}, "success_criteria": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "desired_state": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false},
-    "context": {"type": "object", "properties": {"load": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false},
-    "steps": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "purpose"], "properties": {"id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"}, "purpose": {"type": "string", "minLength": 1}, "skill": {"type": "string"}, "action": {"type": "string"}, "requires": {"type": "array", "items": {"type": "string"}}, "produces": {"type": "array", "items": {"type": "string"}}, "human_gate": {"type": "boolean"}}, "oneOf": [{"required": ["skill"]}, {"required": ["action"]}], "additionalProperties": false}},
-    "terminal": {"type": "object", "required": ["done", "escalate", "failed"], "properties": {"done": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "escalate": {"type": "array", "items": {"type": "string"}}, "failed": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false},
-    "budgets": {"type": "object", "required": ["max_iterations", "max_duration_minutes", "max_no_progress_iterations"], "properties": {"max_iterations": {"type": "integer", "minimum": 1}, "max_duration_minutes": {"type": "integer", "minimum": 1}, "max_no_progress_iterations": {"type": "integer", "minimum": 1}}, "additionalProperties": false},
-    "human_gates": {"type": "array", "items": {"type": "object", "required": ["condition", "required_for"], "properties": {"condition": {"type": "string"}, "required_for": {"type": "array", "minItems": 1, "items": {"type": "string"}}}, "additionalProperties": false}},
+    "goal": {
+      "type": "object",
+      "required": ["objective", "success_criteria"],
+      "properties": {
+        "objective": {"type": "string", "minLength": 1},
+        "success_criteria": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "desired_state": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "strategy": {"enum": ["pull", "preload"]},
+        "seed": {"type": "array", "items": {"type": "string"}},
+        "available": {"type": "array", "items": {"type": "string"}},
+        "load": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "must_hold": {"type": "array", "items": {"type": "string"}},
+        "must_not": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "purpose"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "purpose": {"type": "string", "minLength": 1},
+          "skill": {"type": "string"},
+          "action": {"type": "string"},
+          "when_useful": {"type": "array", "items": {"type": "string"}},
+          "produces": {"type": "array", "items": {"type": "string"}},
+          "human_gate": {"type": "boolean"}
+        },
+        "oneOf": [{"required": ["skill"]}, {"required": ["action"]}],
+        "additionalProperties": false
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "purpose"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "purpose": {"type": "string", "minLength": 1},
+          "skill": {"type": "string"},
+          "action": {"type": "string"},
+          "requires": {"type": "array", "items": {"type": "string"}},
+          "produces": {"type": "array", "items": {"type": "string"}},
+          "human_gate": {"type": "boolean"}
+        },
+        "oneOf": [{"required": ["skill"]}, {"required": ["action"]}],
+        "additionalProperties": false
+      }
+    },
+    "terminal": {
+      "type": "object",
+      "required": ["done", "escalate", "failed"],
+      "properties": {
+        "done": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "escalate": {"type": "array", "items": {"type": "string"}},
+        "failed": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "budgets": {
+      "type": "object",
+      "required": ["max_iterations", "max_duration_minutes", "max_no_progress_iterations"],
+      "properties": {
+        "max_iterations": {"type": "integer", "minimum": 1},
+        "max_duration_minutes": {"type": "integer", "minimum": 1},
+        "max_no_progress_iterations": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "human_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["condition", "required_for"],
+        "properties": {
+          "condition": {"type": "string"},
+          "required_for": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
     "regression_obligations": {"type": "array", "items": {"type": "string"}},
-    "learn": {"type": "object", "required": ["writeback"], "properties": {"writeback": {"type": "array", "items": {"enum": ["incident", "runbook", "adr_candidate", "policy_candidate", "eval_candidate", "measurement", "optimization_record", "delivery_record", "change_record"]}}}, "additionalProperties": false}
+    "learn": {
+      "type": "object",
+      "required": ["writeback"],
+      "properties": {
+        "writeback": {"type": "array", "items": {"enum": ["incident", "runbook", "adr_candidate", "policy_candidate", "eval_candidate", "measurement", "optimization_record", "delivery_record", "change_record", "knowledge_candidate"]}}
+      },
+      "additionalProperties": false
+    }
   },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "adaptive"}}, "required": ["mode"]},
+      "then": {"required": ["actions"]}
+    },
+    {
+      "if": {"properties": {"mode": {"const": "sequential"}}, "required": ["mode"]},
+      "then": {"required": ["steps"]}
+    }
+  ],
+  "anyOf": [{"required": ["actions"]}, {"required": ["steps"]}],
   "additionalProperties": false
 }
