@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/context-pack.schema.json",
+  "title": "Context Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pack_id", "task", "scope", "budget", "items", "gaps"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "pack_id": { "type": "string", "minLength": 1 },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent"],
+      "properties": {
+        "intent": { "type": "string", "minLength": 1 },
+        "loop_id": { "type": ["string", "null"] },
+        "current_step": { "type": ["string", "null"] }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["services"],
+      "properties": {
+        "services": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "resource_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_tokens"],
+      "properties": {
+        "max_tokens": { "type": "integer", "minimum": 256 },
+        "estimated_tokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "source_ref", "authority", "freshness", "content_ref"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "kind": {
+            "enum": [
+              "service_catalog",
+              "adr",
+              "policy",
+              "runbook",
+              "incident",
+              "verified_fact",
+              "observation",
+              "resource_graph",
+              "slo",
+              "change",
+              "cost",
+              "negative_corpus",
+              "learning_candidate"
+            ]
+          },
+          "source_ref": { "type": "string", "minLength": 1 },
+          "authority": { "enum": ["authoritative", "governed", "evidence", "provisional"] },
+          "freshness": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["observed_or_updated_at", "status"],
+            "properties": {
+              "observed_or_updated_at": { "type": "string", "format": "date-time" },
+              "status": { "enum": ["current", "stale", "unknown"] },
+              "max_age_seconds": { "type": ["integer", "null"], "minimum": 0 }
+            }
+          },
+          "content_ref": { "type": "string", "minLength": 1 },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "required_evidence", "blocking"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "question": { "type": "string", "minLength": 1 },
+          "required_evidence": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
