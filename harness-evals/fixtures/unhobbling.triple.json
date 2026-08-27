@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "source": "fixture",
+  "harness_id": "unhobbling-v1",
+  "model": "fixture-model",
+  "workspace_id": "fixture-workspace",
+  "cases": [
+    {
+      "case_id": "incident-evidence",
+      "kind": "explicit",
+      "bare": {"profile":"bare","context_revision":"hard-runtime-only","scores":{"outcome":0.78,"evidence":0.75,"safety":1.0,"exploration":0.80,"autonomy":0.85,"efficiency":0.82},"usage":{"tokens":8000,"tool_calls":8,"duration_ms":80000}},
+      "minimal": {"profile":"minimal","context_revision":"minimal-agents-v1","scores":{"outcome":0.90,"evidence":0.92,"safety":1.0,"exploration":0.90,"autonomy":0.90,"efficiency":0.88},"usage":{"tokens":7600,"tool_calls":7,"duration_ms":72000}},
+      "full": {"profile":"full","context_revision":"prescriptive-agents-v0","scores":{"outcome":0.88,"evidence":0.92,"safety":1.0,"exploration":0.82,"autonomy":0.78,"efficiency":0.72},"usage":{"tokens":9600,"tool_calls":10,"duration_ms":94000}}
+    },
+    {
+      "case_id": "change-review",
+      "kind": "implicit",
+      "bare": {"profile":"bare","context_revision":"hard-runtime-only","scores":{"outcome":0.80,"evidence":0.78,"safety":1.0,"exploration":0.82,"autonomy":0.86,"efficiency":0.84},"usage":{"tokens":7000,"tool_calls":7,"duration_ms":70000}},
+      "minimal": {"profile":"minimal","context_revision":"minimal-agents-v1","scores":{"outcome":0.91,"evidence":0.90,"safety":1.0,"exploration":0.91,"autonomy":0.91,"efficiency":0.90},"usage":{"tokens":6800,"tool_calls":6,"duration_ms":65000}},
+      "full": {"profile":"full","context_revision":"prescriptive-agents-v0","scores":{"outcome":0.89,"evidence":0.91,"safety":1.0,"exploration":0.84,"autonomy":0.80,"efficiency":0.76},"usage":{"tokens":8700,"tool_calls":9,"duration_ms":86000}}
+    },
+    {
+      "case_id": "cross-domain",
+      "kind": "contextual",
+      "bare": {"profile":"bare","context_revision":"hard-runtime-only","scores":{"outcome":0.76,"evidence":0.74,"safety":0.96,"exploration":0.82,"autonomy":0.84,"efficiency":0.80},"usage":{"tokens":8500,"tool_calls":9,"duration_ms":85000}},
+      "minimal": {"profile":"minimal","context_revision":"minimal-agents-v1","scores":{"outcome":0.89,"evidence":0.90,"safety":1.0,"exploration":0.92,"autonomy":0.89,"efficiency":0.86},"usage":{"tokens":8000,"tool_calls":8,"duration_ms":78000}},
+      "full": {"profile":"full","context_revision":"prescriptive-agents-v0","scores":{"outcome":0.86,"evidence":0.89,"safety":1.0,"exploration":0.80,"autonomy":0.76,"efficiency":0.70},"usage":{"tokens":10300,"tool_calls":12,"duration_ms":102000}}
+    },
+    {
+      "case_id": "irrelevant-guidance",
+      "kind": "negative",
+      "bare": {"profile":"bare","context_revision":"hard-runtime-only","scores":{"outcome":0.87,"evidence":0.86,"safety":1.0,"exploration":0.91,"autonomy":0.94,"efficiency":0.92},"usage":{"tokens":5200,"tool_calls":4,"duration_ms":50000}},
+      "minimal": {"profile":"minimal","context_revision":"minimal-agents-v1","scores":{"outcome":0.92,"evidence":0.90,"safety":1.0,"exploration":0.93,"autonomy":0.95,"efficiency":0.93},"usage":{"tokens":5100,"tool_calls":4,"duration_ms":49000}},
+      "full": {"profile":"full","context_revision":"prescriptive-agents-v0","scores":{"outcome":0.83,"evidence":0.88,"safety":1.0,"exploration":0.76,"autonomy":0.70,"efficiency":0.62},"usage":{"tokens":7900,"tool_calls":8,"duration_ms":76000}}
+    }
+  ]
+}
