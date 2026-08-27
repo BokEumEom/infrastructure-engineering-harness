@@ -7,7 +7,7 @@ description: Orchestrate long-running infrastructure engineering work as bounded
 
 Use this Skill as the control layer above domain Skills.
 
-Read `loops/README.md`, the selected `loops/<loop-id>/loop.yaml`, and `docs/REFERENCE-MODELS.md`.
+Read `loops/README.md`, the selected `loops/<loop-id>/loop.yaml`, `docs/REFERENCE-MODELS.md`, and when learning/context is material, `docs/KNOWLEDGE-CONSOLIDATION.md`.
 
 ## Core rule
 
@@ -16,19 +16,20 @@ A Skill may propose an answer. A Loop decides whether the work may continue, mus
 ## Execution model
 
 1. Load the Loop Spec and current external Loop State.
-2. Resolve only the context required for the current step.
-3. Invoke the specified domain Skill or action.
-4. Collect environment/tool/human/test observations.
-5. Update `verified_facts` only from independently verified observations.
-6. Record one iteration and material/no-progress status.
-7. Check human gates, regression obligations, and execution budgets.
-8. Decide: continue, wait, verify, escalate, fail, budget-exhausted, or done.
-9. On terminal state, emit a Loop Result and explicit learning/writeback.
+2. Resolve only the context required for the current step as a bounded Context Pack: authoritative/governed knowledge, current evidence, freshness, and explicit gaps.
+3. If a blocking evidence gap exists, route to evidence collection or escalation rather than filling the gap with model inference.
+4. Invoke the specified domain Skill or action.
+5. Collect environment/tool/human/test observations.
+6. Update `verified_facts` only from independently verified observations.
+7. Record one iteration and material/no-progress status.
+8. Check human gates, evidence gaps, regression obligations, and execution budgets.
+9. Decide: continue, wait, verify, escalate, fail, budget-exhausted, or done.
+10. On terminal state, emit a Loop Result and explicit learning/writeback. Durable lessons should first be emitted as governed Knowledge Candidates.
 
 ## State rules
 
 - State is explicit and should survive model/context resets.
-- Keep assumptions separate from verified facts.
+- Keep observations, assumptions, verified facts, engineering assessments, learning candidates, and durable organizational knowledge separate.
 - `verified_by: agent` is invalid.
 - Do not hide missing evidence inside confidence language.
 - Do not reset no-progress counters unless material progress occurred.
@@ -68,5 +69,7 @@ Terminal or abandoned loops should propose durable learning without defending th
 - Generalize specific complaints or failures into an anti-pattern and a gate that catches the broader class; keep the concrete event as evidence, not as the whole lesson.
 - If the foundation is wrong, a controlled restart may discard implementation while retaining earned lessons and gates. Existing code does not earn reuse merely by existing.
 - Name the next cycle's first quality gate when learning implies another iteration.
-- Propose Incident, Runbook change, ADR candidate, Policy candidate, Eval candidate, Measurement, Delivery record, Optimization record, Change record, negative corpus entry, or restart plan as appropriate.
+- Propose Incident, Runbook change, ADR candidate, Policy candidate, Eval candidate, Measurement, Delivery record, Optimization record, Change record, negative corpus entry, restart plan, or a `knowledge_candidate` writeback as appropriate.
+- A Knowledge Candidate must preserve source Loop/run ids plus supporting and contradicting evidence. Confidence is not verification.
+- Consolidation may deduplicate or detect contradictions, but promotion into durable organizational knowledge requires the normal owner/review path.
 - Do not silently overwrite organizational source-of-truth documents.

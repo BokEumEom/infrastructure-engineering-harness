@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "pack_id": "ctx-incident-payment-api-001",
+  "task": {
+    "intent": "incident",
+    "loop_id": "incident-response",
+    "current_step": "investigate"
+  },
+  "scope": {
+    "services": ["payment-api"],
+    "resource_ids": ["svc:payment-api"]
+  },
+  "budget": {
+    "max_tokens": 12000,
+    "estimated_tokens": 3400
+  },
+  "items": [
+    {
+      "id": "service",
+      "kind": "service_catalog",
+      "source_ref": "service-catalog/payment-api",
+      "authority": "authoritative",
+      "freshness": {
+        "observed_or_updated_at": "2026-08-27T00:00:00Z",
+        "status": "current",
+        "max_age_seconds": null
+      },
+      "content_ref": "service-catalog/payment-api"
+    },
+    {
+      "id": "cpu-observation",
+      "kind": "observation",
+      "source_ref": "observability/payment-api/cpu",
+      "authority": "evidence",
+      "freshness": {
+        "observed_or_updated_at": "2026-08-27T01:02:00Z",
+        "status": "current",
+        "max_age_seconds": 300
+      },
+      "content_ref": "evidence/payment-api/cpu-window"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "db-latency-gap",
+      "question": "Did database latency or lock contention change during the incident window?",
+      "required_evidence": ["database latency", "lock/deadlock evidence"],
+      "blocking": true
+    }
+  ]
+}

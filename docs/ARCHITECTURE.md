@@ -1,6 +1,6 @@
 # Architecture
 
-The harness separates durable knowledge, environment discovery, current evidence, engineering judgment, technology implementation knowledge, loop control, runtime execution mechanics and production execution.
+The harness separates durable knowledge, environment discovery, current evidence, bounded context assembly, engineering judgment, technology implementation knowledge, loop control, runtime execution mechanics, production execution, and governed knowledge consolidation.
 
 ```text
 Durable Knowledge                 Live Environment
@@ -13,6 +13,9 @@ Service Catalog / ADR / Policy    Cloud / K8s / CI / Observability
           └──────────────┬───────────────────┘
                          ↓
                  Context Resolution
+                         ↓
+                 Bounded Context Pack
+             knowledge + evidence + gaps
                          ↓
                   Domain Lens(es)
                          ↓
@@ -44,14 +47,22 @@ Service Catalog / ADR / Policy    Cloud / K8s / CI / Observability
                          ↓
              terminal: done/escalated/failed
                          ↓
-      Incident / Runbook / ADR or Policy candidate / Eval
+                  Learning Candidate
+ Observation / Verified Fact / Assessment kept distinct
+                         ↓
+              Knowledge Consolidation
+        dedupe / contradiction / owner review
+                         ↓
+ Incident / Runbook / ADR or Policy candidate / Eval
+                         ↓
+           Governed Durable Knowledge
                          ↓
                       Next Loop
 ```
 
 ## Shared core
 
-The core owns contracts that should not vary by model, provider or discipline: progressive context loading, service/dependency model, evidence/provenance, ADR/incident knowledge, domain profiles, change/ticket contracts, capability source trust, environment/resource binding, loop state and provider-neutral eval infrastructure.
+The core owns contracts that should not vary by model, provider or discipline: progressive context loading, bounded Context Packs, explicit evidence gaps, service/dependency model, evidence/provenance, ADR/incident knowledge, epistemic classes, knowledge candidates, domain profiles, change/ticket contracts, capability source trust, environment/resource binding, loop state and provider-neutral eval infrastructure.
 
 ## Environment discovery and resource graph
 
@@ -73,11 +84,29 @@ Provider API → read-only adapter → adapter result → normalization → Evid
 
 Adapter results require provenance and observation time. They may be useful current evidence, but the adapter and model cannot self-promote observations into Loop `verified_facts`.
 
+## Context Pack and evidence gaps
+
+Context resolution should produce a bounded, task-specific Context Pack conforming to `schemas/context-pack.schema.json` instead of dumping all available knowledge into the model.
+
+A Context Pack combines only the information required for the current workflow/Loop step:
+
+- authoritative or governed organizational knowledge;
+- current evidence and verified facts;
+- resource/dependency scope;
+- freshness metadata;
+- token budget;
+- explicit unknowns and required evidence.
+
+A missing signal is represented as a `gap`, not hidden behind confidence language. A blocking gap prevents the downstream Loop condition from being treated as verified.
+
+Context Pack assembly does not change authority. A provisional learning candidate remains provisional even when included in context, and stale evidence remains stale.
+
 ## Domain, Decision, Capability and Loop
 
 These layers have different responsibilities:
 
 ```text
+Context Pack→ what bounded knowledge/evidence/gaps the current step may use
 Domain      → which engineering questions and constraints matter
 Decision    → what should be done and why
 Capability  → how to implement or verify using technology-specific knowledge
@@ -137,6 +166,34 @@ Loop state is explicit outside agent prose and is updated only with independentl
 
 Runtime state and Loop state are intentionally separate. Runtime state reconstructs agent execution; Loop state reconciles an engineering objective against independently verified world state.
 
+## Knowledge consolidation
+
+Loop learning is not automatically organizational truth. The harness uses the following epistemic sequence:
+
+```text
+Observation
+    ↓ independent verification
+Verified Fact
+    ↓ reasoning
+Engineering Assessment
+    ↓ outcome evidence
+Learning Candidate
+    ↓ artifact owner / governance review
+Durable Organizational Knowledge
+```
+
+`schemas/knowledge-candidate.schema.json` defines the proposal boundary. Supporting and contradicting evidence remain attached to the candidate. Confidence may describe an assessment but does not replace verification.
+
+Consolidation may deduplicate, group, detect contradictions and propose target updates. It must not silently overwrite Architecture, ADRs, Policies, Service Catalog, Runbooks, or other protected truth. Failed hypotheses and prohibited paths remain available as negative corpus/eval candidates.
+
+See `docs/KNOWLEDGE-CONSOLIDATION.md`.
+
+## Workflow surface
+
+The user-facing workflow surface may route simple intents such as incident, reliability, delivery, FinOps, security, change and learn into the appropriate Domain/Loop/Skills. This is progressive disclosure only: routing never increases authority or bypasses evidence, approval, regression, or production boundaries.
+
+See `docs/WORKFLOW-SURFACE.md`.
+
 ## Production boundary
 
 The default harness may analyze, design, generate code/config/pipelines/runbooks, verify available checks and create workflow artifacts, but production execution remains independently authorized. `change-validation` can orchestrate precheck → approval → external execution → post-verification without making the model or runtime the authorization boundary.
@@ -147,4 +204,4 @@ Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud
 
 Future execution adapters should implement the contracts under `runtime/` instead of bypassing them with direct model-to-provider mutation.
 
-See `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
+See `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `docs/WORKFLOW-SURFACE.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.

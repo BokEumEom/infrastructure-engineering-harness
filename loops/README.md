@@ -5,7 +5,7 @@ Loop Engineering is the control layer above domain Skills.
 ```text
 Knowledge + Evidence
         ↓
-     Context
+  Context Pack + Gaps
         ↓
       Skill
         ↓
@@ -26,6 +26,7 @@ A **Skill** defines what an agent can do. A **Loop** defines when to invoke skil
 5. **Regression obligations** — previously established guarantees remain obligations in later iterations.
 6. **Human gates** — production mutation, authorization changes, destructive actions, and financial commitments remain independently authorized.
 7. **Learning is explicit** — incidents, runbooks, measurements, policies, ADR candidates, and eval candidates are declared writebacks.
+8. **Epistemic classes stay separate** — Observation, Verified Fact, Engineering Assessment, Learning Candidate, and Durable Knowledge are never silently collapsed into one another.
 
 ## Reference loops
 
@@ -45,13 +46,35 @@ A **Skill** defines what an agent can do. A **Loop** defines when to invoke skil
 
 Loop definitions conform to `schemas/loop-spec.schema.json`. Execution state conforms to `schemas/loop-state.schema.json`. Terminal output conforms to `schemas/loop-result.schema.json`.
 
-A runtime should execute **one iteration at a time**: load the Loop Spec and external state, invoke the current Skill/action, collect independent observations, update verified facts, check regression obligations and budgets, then continue/wait/escalate/fail/done.
+A runtime should execute **one iteration at a time**: load the Loop Spec and external state, assemble only the current step's bounded Context Pack, invoke the current Skill/action, collect independent observations, update verified facts, check evidence gaps, regression obligations and budgets, then continue/wait/escalate/fail/done.
 
 `loops/runtime.py` contains deterministic reference helpers for state transitions, verified facts, progress budgets, and regression status. It is intentionally not a production workflow engine.
 
 ## Done means verified
 
 An agent statement is not a completion check. Success criteria must be independently verified, regression obligations must pass, required human gates must be clear, and the loop must remain within its budget.
+
+## Learning boundary
+
+A terminal or abandoned Loop may emit one or more `knowledge-candidate` proposals. These proposals preserve source run ids, supporting/contradicting evidence, epistemic class and governance owner.
+
+```text
+Loop Result
+    ↓
+Learning Candidate
+    ↓
+Consolidation
+    ↓
+Review / Promote
+    ↓
+Durable Knowledge
+    ↓
+Next Loop
+```
+
+Loop state may consume a reviewed knowledge artifact or a clearly marked provisional candidate through a Context Pack, but a candidate never becomes authoritative merely because another agent retrieved it.
+
+See `docs/KNOWLEDGE-CONSOLIDATION.md` and `schemas/knowledge-candidate.schema.json`.
 
 ## Evaluation
 

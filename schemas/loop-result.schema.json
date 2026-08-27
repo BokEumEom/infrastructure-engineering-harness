@@ -7,7 +7,7 @@
     "schema_version": {"const": "1.0"}, "run_id": {"type": "string"}, "loop_id": {"type": "string"},
     "terminal_status": {"enum": ["done", "escalated", "failed", "budget_exhausted"]}, "iterations": {"type": "integer", "minimum": 1},
     "goal_outcome": {"type": "string"}, "verified_conditions": {"type": "array", "items": {"type": "string"}}, "evidence_refs": {"type": "array", "items": {"type": "string"}}, "events": {"type": "array", "items": {"type": "string"}},
-    "writeback": {"type": "array", "items": {"type": "object", "required": ["type", "action"], "properties": {"type": {"enum": ["incident", "runbook", "adr_candidate", "policy_candidate", "eval_candidate", "measurement", "optimization_record", "delivery_record", "change_record"]}, "action": {"type": "string"}, "ref": {"type": "string"}}, "additionalProperties": false}},
+    "writeback": {"type": "array", "items": {"type": "object", "required": ["type", "action"], "properties": {"type": {"enum": ["incident", "runbook", "adr_candidate", "policy_candidate", "eval_candidate", "measurement", "optimization_record", "delivery_record", "change_record", "knowledge_candidate"]}, "action": {"type": "string"}, "ref": {"type": "string"}}, "additionalProperties": false}},
     "regression_results": {"type": "array", "items": {"type": "object", "required": ["id", "status"], "properties": {"id": {"type": "string"}, "status": {"enum": ["passed", "failed"]}}, "additionalProperties": false}},
     "remaining_risks": {"type": "array", "items": {"type": "string"}}
   }, "additionalProperties": false

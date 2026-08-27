@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "candidate_id": "learn-inc-123-cpu-root-cause",
+  "epistemic_class": "negative_learning",
+  "claim": "Do not treat high CPU alone as proof of root cause; correlate it with dependency and database evidence before mitigation.",
+  "status": "supported",
+  "confidence": 0.9,
+  "source": {
+    "loop_id": "incident-response",
+    "run_id": "INC-123",
+    "service": "payment-api"
+  },
+  "evidence": {
+    "supporting": [
+      "incident/INC-123/timeline",
+      "incident/INC-123/db-lock-analysis"
+    ],
+    "contradicting": []
+  },
+  "target": {
+    "type": "eval_candidate",
+    "path_hint": "evals/scenarios/"
+  },
+  "governance": {
+    "review_required": true,
+    "owner": "service-owner",
+    "expires_at": null
+  }
+}
