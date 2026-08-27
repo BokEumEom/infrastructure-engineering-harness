@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/knowledge-candidate.schema.json",
+  "title": "Knowledge Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "epistemic_class",
+    "claim",
+    "status",
+    "source",
+    "evidence",
+    "target",
+    "governance"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "candidate_id": { "type": "string", "minLength": 1 },
+    "epistemic_class": {
+      "enum": ["verified_fact", "engineering_assessment", "procedure", "negative_learning", "measurement"]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["proposed", "supported", "disproven", "superseded"] },
+    "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["loop_id", "run_id"],
+      "properties": {
+        "loop_id": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "service": { "type": ["string", "null"] }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supporting", "contradicting"],
+      "properties": {
+        "supporting": { "type": "array", "items": { "type": "string" } },
+        "contradicting": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["incident", "runbook", "adr_candidate", "policy_candidate", "eval_candidate", "measurement", "service_catalog_candidate"]
+        },
+        "path_hint": { "type": ["string", "null"] }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review_required", "owner"],
+      "properties": {
+        "review_required": { "const": true },
+        "owner": { "type": "string", "minLength": 1 },
+        "expires_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "epistemic_class": { "const": "verified_fact" } },
+        "required": ["epistemic_class"]
+      },
+      "then": {
+        "properties": {
+          "evidence": {
+            "properties": {
+              "supporting": { "minItems": 1 }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
