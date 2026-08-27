@@ -4,7 +4,7 @@
 
 A provider-neutral, cross-agent harness for turning infrastructure knowledge and current evidence into reviewable engineering decisions and governed implementation across **Infrastructure Engineering / SRE / DevOps / FinOps / Security**.
 
-> **Knowledge → Context → Decision Skill → Capability → Loop → Verified Outcome → Learning → Next Loop**
+> **Knowledge → Context Pack → Decision Skill → Capability → Loop → Verified Outcome → Learning Candidate → Governed Knowledge → Next Loop**
 
 > **Status: Research Preview.** Core contracts, deterministic scenarios, evaluation plumbing, and the Harness CLI are available now. Live adapters, persistent runtime, and controlled execution remain experimental.
 
@@ -47,6 +47,8 @@ Organizational Knowledge + Live Environment
                     ↓
              Context Resolution
                     ↓
+        Bounded Context Pack + Gaps
+                    ↓
                 Domain Lens
                     ↓
               Decision Skill
@@ -66,6 +68,8 @@ Organizational Knowledge + Live Environment
 
 ## Core building blocks
 
+- **Workflow Surface** — simple incident / reliability / delivery / FinOps / security / change / learn entry intents that route into the rigorous internal control plane
+- **Context Pack** — budgeted task-specific bundle of durable knowledge, live evidence, freshness metadata, and explicit evidence gaps
 - **Domain** — Infrastructure / SRE / DevOps / FinOps / Security engineering lens
 - **Decision Skill** — decides what should be done and why
 - **Capability** — selects implementation or verification knowledge
@@ -73,10 +77,11 @@ Organizational Knowledge + Live Environment
 - **Bound Capability** — Capability + Resource Scope + Permission Scope + Evidence Source
 - **Runtime Kernel** — reference Session/Event Log, Tool Pipeline, Guard, Approval, and Sandbox runtime
 - **Engineering Loop** — Observe → Decide → Act/Propose → Verify → Learn
+- **Knowledge Consolidation** — separates Observation → Verified Fact → Engineering Assessment → Learning Candidate → governed Durable Knowledge
 - **Skill Lift / Context Lift** — paired evaluation of actual Skill / Context contribution
 - **Artifact Reflex** — Paperthin-inspired artifact hygiene, SSOT, and eval-integrity rules
 
-Detailed architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md), [loops/README.md](loops/README.md), and [docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md).
+Detailed architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md), [docs/WORKFLOW-SURFACE.md](docs/WORKFLOW-SURFACE.md), [docs/KNOWLEDGE-CONSOLIDATION.md](docs/KNOWLEDGE-CONSOLIDATION.md), [loops/README.md](loops/README.md), and [docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md).
 
 ## Safety model
 
@@ -90,7 +95,7 @@ Detailed architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [do
 
 ## External references
 
-The harness can learn from external projects without granting them authority. Reviewed sources are pinned and registered as `reference_only`. Examples include BagelHole/DevOps-Security-Agent-Skills and Paperthin. Runtime, evaluation, environment-discovery, and SRE projects are tracked as reference models rather than copied wholesale.
+The harness can learn from external projects without granting them authority. Reviewed sources are pinned and registered as `reference_only`. Examples include BagelHole/DevOps-Security-Agent-Skills and Paperthin. gstack is tracked as a workflow-composition / Agent UX reference, and GBrain as a context-pack / persistent-memory / knowledge-consolidation reference. Runtime, evaluation, environment-discovery, and SRE projects are tracked as reference models rather than copied wholesale.
 
 See [capabilities/README.md](capabilities/README.md) and [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md).
 
