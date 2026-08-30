@@ -25,9 +25,12 @@ def normalize_adapter_result(result: dict[str, Any], *, bundle_id: str | None = 
         item.setdefault("observed_at", result["observed_at"])
         normalized.append(item)
 
-    return {
+    bundle = {
         "schema_version": "1.0",
         "bundle_id": bundle_id or f"adapter:{result['adapter_id']}:{result['observed_at']}",
         "observed_at": result["observed_at"],
         "observations": normalized,
     }
+    if "freshness_seconds" in result:
+        bundle["freshness_seconds"] = result["freshness_seconds"]
+    return bundle

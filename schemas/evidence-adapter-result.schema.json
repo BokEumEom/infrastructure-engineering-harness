@@ -10,6 +10,7 @@
     "observed_at": {"type": "string", "format": "date-time"},
     "collection_mode": {"const": "read_only"},
     "scope": {"type": "object", "additionalProperties": true},
+    "freshness_seconds": {"type": "integer", "minimum": 0},
     "source_revision": {"type": "string"},
     "observations": {
       "type": "array",
