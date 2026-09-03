@@ -1,6 +1,6 @@
 # Production Readiness
 
-This repository is a production-oriented engineering harness reference, not an authorization system.
+This repository is a production-oriented **Infrastructure Engineering Agent** reference. Its internal harness/runtime is a control plane, not an authorization system.
 
 ## Adoption levels
 
@@ -14,7 +14,7 @@ Connect selected metrics/logs/traces/runtime/deployment/SLO/cost/business/securi
 
 ### Level 2 — Proposal and implementation-artifact automation
 
-Allow the agent to select governed Capabilities and generate code/config, pipelines, change tickets, plans, runbooks or operator procedures. Keep production execution outside the agent's authority.
+Allow the Infrastructure Engineering Agent to select governed Capabilities and generate code/config, pipelines, change tickets, plans, runbooks or operator procedures. Keep production execution outside the Agent's authority and behind the Backend/Runtime approval boundary.
 
 Third-party capability sources remain `reference_only` unless the organization explicitly reviews and manages them. External Skill scripts/commands/assets are never automatically executed by capability routing.
 
@@ -31,7 +31,7 @@ If execution is automated, require independent short-lived credentials, least pr
 - capability registry validation and immutable revisions for third-party sources
 - external Skill content treated as reference until reviewed/managed
 - explicit risk/blast-radius/validation/recovery fields
-- independent authorization outside the model
+- independent authorization outside the model/chat surface\n- resource provenance before mutation targets are accepted\n- staged change → approval → apply separation
 - secrets excluded from context and external capability prompts unless explicitly allowed
 - clear context and capability owners/review cadence
 - SRE policy for reliability-impacting changes where applicable
