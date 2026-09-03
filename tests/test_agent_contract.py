@@ -30,6 +30,14 @@ class InfrastructureEngineeringAgentContractTests(unittest.TestCase):
         self.assertFalse(self.contract["authority"]["chat_approval_is_authorization"])
         self.assertEqual("independently_authorized", self.contract["authority"]["production_mutation"])
 
+    def test_mutation_requires_provenance_and_revision_revalidation(self):
+        backend = self.contract["backend"]
+        self.assertTrue(backend["resource_provenance_required_for_mutation"])
+        self.assertTrue(backend["apply_revalidates_staged_revision"])
+        owned = set(self.contract["runtime_boundary"]["owns"])
+        self.assertIn("untrusted_content_fencing", owned)
+        self.assertIn("runtime_recording", owned)
+
     def test_backend_contract_imports(self):
         path = ROOT / "agents" / "infrastructure_engineering" / "backend.py"
         spec = importlib.util.spec_from_file_location("infrastructure_agent_backend", path)

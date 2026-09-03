@@ -49,9 +49,17 @@ class RuntimeSkillRegistry:
             "catalog_visible": rule.get("catalog_visible", defaults["catalog_visible"]),
         }
 
-    def list(self, *, for_model: bool = False, for_user: bool = False) -> tuple[RuntimeSkillSummary, ...]:
+    def list(
+        self,
+        *,
+        for_model: bool = False,
+        for_user: bool = False,
+        enabled_capability_ids: set[str] | None = None,
+    ) -> tuple[RuntimeSkillSummary, ...]:
         summaries: list[RuntimeSkillSummary] = []
         for capability in self.capability_registry["capabilities"]:
+            if enabled_capability_ids is not None and capability["id"] not in enabled_capability_ids:
+                continue
             invocation = self._invocation(capability["id"])
             if not invocation["catalog_visible"]:
                 continue
@@ -80,12 +88,24 @@ class RuntimeSkillRegistry:
             )
         return tuple(sorted(summaries, key=lambda item: item.id))
 
-    def get(self, skill_id: str, *, actor: str) -> RuntimeSkillSummary:
+    def get(
+        self,
+        skill_id: str,
+        *,
+        actor: str,
+        enabled_capability_ids: set[str] | None = None,
+    ) -> RuntimeSkillSummary:
         if actor not in {"model", "user", "trusted_runtime"}:
             raise ValueError("actor must be model, user, or trusted_runtime")
-        all_entries = {item.id: item for item in self.list()}
-        if skill_id not in all_entries:
+        registered_ids = {item["id"] for item in self.capability_registry["capabilities"]}
+        if skill_id not in registered_ids:
             raise KeyError(skill_id)
+        if enabled_capability_ids is not None and skill_id not in enabled_capability_ids:
+            raise PermissionError(f"skill {skill_id} is not enabled in the current runtime surface")
+        all_entries = {
+            item.id: item
+            for item in self.list(enabled_capability_ids=enabled_capability_ids)
+        }
         entry = all_entries[skill_id]
         if actor == "model" and not entry.model_invocable:
             raise PermissionError(f"skill {skill_id} is not model invocable")

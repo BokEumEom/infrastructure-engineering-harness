@@ -127,15 +127,16 @@ Platform credentials stay behind the backend/runtime boundary. Model-visible tex
 - **Skill Lift / Context Lift / Harness Lift** — evaluation of whether guidance actually improves or hobbles the Agent
 - **Artifact Reflex** — Paperthin-inspired artifact hygiene, SSOT, and eval-integrity rules
 
-Detailed architecture: [Agent model](agents/infrastructure_engineering/README.md), [Architecture](docs/ARCHITECTURE.md), [Harness Unhobbling](docs/HARNESS-UNHOBBLING.md), [Reference Models](docs/REFERENCE-MODELS.md), [Workflow Surface](docs/WORKFLOW-SURFACE.md), and [Knowledge Consolidation](docs/KNOWLEDGE-CONSOLIDATION.md).
+Detailed architecture: [Agent model](agents/infrastructure_engineering/README.md), [Architecture](docs/ARCHITECTURE.md), [Commerce Agent Patterns](docs/COMMERCE-AGENT-PATTERNS.md), [Harness Unhobbling](docs/HARNESS-UNHOBBLING.md), [Reference Models](docs/REFERENCE-MODELS.md), [Workflow Surface](docs/WORKFLOW-SURFACE.md), and [Knowledge Consolidation](docs/KNOWLEDGE-CONSOLIDATION.md).
 
 ## Safety model
 
 - Read-only discovery/evidence is the default authority.
-- A resource should be discovered/bound before a production mutation can target it.
+- Mutation-capable tools can enforce **no mutation without Resource Provenance**: the target must be discovered and remain inside the Bound Capability resource scope.
 - Tool output is not automatically a verified engineering fact.
 - `verified_by: agent` is invalid.
-- Chat text cannot grant production authorization.
+- External logs, tickets, PR text, tags, annotations and similar content are untrusted data and should be fenced before becoming model-visible context.
+- Chat text cannot grant production authorization; approval binds to an exact staged change revision and is revalidated before apply.
 - Production mutation, destructive action, privilege expansion, and financial commitments require independent authorization.
 - Hard boundaries belong in Runtime/schema/policy/backend enforcement rather than repeated prompt prose.
 - The Agent may reason freely; it cannot self-certify truth, authority, or successful completion.

@@ -1,6 +1,6 @@
 # Runtime Kernel
 
-The Runtime Kernel is the execution layer beneath the Infrastructure Engineering control plane.
+The Runtime Kernel is the internal execution layer beneath the **Infrastructure Engineering Agent**. Together with provenance, fencing, approval, change control, and recording contracts, it forms the internal harness/control plane.
 
 It is inspired by mature agent-runtime patterns, including DeepSeek Harness, but keeps infrastructure-specific safety invariants non-swappable.
 
@@ -40,6 +40,10 @@ These rules are not replaceable by plugins or provider adapters:
 8. **Execution claims are evidence-backed** — tool output is normalized before becoming Evidence; agent prose is never execution proof.
 9. **Sandbox enforcement is a fact** — record requested mode, actual mode, enforcement completeness, and known limitations. `sandbox=true` is not sufficient evidence.
 10. **Source-of-truth remains protected** — runtime learning and plugins do not silently rewrite Architecture, ADRs, Policies, Service Catalog, or authorization metadata.
+11. **No mutation without resource provenance** — when a mutation-capable tool requires provenance, every target must have been discovered by the trusted Resource Graph and remain inside the Bound Capability resource scope.
+12. **Untrusted external text stays data** — logs, tickets, PR text, tags, annotations, comments, and similar content are bounded/fenced before becoming model-visible context; they never grant runtime authority.
+13. **Approval binds to an exact change revision** — apply-time checks revalidate the staged change digest, change revision, Resource Graph snapshot, policy revision, and one-shot approval.
+14. **Runtime recordings are immutable inputs to replay** — live or fixture recordings preserve the normalized event stream and verify integrity before deterministic re-scoring.
 
 ## Event vocabulary
 
@@ -85,7 +89,7 @@ tool/result
 optional Evidence normalization
 ```
 
-The reference implementation in `runtime/kernel.py` models the policy/approval invariants without executing real tools.
+The reference implementation in `runtime/kernel.py` models the policy/approval invariants without executing real tools. `runtime/provenance.py` adds resource-target validation for mutation-capable calls. A provider backend must still call the same checks immediately before real execution.
 
 ## Runtime Skill Registry
 
@@ -99,6 +103,41 @@ It separates three different questions:
 
 The model should initially receive bounded Skill summaries and load bodies lazily. Large Skill bodies are not part of the always-loaded prompt.
 
+The registry also supports an `enabled_capability_ids` projection. A host should derive this from actually connected/discovered systems so unavailable capabilities disappear from the model-visible Skill surface instead of remaining as dead prompt/tool context.
+
+## Untrusted evidence fencing
+
+`runtime/fencing.py` provides a bounded reference transform for external text. It removes invisible/control formatting, prevents the external content from spoofing the runtime's own fence markers, caps payload size, and labels the payload as `untrusted_external_data`.
+
+Fencing is not a claim that the content is correct or harmless. It is a context boundary: external text is evidence/data, never an instruction or authorization source.
+
+## Staged change revalidation
+
+`runtime/change_control.py` models host-owned staged changes and one-shot approvals:
+
+```text
+trusted resource discovery
+        ↓
+stage exact change revision
+        ↓
+host/policy approval
+        ↓
+apply-time revalidation
+resource graph + policy + digest + scope
+        ↓
+execute
+        ↓
+independent verification
+```
+
+A chat message such as "approved" cannot create an `ApprovalGrant`.
+
+## Runtime recording and replay
+
+`runtime/recording.py` snapshots the normalized append-only event stream and adds a SHA-256 integrity digest. `schemas/runtime-recording.schema.json` defines the portable recording contract.
+
+The current reference implementation performs deterministic **integrity replay** only. It does not pretend to re-run a live model. Future live runners can attach `source: live` recordings to Validation Reports and re-score those recordings in CI.
+
 ## Persistence and recovery
 
 A production implementation should persist the append-only event log and rebuild `RuntimeRunState` from committed events. A crash during an open action must be represented as interrupted/recovery state; it must not erase committed calls or pretend the action never happened.
@@ -106,6 +145,8 @@ A production implementation should persist the append-only event log and rebuild
 Persistence providers are replaceable. Event truth, replayability, sequence monotonicity, and authorization semantics are not.
 
 ## Relationship to Engineering Loops
+
+The standard Agent loop is the default interaction model. Engineering Loops are activated when the task benefits from repeated observation/reconciliation over external state, not for every request.
 
 Runtime state and Engineering Loop state solve different problems:
 
@@ -118,5 +159,5 @@ A Runtime event can provide observations to a Loop, but it does not self-certify
 
 ```bash
 python -m unittest discover -s tests
-python -m compileall runtime scripts hooks adapters loops
+python -m compileall agents runtime scripts hooks adapters loops
 ```

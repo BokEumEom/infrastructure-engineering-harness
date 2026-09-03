@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Agent Runtime Recording",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "recording_id",
+    "source",
+    "runtime_revision",
+    "agent",
+    "model",
+    "run_id",
+    "final_status",
+    "events",
+    "sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "recording_id": {"type": "string", "minLength": 1},
+    "source": {"enum": ["fixture", "live"]},
+    "runtime_revision": {"type": "string", "minLength": 1},
+    "agent": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "final_status": {"type": "string", "minLength": 1},
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "run_id",
+          "seq",
+          "type",
+          "data",
+          "timestamp",
+          "model_visible",
+          "ignorable"
+        ],
+        "properties": {
+          "run_id": {"type": "string", "minLength": 1},
+          "seq": {"type": "integer", "minimum": 0},
+          "type": {"type": "string", "minLength": 1},
+          "data": {"type": "object"},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "model_visible": {"type": "boolean"},
+          "ignorable": {"type": "boolean"}
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

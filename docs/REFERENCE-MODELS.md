@@ -163,9 +163,11 @@ Particularly relevant patterns:
 - **delegation cannot expand authority** — read-only analysis/subagents do not gain write scope merely by discovering an identifier;
 - **live recording → replay eval** — real executions can be recorded once and deterministically re-scored in CI.
 
+The current reference runtime now implements the deterministic local form of several of these ideas through `runtime/provenance.py`, `runtime/fencing.py`, `runtime/change_control.py`, `runtime/recording.py`, and capability projection in `runtime/skill_registry.py`. Live provider enforcement remains experimental.
+
 The project remains stricter on independent engineering verification, epistemic classes, Loop reconciliation, regression obligations, and cross-provider neutrality.
 
-https://github.com/anthropics/commerce-agents
+https://claude.com/blog/the-anatomy-of-effective-commerce-agents\nhttps://github.com/anthropics/commerce-agents
 
 ## IBM Loop Engineering
 

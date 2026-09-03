@@ -1,6 +1,6 @@
 # Workflow Surface
 
-The Harness has a deliberately simple user-facing workflow surface and a rigorous internal control plane. The surface provides entrypoints and discoverability; it does not prescribe the model's reasoning path.
+The **Infrastructure Engineering Agent** is the user-facing workflow surface. The internal harness/runtime provides the rigorous control plane. The surface provides entrypoints and discoverability; it does not prescribe the model's reasoning path.
 
 The design is influenced by workflow-composed agent systems such as gstack: the user should not need to manually select every Skill when the intent already identifies the engineering workflow.
 
@@ -39,19 +39,23 @@ Natural-language requests may route to the same entrypoints.
 ```text
 User Intent
     ↓
+Infrastructure Engineering Agent
+    ↓
 Minimal seed context
     ↓
 Model Judgment
    ↙        ↘
-suggested      pull additional
-Loop/Skill     context/capability
+Skill/Tool     pull additional
+Capability    context/evidence
    ↘        ↙
       Action
         ↓
 Runtime / verification boundary
+        ↓
+Engineering Loop only when repeated reconciliation is useful
 ```
 
-Mappings are recommendations for discovery, not a mandatory chain. The model may skip irrelevant layers or choose another relevant Skill/Capability while hard Runtime, evidence, permission, and verification boundaries remain unchanged.
+Mappings are recommendations for discovery, not a mandatory chain. A one-shot review or analysis does not need an Engineering Loop merely because a Loop definition exists. The model may skip irrelevant layers or choose another relevant Skill/Capability while hard Runtime, evidence, permission, and verification boundaries remain unchanged.
 
 ## Suggested mapping
 
