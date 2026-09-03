@@ -27,7 +27,7 @@ class CommerceInspiredRuntimePatternTests(unittest.TestCase):
         result = ToolPipeline(log).evaluate(
             tool_name="infra.change",
             arguments={"resource_id": "db:fabricated"},
-            resource_provenance_required=True,
+            execution_authority="change",
             provenance=self.provenance,
             target_resource_ids=["db:fabricated"],
             bound_resource_scope=["svc:payment-api", "db:orders"],
@@ -46,7 +46,7 @@ class CommerceInspiredRuntimePatternTests(unittest.TestCase):
         result = ToolPipeline(log).evaluate(
             tool_name="infra.change",
             arguments={"resource_id": "obs:payment"},
-            resource_provenance_required=True,
+            execution_authority="change",
             provenance=self.provenance,
             target_resource_ids=["obs:payment"],
             bound_resource_scope=["svc:payment-api", "db:orders"],
@@ -58,7 +58,7 @@ class CommerceInspiredRuntimePatternTests(unittest.TestCase):
         result = ToolPipeline(log).evaluate(
             tool_name="infra.stage",
             arguments={"resource_id": "db:orders"},
-            resource_provenance_required=True,
+            execution_authority="change",
             provenance=self.provenance,
             target_resource_ids=["db:orders"],
             bound_resource_scope=["db:orders"],
