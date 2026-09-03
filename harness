@@ -122,7 +122,8 @@ def command_validate(_: argparse.Namespace) -> int:
         return 2
 
     commands = [
-        ("agent contract", _python(str(ROOT / "scripts" / "validate_agent_contract.py"))),\n        ("context contracts", _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT))),
+        ("agent contract", _python(str(ROOT / "scripts" / "validate_agent_contract.py"))),
+        ("context contracts", _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT))),
         ("community contract", _python(str(ROOT / "scripts" / "check_community_contract.py"))),
         ("localization contract", _python(str(ROOT / "scripts" / "check_localization.py"))),
         ("capability registry", _python(str(ROOT / "scripts" / "validate_capability_registry.py"), str(ROOT / "capabilities" / "registry.yaml"))),
