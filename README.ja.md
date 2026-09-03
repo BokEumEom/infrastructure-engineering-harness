@@ -1,12 +1,12 @@
-# Infrastructure Engineering Harness
+# Infrastructure Engineering Agent
 
 [English](README.md) | [한국어](README.ko.md) | **日本語** | [简体中文](README.zh-CN.md)
 
-Infrastructure Knowledge と現在の Evidence を、**Infrastructure Engineering / SRE / DevOps / FinOps / Security** のレビュー可能な Engineering Decision と統制された実装につなぐ、provider-neutral / cross-agent Harness です。
+Infrastructure / Operations / DevOps / SRE / FinOps / Security の業務を調査・レビュー・計画・検証する provider-neutral な **Infrastructure Engineering Agent** です。Harness は製品名ではなく、Agent 内部の Runtime / Control Plane を指します。
 
-> **Knowledge → Context → Decision Skill → Capability → Loop → Verified Outcome → Learning → Next Loop**
+> **Agent の判断は自由にし、authority と truth は Runtime boundary で制約する。**
 
-> **Status: Research Preview.** Core contracts、deterministic scenarios、evaluation plumbing、Harness CLI は利用できます。Live adapters、persistent runtime、controlled execution はまだ experimental です。
+> **Status: Research Preview.** Core contracts、deterministic scenarios、evaluation plumbing、Agent CLI は利用できます。Live adapters、persistent runtime、controlled execution はまだ experimental です。
 
 ## まず試す
 
@@ -15,15 +15,15 @@ Infrastructure Knowledge と現在の Evidence を、**Infrastructure Engineerin
 ```bash
 git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
 cd infrastructure-engineering-harness
-./harness setup
-./harness demo
+./agent setup
+./agent demo
 ```
 
 Windows:
 
 ```powershell
-harness.cmd setup
-harness.cmd demo
+agent.cmd setup
+agent.cmd demo
 ```
 
 詳細: [日本語 Quickstart](QUICKSTART.ja.md)
@@ -66,7 +66,7 @@ Organizational Knowledge + Live Environment
 
 ## 主要コンポーネント
 
-- **Domain** — Infrastructure / SRE / DevOps / FinOps / Security の lens
+- **Agent Contract** — Agent の role / authority / backend / completion boundary\n- **Domain** — Infrastructure / Operations / SRE / DevOps / FinOps / Security の lens
 - **Decision Skill** — 何をなぜ行うべきかを判断
 - **Capability** — 実装・検証方法を選択
 - **Resource Graph** — 実環境の resource / dependency を provider-neutral に表現
@@ -92,7 +92,7 @@ Framework code を変更しなくても参加できます。
 - 実運用経験を匿名化した [Scenario](contrib/scenarios/README.md) として追加
 - Agent を実行して [Validation Report](validation-reports/README.md) を提出
 - Kubernetes / Prometheus などの read-only Adapter を実装
-- Skill Eval / negative case を追加
+- Skill Eval / Harness Lift / negative case を追加
 - Reference Model を提案
 
 詳細: [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -106,3 +106,4 @@ English は technical contract の canonical source です。日本語・韓国�
 ## License
 
 MIT
+\nLegacy compatibility として `./harness` / `harness.cmd` も Research Preview 中は維持します。\n
