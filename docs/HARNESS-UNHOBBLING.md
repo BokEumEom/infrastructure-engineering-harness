@@ -4,7 +4,7 @@ Infrastructure Engineering Harness should improve engineering outcomes without t
 
 The design principle is:
 
-> **The harness should constrain authority and truth, not intelligence.**
+> **Let the agent reason freely; constrain authority and truth at the runtime boundary.**
 
 This follows a broader context-engineering shift: as model capability improves, accumulated instructions can become redundant, conflicting, or overly prescriptive. Anthropic reported in July 2026 that it removed more than 80% of Claude Code's system prompt for newer Claude models without measurable loss on its coding evaluations, and described the previous state as overconstrained.
 
@@ -108,7 +108,7 @@ Updated Context Pack
 
 The resolver should prefer authoritative knowledge and current evidence, expose gaps, and avoid injecting unrelated instructions.
 
-## Harness Lift
+## Harness Lift inside the Agent
 
 A Harness change is not automatically an improvement because it is safer-looking, more detailed, or more structured.
 
