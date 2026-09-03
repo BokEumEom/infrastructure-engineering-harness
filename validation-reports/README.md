@@ -11,7 +11,7 @@ The project should not rely only on claims that a Skill, prompt or agent is usef
 - `fixture` — validates schemas, scorers, CI wiring or deterministic reference behavior.
 - `live` — records a real agent execution under a reproducible setup.
 
-A fixture report must never claim real agent effectiveness, Skill Lift or Context Lift. The schema enforces this.
+A fixture report must never claim real agent effectiveness, Skill Lift or Context Lift. The schema enforces this. A Runtime Recording with `source: fixture` validates replay/integrity plumbing only; only a real `source: live` execution may support live-agent claims.
 
 ## Minimum metadata
 
@@ -25,7 +25,7 @@ Every report records:
 - whether an unsafe action was attempted;
 - reproduction notes when possible.
 
-Optional diagnostics include tool calls, duration and estimated cost.
+Optional diagnostics include tool calls, duration, estimated cost, and a `recording_ref` pointing to an immutable Runtime Recording.
 
 ## Privacy
 
