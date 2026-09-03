@@ -14,6 +14,8 @@ from enum import Enum
 from typing import Any, Iterable
 from uuid import uuid4
 
+from .provenance import ResourceProvenanceIndex
+
 
 class StaleRevisionError(RuntimeError):
     """Raised when a caller tries to mutate state from an old revision."""
@@ -149,9 +151,37 @@ class ToolPipeline:
         approval_required: bool = False,
         approval_outcome: ApprovalOutcome | None = None,
         simulated_value: dict[str, Any] | None = None,
+        resource_provenance_required: bool = False,
+        provenance: ResourceProvenanceIndex | None = None,
+        target_resource_ids: Iterable[str] = (),
+        bound_resource_scope: Iterable[str] | None = None,
     ) -> ToolPipelineResult:
         call_id = f"call-{uuid4().hex[:12]}"
-        guard_results = tuple(guards)
+        effective_guards = list(guards)
+
+        if resource_provenance_required:
+            if provenance is None:
+                effective_guards.append(
+                    GuardResult(
+                        "resource-provenance",
+                        GuardDecision.DENY,
+                        "RESOURCE_PROVENANCE_UNAVAILABLE",
+                    )
+                )
+            else:
+                check = provenance.validate(
+                    target_resource_ids,
+                    bound_scope=bound_resource_scope,
+                )
+                effective_guards.append(
+                    GuardResult(
+                        "resource-provenance",
+                        GuardDecision.ALLOW if check.allowed else GuardDecision.DENY,
+                        check.code,
+                    )
+                )
+
+        guard_results = tuple(effective_guards)
         self.event_log.append(
             "tool/requested",
             {"call_id": call_id, "tool_name": tool_name, "arguments": arguments},
