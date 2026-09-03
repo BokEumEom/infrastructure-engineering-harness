@@ -15,6 +15,7 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: ./harness doctor
       - run: ./harness demo
+      - run: python scripts/validate_agent_contract.py
       - run: python scripts/validate_context.py examples/.infra-context
       - run: python scripts/check_community_contract.py
       - run: python scripts/check_localization.py
@@ -36,4 +37,4 @@ jobs:
       - run: python scripts/score_harness_lift.py harness-evals/fixtures/plumbing.triple.json /tmp/harness-lift.json
       - run: python scripts/check_harness_lift.py harness-evals/policy.yaml /tmp/harness-lift.json
       - run: python -m unittest discover -s tests
-      - run: python -m compileall scripts hooks adapters environment loops runtime
+      - run: python -m compileall agents scripts hooks adapters environment loops runtime
