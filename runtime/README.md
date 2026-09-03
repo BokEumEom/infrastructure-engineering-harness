@@ -7,8 +7,8 @@ It is inspired by mature agent-runtime patterns, including DeepSeek Harness, but
 ```text
 Organizational Knowledge + Evidence
               ↓
-Engineering Control Plane
-Domain → Decision → Capability → Loop
+Infrastructure Engineering Agent
+Model Judgment → Skill / Capability
               ↓
         Runtime Kernel
   Event Log / Context / Skills

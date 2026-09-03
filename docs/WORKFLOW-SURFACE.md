@@ -18,17 +18,19 @@ change
 learn
 ```
 
-Future CLI/chat surfaces may expose these as:
+CLI/chat surfaces may expose these as:
 
 ```text
-harness incident
-harness reliability
-harness delivery
-harness finops
-harness security
-harness change
-harness learn
+agent incident
+agent reliability
+agent delivery
+agent finops
+agent security
+agent change
+agent learn
 ```
+
+These workflow commands are future/optional convenience surfaces; natural-language requests remain the primary Agent interaction model.
 
 Natural-language requests may route to the same entrypoints.
 

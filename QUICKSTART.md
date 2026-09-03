@@ -2,17 +2,17 @@
 
 **English** | [한국어](QUICKSTART.ko.md) | [日本語](QUICKSTART.ja.md) | [简体中文](QUICKSTART.zh-CN.md)
 
-You do not need cloud credentials or a production environment to try the harness. You also do not need to write or invoke Python commands directly.
+You do not need cloud credentials or a production environment to try the Infrastructure Engineering Agent. You also do not need to write or invoke Python commands directly.
 
-> **Current Research Preview runtime:** Python 3 is still used internally. The public quickstart interface is the `harness` command so the implementation runtime can change later without changing the user workflow.
+> **Current Research Preview runtime:** Python 3 is still used internally. The public quickstart interface is the `agent` command so the implementation runtime can change later without changing the user workflow.
 
 ## macOS / Linux
 
 ```bash
 git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
 cd infrastructure-engineering-harness
-./harness setup
-./harness demo
+./agent setup
+./agent demo
 ```
 
 ## Windows
@@ -20,8 +20,8 @@ cd infrastructure-engineering-harness
 ```powershell
 git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
 cd infrastructure-engineering-harness
-harness.cmd setup
-harness.cmd demo
+agent.cmd setup
+agent.cmd demo
 ```
 
 `setup` installs the small Research Preview dependency set. `demo` uses only checked-in fixtures: it does not connect to a cloud account, Kubernetes cluster, observability system, or production environment.
@@ -29,7 +29,7 @@ harness.cmd demo
 ## What `demo` does
 
 ```text
-Infrastructure Engineering Harness
+Infrastructure Engineering Agent
         ↓
 Reference Context Validation
         ↓
@@ -42,35 +42,35 @@ Safety / Consistency Check
 DEMO PASS / FAIL
 ```
 
-A successful demo confirms that the deterministic Harness contracts and scenario wiring are coherent. It does **not** prove that a live AI agent performs better.
+A successful demo confirms that the deterministic Agent/runtime contracts and scenario wiring are coherent. It does **not** prove that a live AI agent performs better.
 
 ## Useful commands
 
 ```text
-./harness demo
+./agent demo
     Fast, credential-free first experience.
 
-./harness validate
+./agent validate
     Contributor-facing deterministic validation.
 
-./harness scenario evals/scenarios/sre-dependency-saturation.json
+./agent scenario evals/scenarios/sre-dependency-saturation.json
     Validate one scenario and its referenced fixtures.
 
-./harness doctor
+./agent doctor
     Show local runtime/dependency status.
 
-./harness setup
+./agent setup
     Install the current Research Preview dependencies.
 ```
 
-On Windows, replace `./harness` with `harness.cmd`.
+On Windows, replace `./agent` with `agent.cmd`.
 
 ## Contributor validation
 
 Before opening a PR:
 
 ```bash
-./harness validate
+./agent validate
 ```
 
 ## Next steps
@@ -81,3 +81,4 @@ Before opening a PR:
 - Read the architecture: `docs/ARCHITECTURE.md`
 
 The current `demo` is deterministic by design. Live agent execution is recorded separately through `source: live` Validation Reports; fixture results must not be presented as live-agent benchmarks.
+\nLegacy compatibility: `./harness` and `harness.cmd` remain available as internal-harness entrypoints during the Research Preview.\n

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Contributor-facing CLI for Infrastructure Engineering Harness.
+"""CLI runtime for the Infrastructure Engineering Agent.
 
-The CLI intentionally hides implementation details from the quickstart. Python remains
-an internal runtime for the current Research Preview, while users interact with
-`./harness` (or `harness.cmd` on Windows).
+`./agent` is the primary product entrypoint. `./harness` remains a compatibility
+entrypoint for the internal harness/control plane during the Research Preview.
 """
 from __future__ import annotations
 
@@ -15,6 +14,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
+CLI_NAME = os.environ.get("INFRA_AGENT_ENTRYPOINT") or Path(sys.argv[0]).name
 DEFAULT_CONTEXT = ROOT / "examples" / ".infra-context"
 DEFAULT_SCENARIO = ROOT / "evals" / "scenarios" / "sre-dependency-saturation.json"
 
@@ -47,27 +47,27 @@ def _deps_ready() -> bool:
 
 
 def command_setup(_: argparse.Namespace) -> int:
-    print("Infrastructure Engineering Harness · setup")
+    print("Infrastructure Engineering Agent · setup")
     print("Installing the Research Preview dependencies into the current Python environment.")
     ok = _run(
         "install dependencies",
         _python("-m", "pip", "install", "-r", str(ROOT / "requirements.txt")),
     )
     if ok:
-        print("\n✓ Ready. Run: ./harness demo")
+        print("\n✓ Ready. Run: ./agent demo")
     return 0 if ok else 1
 
 
 def _require_deps() -> bool:
     if _deps_ready():
         return True
-    print("Harness dependencies are not installed.")
-    print("Run `./harness setup` first (Windows: `harness.cmd setup`).")
+    print("Agent runtime dependencies are not installed.")
+    print("Run `./agent setup` first (Windows: `agent.cmd setup`).")
     return False
 
 
 def command_demo(_: argparse.Namespace) -> int:
-    print("Infrastructure Engineering Harness · demo")
+    print("Infrastructure Engineering Agent · demo")
     print("No cloud credentials or production access are used.")
     if not _require_deps():
         return 2
@@ -95,7 +95,7 @@ def command_demo(_: argparse.Namespace) -> int:
         print("  Context contract: valid")
         print("  Resource/Evidence scenario: consistent")
         print("  Production mutation: none")
-        print("\nThis proves the deterministic harness plumbing, not live agent effectiveness.")
+        print("\nThis proves deterministic agent/runtime contract plumbing, not live agent effectiveness.")
         print("Next: add a scenario or submit a live validation report.")
         return 0
 
@@ -117,11 +117,12 @@ def command_scenario(args: argparse.Namespace) -> int:
 
 
 def command_validate(_: argparse.Namespace) -> int:
-    print("Infrastructure Engineering Harness · validate")
+    print("Infrastructure Engineering Agent · validate")
     if not _require_deps():
         return 2
 
     commands = [
+        ("agent contract", _python(str(ROOT / "scripts" / "validate_agent_contract.py"))),
         ("context contracts", _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT))),
         ("community contract", _python(str(ROOT / "scripts" / "check_community_contract.py"))),
         ("localization contract", _python(str(ROOT / "scripts" / "check_localization.py"))),
@@ -134,12 +135,12 @@ def command_validate(_: argparse.Namespace) -> int:
     for label, command in commands:
         if not _run(label, command):
             return 1
-    print("\n✓ HARNESS VALIDATION PASS")
+    print("\n✓ AGENT VALIDATION PASS")
     return 0
 
 
 def command_doctor(_: argparse.Namespace) -> int:
-    print("Infrastructure Engineering Harness · doctor")
+    print("Infrastructure Engineering Agent · doctor")
     print(f"Repository: {ROOT}")
     print(f"Python runtime: {sys.version.split()[0]} ({sys.executable})")
     print(f"Dependencies: {'ready' if _deps_ready() else 'missing'}")
@@ -150,15 +151,15 @@ def command_doctor(_: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="harness",
-        description="Infrastructure Engineering Harness CLI (Research Preview)",
+        prog=CLI_NAME,
+        description="Infrastructure Engineering Agent CLI (Research Preview; harness is the internal control plane)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     setup = sub.add_parser("setup", help="install local Research Preview dependencies")
     setup.set_defaults(func=command_setup)
 
-    demo = sub.add_parser("demo", help="run the credential-free 5-minute harness demo")
+    demo = sub.add_parser("demo", help="run the credential-free 5-minute agent demo")
     demo.set_defaults(func=command_demo)
 
     validate = sub.add_parser("validate", help="run contributor-facing deterministic validation")

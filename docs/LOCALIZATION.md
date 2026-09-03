@@ -1,6 +1,6 @@
 # Localization Policy
 
-Infrastructure Engineering Harness supports localized **entry documentation** without duplicating every technical contract.
+Infrastructure Engineering Agent supports localized **entry documentation** without duplicating every technical contract.
 
 ## Supported languages
 
@@ -33,12 +33,12 @@ Every localized README must preserve the meaning of:
 
 Every localized Quickstart must preserve:
 
-- `harness setup`;
-- `harness demo`;
-- `harness validate`;
-- `harness scenario`;
-- `harness doctor`;
-- Windows `harness.cmd` path;
+- `agent setup`;
+- `agent demo`;
+- `agent validate`;
+- `agent scenario`;
+- `agent doctor`;
+- Windows `agent.cmd` path;
 - the statement that deterministic demo results are not live-agent effectiveness evidence.
 
 ## Translation scope
@@ -65,7 +65,7 @@ Translation fixes are valid contributions. A translation PR should:
 2. keep file paths, command names, schema names and rule identifiers exact;
 3. never weaken safety or authorization language;
 4. update all affected entry documents when the public CLI or status changes;
-5. pass `python scripts/check_localization.py` or `./harness validate`.
+5. pass `python scripts/check_localization.py` or `./agent validate`.
 
 CI checks structural/semantic parity markers, but it cannot guarantee natural language quality. Japanese and Simplified Chinese entry documents should therefore be reviewed by fluent or native-speaking contributors as the community grows; Korean should follow the same review standard when external contributors are available.
 

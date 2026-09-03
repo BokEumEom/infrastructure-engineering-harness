@@ -8,6 +8,12 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_FILES = [
+    "agent",
+    "agent.cmd",
+    "agents/README.md",
+    "agents/infrastructure_engineering/agent.yaml",
+    "agents/infrastructure_engineering/backend.py",
+    "schemas/agent-contract.schema.json",
     "harness",
     "harness.cmd",
     "README.ko.md",
@@ -49,9 +55,10 @@ def main() -> int:
         if not (ROOT / rel).exists():
             failures.append(f"missing community file: {rel}")
 
-    harness_path = ROOT / "harness"
-    if harness_path.exists() and not (harness_path.stat().st_mode & 0o111):
-        failures.append("harness: macOS/Linux launcher must be executable")
+    for launcher in ("agent", "harness"):
+        launcher_path = ROOT / launcher
+        if launcher_path.exists() and not (launcher_path.stat().st_mode & 0o111):
+            failures.append(f"{launcher}: macOS/Linux launcher must be executable")
 
     for rel in ISSUE_FORMS:
         path = ROOT / rel
@@ -78,11 +85,11 @@ def main() -> int:
             failures.append(f"README.md: missing contributor/localization marker '{marker}'")
 
     quickstart = (ROOT / "QUICKSTART.md").read_text(encoding="utf-8")
-    for marker in ("./harness setup", "./harness demo", "./harness validate", "harness.cmd demo"):
+    for marker in ("./agent setup", "./agent demo", "./agent validate", "agent.cmd demo"):
         if marker not in quickstart:
-            failures.append(f"QUICKSTART.md: missing harness CLI marker '{marker}'")
+            failures.append(f"QUICKSTART.md: missing Agent CLI marker '{marker}'")
     if "python scripts/" in quickstart or "python -m unittest" in quickstart:
-        failures.append("QUICKSTART.md: user-facing path must use the harness CLI, not lower-level Python commands")
+        failures.append("QUICKSTART.md: user-facing path must use the Agent CLI, not lower-level Python commands")
 
     report_path = ROOT / "validation-reports/example.fixture.json"
     if report_path.exists():
