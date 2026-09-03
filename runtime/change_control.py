@@ -100,7 +100,11 @@ class ChangeControl:
             return ApplyCheck(False, "CHANGE_REVISION_MISMATCH")
         if grant.proposal_digest != change.proposal_digest:
             return ApplyCheck(False, "CHANGE_DIGEST_MISMATCH")
-        if current_resource_graph_id != change.resource_graph_id or grant.resource_graph_id != change.resource_graph_id:
+        if (
+            current_resource_graph_id != change.resource_graph_id
+            or grant.resource_graph_id != change.resource_graph_id
+            or provenance.graph_id != current_resource_graph_id
+        ):
             return ApplyCheck(False, "RESOURCE_GRAPH_STALE")
         if current_policy_revision != change.policy_revision or grant.policy_revision != change.policy_revision:
             return ApplyCheck(False, "POLICY_REVISION_STALE")
