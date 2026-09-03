@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Engineering Agent Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "name", "description", "surface", "capability_domains", "judgment", "runtime_boundary", "authority", "backend", "completion"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "name": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product", "default_entrypoint", "compatibility_entrypoints"],
+      "properties": {
+        "product": {"const": "agent"},
+        "default_entrypoint": {"type": "string", "minLength": 1},
+        "compatibility_entrypoints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "capability_domains": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["infrastructure", "operations", "devops", "sre", "finops", "security"]}
+    },
+    "judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routing", "context", "skill_loading", "default_instruction"],
+      "properties": {
+        "routing": {"enum": ["adaptive", "fixed"]},
+        "context": {"enum": ["pull", "preload"]},
+        "skill_loading": {"enum": ["progressive", "eager"]},
+        "default_instruction": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtime_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementation", "owns"],
+      "properties": {
+        "implementation": {"type": "string", "minLength": 1},
+        "owns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default", "production_mutation", "destructive_actions", "privilege_expansion", "financial_commitments", "chat_approval_is_authorization"],
+      "properties": {
+        "default": {"const": "read_only"},
+        "production_mutation": {"const": "independently_authorized"},
+        "destructive_actions": {"const": "independently_authorized"},
+        "privilege_expansion": {"const": "independently_authorized"},
+        "financial_commitments": {"const": "independently_authorized"},
+        "chat_approval_is_authorization": {"const": false}
+      }
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["interface", "model_receives_credentials", "mutation_requires_staged_change", "apply_requires_approved_change"],
+      "properties": {
+        "interface": {"type": "string", "minLength": 1},
+        "model_receives_credentials": {"const": false},
+        "mutation_requires_staged_change": {"const": true},
+        "apply_requires_approved_change": {"const": true}
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_self_certification", "requires"],
+      "properties": {
+        "agent_self_certification": {"const": false},
+        "requires": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}
