@@ -1,4 +1,4 @@
-# Infrastructure Engineering Harness — Agent Guide
+# Infrastructure Engineering Agent — Repository Guide
 
 Use repository context and available tools to solve infrastructure engineering tasks with your own engineering judgment.
 
@@ -31,7 +31,7 @@ Completion means the real objective is independently verified, required safety/p
 - `domains/` — Infrastructure / SRE / DevOps / FinOps / Security lenses
 - `capabilities/` — implementation and verification capability trust metadata
 - `environment/` and `adapters/evidence/` — live resource/evidence contracts
-- `runtime/` — hard execution, approval, guard, audit, and sandbox boundaries
+- `agents/infrastructure_engineering/` — user-facing Agent contract and provider-neutral Backend interface\n- `runtime/` — internal hard execution, approval, guard, audit, and sandbox boundaries
 - `docs/HARNESS-UNHOBBLING.md` — why always-loaded guidance is intentionally small
 
 Use these as interfaces and evidence sources, not as a substitute for task-specific reasoning.
