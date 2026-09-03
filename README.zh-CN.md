@@ -1,12 +1,12 @@
-# Infrastructure Engineering Harness
+# Infrastructure Engineering Agent
 
 [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | **简体中文**
 
-这是一个 provider-neutral、cross-agent 的 Infrastructure Engineering Harness，用于把 Infrastructure Knowledge 与当前 Evidence 转换为 **Infrastructure Engineering / SRE / DevOps / FinOps / Security** 中可审查的工程决策和受控实现。
+这是一个 provider-neutral 的 **Infrastructure Engineering Agent**，用于调查、审查、规划和验证 Infrastructure / Operations / DevOps / SRE / FinOps / Security 工作。Harness 不再是产品身份，而是 Agent 内部的 Runtime / Control Plane。
 
-> **Knowledge → Context → Decision Skill → Capability → Loop → Verified Outcome → Learning → Next Loop**
+> **让 Agent 自由判断，在 Runtime boundary 约束 authority 与 truth。**
 
-> **状态：Research Preview。** Core contracts、deterministic scenarios、evaluation plumbing 与 Harness CLI 已可使用；live adapters、persistent runtime 与 controlled execution 仍处于 experimental 阶段。
+> **状态：Research Preview。** Core contracts、deterministic scenarios、evaluation plumbing 与 Agent CLI 已可使用；live adapters、persistent runtime 与 controlled execution 仍处于 experimental 阶段。
 
 ## 先运行起来
 
@@ -15,15 +15,15 @@
 ```bash
 git clone https://github.com/BokEumEom/infrastructure-engineering-harness.git
 cd infrastructure-engineering-harness
-./harness setup
-./harness demo
+./agent setup
+./agent demo
 ```
 
 Windows：
 
 ```powershell
-harness.cmd setup
-harness.cmd demo
+agent.cmd setup
+agent.cmd demo
 ```
 
 详细说明：[中文 Quickstart](QUICKSTART.zh-CN.md)
@@ -66,7 +66,7 @@ Organizational Knowledge + Live Environment
 
 ## 核心组件
 
-- **Domain** — Infrastructure / SRE / DevOps / FinOps / Security 的工程视角
+- **Agent Contract** — Agent 的角色、权限、Backend 与完成边界\n- **Domain** — Infrastructure / Operations / SRE / DevOps / FinOps / Security 的工程视角
 - **Decision Skill** — 判断应该做什么以及为什么
 - **Capability** — 选择如何实现或验证
 - **Resource Graph** — provider-neutral 的实际资源与依赖关系
@@ -92,7 +92,7 @@ Organizational Knowledge + Live Environment
 - 把真实运维经验匿名化为 [Scenario](contrib/scenarios/README.md)
 - 运行 Agent 并提交 [Validation Report](validation-reports/README.md)
 - 实现 Kubernetes / Prometheus 等 read-only Adapter
-- 增加 Skill Eval / negative case
+- 增加 Skill Eval / Harness Lift / negative case
 - 提议新的 Reference Model
 
 详细说明：[CONTRIBUTING.md](CONTRIBUTING.md)
@@ -106,3 +106,4 @@ English 是 technical contract 的 canonical source。中文、韩文和日文�
 ## License
 
 MIT
+\n兼容入口 `./harness` / `harness.cmd` 在 Research Preview 期间继续保留。\n
