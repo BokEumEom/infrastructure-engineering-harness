@@ -37,6 +37,9 @@ runtime_boundary:
     - audit_events
     - regression_gates
     - independent_verification
+    - untrusted_content_fencing
+    - change_revision_validation
+    - runtime_recording
 
 authority:
   default: read_only
@@ -51,6 +54,8 @@ backend:
   model_receives_credentials: false
   mutation_requires_staged_change: true
   apply_requires_approved_change: true
+  resource_provenance_required_for_mutation: true
+  apply_revalidates_staged_revision: true
 
 completion:
   agent_self_certification: false
