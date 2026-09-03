@@ -27,7 +27,7 @@ Context Skills Capabilities
        Action
          ↓
 Agent Runtime / Harness Control Plane
-Evidence · Resource Provenance · State · Guard · Approval · Permission
+Evidence · Resource Provenance · Fence · State · Guard · Approval · Permission
          ↓
 Infrastructure Backend
          ↓
@@ -55,6 +55,8 @@ stage_change
           ↓
 review / approval
           ↓
+apply-time provenance + revision revalidation
+          ↓
 apply_approved_change
           ↓
 verify_outcome
@@ -70,12 +72,29 @@ Within this project it means the internal control mechanisms that make the Agent
 
 - Runtime Event Log;
 - Evidence and Resource provenance;
-- Context/Skill progressive disclosure;
+- untrusted external-data fencing;
+- Context/Skill progressive disclosure and capability-aware projection;
 - Guard and policy enforcement;
-- independent approval;
+- independently owned, revision-bound approval;
+- immutable runtime recording/replay integrity;
 - state persistence;
 - regression obligations;
 - independent verification;
 - Skill / Context / Harness Lift evaluation.
 
 The product is the Agent. The harness is part of how the Agent is built and governed.
+
+
+## Commerce-agent-derived runtime rules
+
+The current reference runtime implements several patterns from Anthropic's Commerce Agents architecture:
+
+- mutation targets can be gated against resources actually discovered in the current Resource Graph;
+- unavailable Skills can be projected out of the model-visible surface;
+- external text can be bounded and fenced as untrusted data;
+- approvals bind to the exact staged change/policy/resource-graph revision and are one-shot;
+- Runtime Events can be snapshotted into an integrity-checked recording.
+
+These are deterministic reference contracts. Live provider adapters must invoke the same gates immediately before real production execution.
+
+See `docs/COMMERCE-AGENT-PATTERNS.md`.
