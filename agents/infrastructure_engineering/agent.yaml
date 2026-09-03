@@ -1,0 +1,61 @@
+schema_version: "1.0"
+id: infrastructure-engineering
+name: Infrastructure Engineering Agent
+description: >
+  A provider-neutral infrastructure engineering agent for architecture, operations,
+  delivery, reliability, cost, and security work. The model chooses the reasoning path;
+  the runtime independently constrains evidence, resource scope, permissions, approval,
+  execution, and verified completion.
+
+surface:
+  product: agent
+  default_entrypoint: agent
+  compatibility_entrypoints: [harness]
+
+capability_domains:
+  - infrastructure
+  - operations
+  - devops
+  - sre
+  - finops
+  - security
+
+judgment:
+  routing: adaptive
+  context: pull
+  skill_loading: progressive
+  default_instruction: use the smallest relevant context and capability set
+
+runtime_boundary:
+  implementation: harness
+  owns:
+    - evidence_provenance
+    - resource_provenance
+    - permission_scope
+    - approval_state
+    - runtime_state
+    - audit_events
+    - regression_gates
+    - independent_verification
+
+authority:
+  default: read_only
+  production_mutation: independently_authorized
+  destructive_actions: independently_authorized
+  privilege_expansion: independently_authorized
+  financial_commitments: independently_authorized
+  chat_approval_is_authorization: false
+
+backend:
+  interface: agents.infrastructure_engineering.backend.InfrastructureEngineeringBackend
+  model_receives_credentials: false
+  mutation_requires_staged_change: true
+  apply_requires_approved_change: true
+
+completion:
+  agent_self_certification: false
+  requires:
+    - objective_reconciled_against_current_state
+    - material_claims_evidence_backed
+    - required_approvals_satisfied
+    - independent_outcome_verification
