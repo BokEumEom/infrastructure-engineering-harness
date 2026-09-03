@@ -10,6 +10,10 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = [
     "agent",
     "agent.cmd",
+    "agents/README.md",
+    "agents/infrastructure_engineering/agent.yaml",
+    "agents/infrastructure_engineering/backend.py",
+    "schemas/agent-contract.schema.json",
     "harness",
     "harness.cmd",
     "README.ko.md",
