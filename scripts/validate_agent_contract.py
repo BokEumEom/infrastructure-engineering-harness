@@ -29,6 +29,9 @@ def main() -> int:
         "permission_scope",
         "approval_state",
         "independent_verification",
+        "untrusted_content_fencing",
+        "change_revision_validation",
+        "runtime_recording",
     }
     owned = set(contract.get("runtime_boundary", {}).get("owns", []))
     missing = sorted(required_runtime_ownership - owned)
