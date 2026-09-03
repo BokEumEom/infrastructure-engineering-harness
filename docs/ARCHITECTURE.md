@@ -76,12 +76,12 @@ A missing signal is represented as a `gap`, not hidden behind confidence languag
 
 Context Pack assembly does not change authority. A provisional learning candidate remains provisional even when included in context, and stale evidence remains stale.
 
-## Model judgment, Domain, Skill, Capability and Loop
+## Agent judgment, Domain, Skill, Capability and Loop
 
 These layers have different responsibilities:
 
 ```text
-Model       → chooses the next useful reasoning/action path
+Agent/Model → chooses the next useful reasoning/action path
 Context     → supplies bounded knowledge/evidence/gaps on demand
 Domain      → optional lens for relevant engineering constraints
 Skill       → optional task-specific guidance/interface
@@ -170,7 +170,7 @@ See `docs/WORKFLOW-SURFACE.md`.
 
 ## Production boundary
 
-The default harness may analyze, design, generate code/config/pipelines/runbooks, verify available checks and create workflow artifacts, but production execution remains independently authorized. `change-validation` can orchestrate precheck → approval → external execution → post-verification without making the model or runtime the authorization boundary.
+The Infrastructure Engineering Agent may analyze, design, generate code/config/pipelines/runbooks, verify available checks and create workflow artifacts, but production execution remains independently authorized. `change-validation` can orchestrate precheck → approval → external execution → post-verification without making the model or runtime the authorization boundary.
 
 ## Agent and tool adapters
 
@@ -178,4 +178,4 @@ Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud
 
 Future execution adapters should implement the contracts under `runtime/` instead of bypassing them with direct model-to-provider mutation.
 
-See `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `docs/HARNESS-UNHOBBLING.md`, `docs/WORKFLOW-SURFACE.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
+See `agents/infrastructure_engineering/README.md`, `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `docs/HARNESS-UNHOBBLING.md`, `docs/WORKFLOW-SURFACE.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
