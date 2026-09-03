@@ -35,6 +35,7 @@ QUICKSTART_LINKS = [
 ]
 
 README_MARKERS = [
+    "Infrastructure Engineering Agent",
     "Research Preview",
     "Resource Graph",
     "Bound Capability",
@@ -47,12 +48,12 @@ README_MARKERS = [
 ]
 
 QUICKSTART_MARKERS = [
-    "harness setup",
-    "harness demo",
-    "harness validate",
-    "harness scenario",
-    "harness doctor",
-    "harness.cmd",
+    "agent setup",
+    "agent demo",
+    "agent validate",
+    "agent scenario",
+    "agent doctor",
+    "agent.cmd",
     "source: live",
 ]
 
