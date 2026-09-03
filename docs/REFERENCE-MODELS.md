@@ -12,7 +12,7 @@ Loop Engineering is an **emerging agent engineering term**, not an infrastructur
 | Paperthin | Artifact restraint, clean-current-state rewrites, SSOT repair, eval independence, earned reuse, and cross-lens disagreement |
 | gstack | Workflow-composed Agent UX, progressive Skill routing, chained artifacts, review/test/ship/reflect sequencing, and cross-session learning surface |
 | GBrain | Persistent agent memory, bounded context packs, explicit gaps, hot/cold knowledge separation, fact/opinion distinction, synthesis, and governed retrieval surfaces |
-| Anthropic Context Engineering (Claude 5) | Unhobbling: remove redundant/prescriptive always-loaded guidance, prefer progressive disclosure, interfaces, and model judgment as capability improves |
+| Anthropic Context Engineering (Claude 5) | Unhobbling: remove redundant/prescriptive always-loaded guidance, prefer progressive disclosure, interfaces, and model judgment as capability improves |\n| Anthropic Commerce Agents | Agent-as-product architecture, backend integration contracts, runtime tool gates, provenance-bound writes, staged changes, host-owned approval, capability-aware tool/prompt surfaces, and live-recording/replay eval patterns |
 | IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
 | LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
 | LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
@@ -132,6 +132,41 @@ This motivates `docs/HARNESS-UNHOBBLING.md` and `harness-evals/`.
 
 https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models
 
+## Anthropic Commerce Agents
+
+`anthropics/commerce-agents` is used as an **agent product / backend / runtime-enforcement reference**. Its most reusable pattern is not commerce-specific: the shopping and merchant agents are user-facing products, while prompts, Skills, backend contracts, gates, executor/runtime, and approvals sit beneath them.
+
+The Infrastructure Engineering Agent adopts the same separation in provider-neutral form:
+
+```text
+Infrastructure Engineering Agent
+          ↓
+Model Judgment
+          ↓
+Skill / Tool / Capability
+          ↓
+Internal Runtime / Harness
+          ↓
+Infrastructure Backend
+          ↓
+Provider Systems
+```
+
+Particularly relevant patterns:
+
+- **backend-owned credentials** — platform credentials remain server-side; the model sees normalized results;
+- **provenance-bound writes** — a model cannot safely target arbitrary identifiers merely by naming them; infrastructure mutation should bind to resources discovered/validated in the current trusted scope;
+- **stage → approve → apply** — mutation proposals are staged first and approval state is owned by the host/runtime, not inferred from chat text;
+- **tool-call enforcement** — safety and authorization rules hold in code even when the model misstates them;
+- **capability-aware surfaces** — when a capability is disabled, its tools and related prompt guidance disappear rather than remaining as dead context;
+- **progressive Skill loading** — the model receives bounded Skill summaries and loads bodies only when useful;
+- **delegation cannot expand authority** — read-only analysis/subagents do not gain write scope merely by discovering an identifier;
+- **live recording → replay eval** — real executions can be recorded once and deterministically re-scored in CI.
+
+The project remains stricter on independent engineering verification, epistemic classes, Loop reconciliation, regression obligations, and cross-provider neutrality.
+
+https://github.com/anthropics/commerce-agents
+
 ## IBM Loop Engineering
 
 IBM describes loop engineering as designing agentic workflows that iteratively guide agents through goals, action, observation and adjustment. This harness adopts bounded loops but adds infrastructure-specific reconciliation, independent authorization and provenance.
@@ -203,7 +238,7 @@ continue / terminal
 Learning Candidate → Governance → Durable Knowledge
 ```
 
-The model is free to choose a better reasoning path. The Harness remains strict about what the model cannot self-assert: independent truth, protected authority, production control, and verified completion.
+The Infrastructure Engineering Agent is free to choose a better reasoning path. Its internal harness/runtime remains strict about what the model cannot self-assert: independent truth, protected authority, production control, and verified completion.
 
 Guidance itself is evaluated:
 
