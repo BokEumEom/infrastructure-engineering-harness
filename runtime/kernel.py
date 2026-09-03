@@ -151,15 +151,20 @@ class ToolPipeline:
         approval_required: bool = False,
         approval_outcome: ApprovalOutcome | None = None,
         simulated_value: dict[str, Any] | None = None,
+        execution_authority: str = "none",
         resource_provenance_required: bool = False,
         provenance: ResourceProvenanceIndex | None = None,
         target_resource_ids: Iterable[str] = (),
         bound_resource_scope: Iterable[str] | None = None,
     ) -> ToolPipelineResult:
         call_id = f"call-{uuid4().hex[:12]}"
-        effective_guards = list(guards)
+        if execution_authority not in {"none", "read", "workflow", "change"}:
+            raise ValueError("execution_authority must be none, read, workflow, or change")
 
-        if resource_provenance_required:
+        effective_guards = list(guards)
+        provenance_mandatory = resource_provenance_required or execution_authority == "change"
+
+        if provenance_mandatory:
             if provenance is None:
                 effective_guards.append(
                     GuardResult(
@@ -184,7 +189,12 @@ class ToolPipeline:
         guard_results = tuple(effective_guards)
         self.event_log.append(
             "tool/requested",
-            {"call_id": call_id, "tool_name": tool_name, "arguments": arguments},
+            {
+                "call_id": call_id,
+                "tool_name": tool_name,
+                "arguments": arguments,
+                "execution_authority": execution_authority,
+            },
             model_visible=True,
         )
 
