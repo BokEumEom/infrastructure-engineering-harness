@@ -34,16 +34,35 @@ class InfrastructureEngineeringBackend(ABC):
         """Return deployment/configuration/change records relevant to the scope."""
 
     @abstractmethod
-    async def stage_change(self, proposal: dict[str, Any]) -> dict[str, Any]:
-        """Create a reviewable change record without mutating production."""
+    async def stage_change(
+        self,
+        proposal: dict[str, Any],
+        *,
+        resource_graph_id: str,
+        resource_ids: list[str],
+        policy_revision: str,
+    ) -> dict[str, Any]:
+        """Create a revisioned, reviewable change record without mutating production.
+
+        The target resources must already be present in trusted discovery provenance.
+        """
 
     @abstractmethod
     async def get_pending_changes(self) -> list[dict[str, Any]]:
         """Return staged changes visible to the current principal/session."""
 
     @abstractmethod
-    async def apply_approved_change(self, change_id: str) -> dict[str, Any]:
-        """Apply a staged change only after the host/runtime has independently approved it."""
+    async def apply_approved_change(
+        self,
+        change_id: str,
+        *,
+        expected_revision: int,
+    ) -> dict[str, Any]:
+        """Apply only the exact staged revision independently approved by the host/runtime.
+
+        Implementations must revalidate resource provenance, policy revision and the
+        staged change revision immediately before execution.
+        """
 
     @abstractmethod
     async def verify_outcome(
