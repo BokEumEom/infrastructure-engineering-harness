@@ -1,6 +1,6 @@
 # Contributing
 
-You do **not** need to understand the whole harness before contributing.
+You do **not** need to understand the whole internal harness before contributing to the Infrastructure Engineering Agent.
 
 Pick the smallest useful contribution:
 
@@ -11,17 +11,17 @@ Pick the smallest useful contribution:
 5. **Research reference** — propose a well-grounded external pattern and explain which local contract it should strengthen.
 6. **Localization** — review or improve Korean, Japanese, or Simplified Chinese entry documentation without changing technical semantics.
 
-## Start with the Harness CLI
+## Start with the Agent CLI
 
 Contributor-facing commands use one stable interface:
 
 ```bash
-./harness setup
-./harness demo
-./harness validate
+./agent setup
+./agent demo
+./agent validate
 ```
 
-On Windows, use `harness.cmd` instead of `./harness`.
+On Windows, use `agent.cmd` instead of `./agent`. The legacy `harness` entrypoint remains available for compatibility.
 
 Python remains the current internal Research Preview runtime, but contributors should not need to memorize individual Python script paths for normal validation. Maintainers can still run lower-level scripts when debugging a specific contract.
 
@@ -67,12 +67,12 @@ See `contrib/scenarios/README.md`.
 Validate a scenario with:
 
 ```bash
-./harness scenario evals/scenarios/<scenario>.json
+./agent scenario evals/scenarios/<scenario>.json
 ```
 
 ## Validation run rules
 
-A validation report must distinguish deterministic fixture validation from a real live agent run. Do not claim Skill Lift or Context Lift from a fixture-only result. Preserve enough metadata for another contributor to understand the agent, harness revision, scenario and result without exposing secrets.
+A validation report must distinguish deterministic fixture validation from a real live agent run. Do not claim Skill Lift or Context Lift from a fixture-only result. Preserve enough metadata for another contributor to understand the Agent, runtime/harness revision, scenario and result without exposing secrets.
 
 See `validation-reports/README.md`.
 
@@ -86,7 +86,7 @@ When reviewing a translation:
 - do not weaken safety, authorization or fixture-vs-live language;
 - prefer stable technical terms over awkward literal translation;
 - update the localization contract when a new supported language is added;
-- run `./harness validate` before opening a PR.
+- run `./agent validate` before opening a PR.
 
 See `docs/LOCALIZATION.md`.
 
@@ -113,10 +113,10 @@ Keep PRs focused. State:
 Run before opening a PR:
 
 ```bash
-./harness validate
+./agent validate
 ```
 
-If validation fails, `./harness doctor` shows the local runtime/dependency state. Use the lower-level command reported by the failing check only when deeper debugging is needed.
+If validation fails, `./agent doctor` shows the local runtime/dependency state. Use the lower-level command reported by the failing check only when deeper debugging is needed.
 
 ## Security
 
