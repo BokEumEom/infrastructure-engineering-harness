@@ -1,4 +1,4 @@
-"""Provider-neutral context assembly and latency accounting.
+"""Provider-neutral context assembly, prompt-cache layout, and latency accounting.
 
 The runtime keeps stable context prefixes deterministic so model-provider prompt
 caching can be used when available, without making caching a provider dependency.
@@ -33,6 +33,13 @@ class PromptAssembly:
     estimated_total_tokens: int
     estimated_cacheable_tokens: int
     estimated_volatile_tokens: int
+
+
+@dataclass(frozen=True)
+class LatencyBudget:
+    max_model_turns: int | None = None
+    max_tool_calls: int | None = None
+    max_accounted_ms: int | None = None
 
 
 @dataclass
@@ -88,6 +95,17 @@ class LatencyTracker:
             "cache_write_tokens": self.cache_write_tokens,
             "cache_read_ratio": round(self.cache_read_tokens / denominator, 6),
         }
+
+    def budget_failures(self, budget: LatencyBudget) -> tuple[str, ...]:
+        failures: list[str] = []
+        if budget.max_model_turns is not None and self.model_turns > budget.max_model_turns:
+            failures.append("MODEL_TURN_BUDGET_EXCEEDED")
+        if budget.max_tool_calls is not None and self.tool_calls > budget.max_tool_calls:
+            failures.append("TOOL_CALL_BUDGET_EXCEEDED")
+        accounted_ms = self.model_ms + self.tool_ms
+        if budget.max_accounted_ms is not None and accounted_ms > budget.max_accounted_ms:
+            failures.append("LATENCY_BUDGET_EXCEEDED")
+        return tuple(failures)
 
 
 def _estimate_tokens(text: str) -> int:
