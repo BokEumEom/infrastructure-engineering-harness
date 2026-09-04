@@ -5,7 +5,7 @@ description: >
   A provider-neutral infrastructure engineering agent for architecture, operations,
   delivery, reliability, cost, and security work. The model chooses the reasoning path;
   the runtime independently constrains evidence, resource scope, permissions, approval,
-  execution, and verified completion.
+  execution, release state, memory persistence, and verified completion.
 
 surface:
   product: agent
@@ -40,6 +40,10 @@ runtime_boundary:
     - untrusted_content_fencing
     - change_revision_validation
     - runtime_recording
+    - persistent_memory
+    - cache_aware_context_assembly
+    - latency_metrics
+    - skill_release_control
 
 authority:
   default: read_only

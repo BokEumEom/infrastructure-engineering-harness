@@ -1,9 +1,4 @@
-"""Scope-neutral reference Runtime Skill Registry.
-
-The durable capability registry owns source trust/risk/execution metadata.
-This runtime layer owns invocation visibility and lazy selection policy.
-"""
-
+"""Scope-neutral Runtime Skill Registry with invocation and release controls."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
+from .release_control import SkillReleaseController
 
 
 @dataclass(frozen=True)
@@ -25,20 +22,42 @@ class RuntimeSkillSummary:
     catalog_visible: bool
     execution_authority: str
     intents: tuple[str, ...]
+    release_state: str = "active"
 
 
 class RuntimeSkillRegistry:
-    def __init__(self, capability_registry: dict[str, Any], invocation_policy: dict[str, Any]):
+    def __init__(
+        self,
+        capability_registry: dict[str, Any],
+        invocation_policy: dict[str, Any],
+        release_controller: SkillReleaseController | None = None,
+    ):
         self.capability_registry = capability_registry
         self.invocation_policy = invocation_policy
+        self.release_controller = release_controller
         self._sources = {item["id"]: item for item in capability_registry["sources"]}
         self._rules = {item["skill_id"]: item for item in invocation_policy.get("rules", [])}
 
     @classmethod
-    def from_files(cls, capability_path: Path, policy_path: Path) -> "RuntimeSkillRegistry":
-        capability_registry = yaml.safe_load(capability_path.read_text(encoding="utf-8"))
-        invocation_policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
-        return cls(capability_registry, invocation_policy)
+    def from_files(
+        cls,
+        capability_path: Path,
+        policy_path: Path,
+        release_policy_path: Path | None = None,
+    ) -> "RuntimeSkillRegistry":
+        if release_policy_path is None:
+            candidate = policy_path.with_name("release-policy.yaml")
+            release_policy_path = candidate if candidate.exists() else None
+        release_controller = (
+            SkillReleaseController.from_file(release_policy_path)
+            if release_policy_path is not None
+            else None
+        )
+        return cls(
+            yaml.safe_load(capability_path.read_text(encoding="utf-8")),
+            yaml.safe_load(policy_path.read_text(encoding="utf-8")),
+            release_controller,
+        )
 
     def _invocation(self, skill_id: str) -> dict[str, bool]:
         defaults = self.invocation_policy["defaults"]
@@ -49,18 +68,35 @@ class RuntimeSkillRegistry:
             "catalog_visible": rule.get("catalog_visible", defaults["catalog_visible"]),
         }
 
+    def _release_controller(
+        self, override: SkillReleaseController | None
+    ) -> SkillReleaseController | None:
+        return override if override is not None else self.release_controller
+
     def list(
         self,
         *,
         for_model: bool = False,
         for_user: bool = False,
         enabled_capability_ids: set[str] | None = None,
+        release_controller: SkillReleaseController | None = None,
+        rollout_key: str | None = None,
     ) -> tuple[RuntimeSkillSummary, ...]:
+        controller = self._release_controller(release_controller)
         summaries: list[RuntimeSkillSummary] = []
         for capability in self.capability_registry["capabilities"]:
-            if enabled_capability_ids is not None and capability["id"] not in enabled_capability_ids:
+            skill_id = capability["id"]
+            if enabled_capability_ids is not None and skill_id not in enabled_capability_ids:
                 continue
-            invocation = self._invocation(capability["id"])
+
+            release_state = "active"
+            if controller is not None:
+                release = controller.decision(skill_id, rollout_key=rollout_key)
+                release_state = release.state
+                if not release.enabled:
+                    continue
+
+            invocation = self._invocation(skill_id)
             if not invocation["catalog_visible"]:
                 continue
             if for_model and not invocation["model_invocable"]:
@@ -69,12 +105,10 @@ class RuntimeSkillRegistry:
                 continue
 
             source = self._sources[capability["source"]]
-            execution_authority = (
-                "none" if source["execution"] == "reference_only" else "governed"
-            )
+            execution_authority = "none" if source["execution"] == "reference_only" else "governed"
             summaries.append(
                 RuntimeSkillSummary(
-                    id=capability["id"],
+                    id=skill_id,
                     source=capability["source"],
                     skill_path=capability["skill_path"],
                     category=capability["category"],
@@ -84,6 +118,7 @@ class RuntimeSkillRegistry:
                     catalog_visible=invocation["catalog_visible"],
                     execution_authority=execution_authority,
                     intents=tuple(capability["intents"]),
+                    release_state=release_state,
                 )
             )
         return tuple(sorted(summaries, key=lambda item: item.id))
@@ -94,6 +129,8 @@ class RuntimeSkillRegistry:
         *,
         actor: str,
         enabled_capability_ids: set[str] | None = None,
+        release_controller: SkillReleaseController | None = None,
+        rollout_key: str | None = None,
     ) -> RuntimeSkillSummary:
         if actor not in {"model", "user", "trusted_runtime"}:
             raise ValueError("actor must be model, user, or trusted_runtime")
@@ -102,9 +139,20 @@ class RuntimeSkillRegistry:
             raise KeyError(skill_id)
         if enabled_capability_ids is not None and skill_id not in enabled_capability_ids:
             raise PermissionError(f"skill {skill_id} is not enabled in the current runtime surface")
+
+        controller = self._release_controller(release_controller)
+        if controller is not None:
+            release = controller.decision(skill_id, rollout_key=rollout_key)
+            if not release.enabled:
+                raise PermissionError(f"skill {skill_id} blocked by release policy: {release.reason}")
+
         all_entries = {
             item.id: item
-            for item in self.list(enabled_capability_ids=enabled_capability_ids)
+            for item in self.list(
+                enabled_capability_ids=enabled_capability_ids,
+                release_controller=controller,
+                rollout_key=rollout_key,
+            )
         }
         entry = all_entries[skill_id]
         if actor == "model" and not entry.model_invocable:

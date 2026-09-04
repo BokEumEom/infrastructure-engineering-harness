@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import yaml
@@ -32,6 +31,10 @@ def main() -> int:
         "untrusted_content_fencing",
         "change_revision_validation",
         "runtime_recording",
+        "persistent_memory",
+        "cache_aware_context_assembly",
+        "latency_metrics",
+        "skill_release_control",
     }
     owned = set(contract.get("runtime_boundary", {}).get("owns", []))
     missing = sorted(required_runtime_ownership - owned)

@@ -28,6 +28,7 @@ Context Skills Capabilities
          ↓
 Agent Runtime / Harness Control Plane
 Evidence · Resource Provenance · Fence · State · Guard · Approval · Permission
+Memory · Cache/Latency · Skill Release · Recording
          ↓
 Infrastructure Backend
          ↓
@@ -38,7 +39,7 @@ Independent Verification
 Verified Outcome
 ```
 
-The model owns reasoning and next-action judgment. It does not own credentials, independent truth, approval state, production authority, or verified completion.
+The model owns reasoning and next-action judgment. It does not own credentials, independent truth, approval state, Skill release state, production authority, or verified completion.
 
 ## Backend contract
 
@@ -74,6 +75,9 @@ Within this project it means the internal control mechanisms that make the Agent
 - Evidence and Resource provenance;
 - untrusted external-data fencing;
 - Context/Skill progressive disclosure and capability-aware projection;
+- persistent user/session memory outside model state;
+- cache-aware context assembly and latency metrics/budgets;
+- Skill canary and hard kill-switch release control;
 - Guard and policy enforcement;
 - independently owned, revision-bound approval;
 - immutable runtime recording/replay integrity;
@@ -84,16 +88,26 @@ Within this project it means the internal control mechanisms that make the Agent
 
 The product is the Agent. The harness is part of how the Agent is built and governed.
 
+## Memory / prompt performance / release control
+
+The reference runtime now adds three operational layers:
+
+1. **Persistent Memory** — SQLite-backed `user` and `session` memory. Model writes are limited to session memory; user-scope persistence requires user/trusted-runtime authority. Memory is context, not verified fact.
+2. **Prompt Performance** — context is assembled as stable `global → session` prefix plus `volatile` suffix. Cache-read/write tokens, model/tool latency, turns, calls, and latency budgets are measurable without assuming a specific model provider.
+3. **Skill Release Control** — `active`, deterministic `canary`, and `disabled` states sit in front of the Runtime Skill Registry. `disabled` is a hard kill switch owned by the host/runtime.
+
+See `docs/MEMORY-PERFORMANCE-RELEASE.md`.
 
 ## Commerce-agent-derived runtime rules
 
 The current reference runtime implements several patterns from Anthropic's Commerce Agents architecture:
 
 - mutation targets can be gated against resources actually discovered in the current Resource Graph;
-- unavailable Skills can be projected out of the model-visible surface;
+- unavailable or disabled Skills can be projected out of the model-visible surface;
 - external text can be bounded and fenced as untrusted data;
 - approvals bind to the exact staged change/policy/resource-graph revision and are one-shot;
-- Runtime Events can be snapshotted into an integrity-checked recording.
+- Runtime Events can be snapshotted into an integrity-checked recording;
+- persistent memory, cache-aware prompt layout, and Skill release controls remain runtime state rather than prompt instructions.
 
 These are deterministic reference contracts. Live provider adapters must invoke the same gates immediately before real production execution.
 

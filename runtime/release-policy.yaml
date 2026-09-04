@@ -1,0 +1,10 @@
+schema_version: "1.0"
+
+defaults:
+  state: active
+  canary_percent: 100
+
+# Keep the default catalog fully active. Production hosts can override this file
+# or generate an environment-specific release policy. A disabled rule is a hard
+# kill switch; canary rules require a stable rollout key such as session/run id.
+rules: []

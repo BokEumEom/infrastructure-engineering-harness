@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Skill Release Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "defaults", "rules"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "canary_percent"],
+      "properties": {
+        "state": {"enum": ["active", "canary", "disabled"]},
+        "canary_percent": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skill_id", "state"],
+        "properties": {
+          "skill_id": {"type": "string", "minLength": 1},
+          "state": {"enum": ["active", "canary", "disabled"]},
+          "canary_percent": {"type": "number", "minimum": 0, "maximum": 100},
+          "reason": {"type": "string"}
+        }
+      }
+    }
+  }
+}
