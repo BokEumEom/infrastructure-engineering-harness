@@ -1,142 +1,54 @@
 # Reference Models
 
-Infrastructure Engineering Harness combines mature infrastructure feedback models with emerging agent Loop Engineering rather than replacing established practice.
+The **Infrastructure Engineering Agent** uses external projects and established engineering frameworks as design references. References are not automatically Runtime dependencies, authorities, or model-visible Skills.
 
-Loop Engineering is an **emerging agent engineering term**, not an infrastructure industry standard. The harness therefore uses it as an execution pattern while grounding safety and operations in established engineering models.
+The important question is not "how many projects do we reference?" but **which layer each reference is allowed to influence**.
 
-| Reference | Contribution |
-| --- | --- |
-| DeepSeek Harness | Plugin-composed runtime, append-only session events, model-visible/logged reconstructability, guarded tool pipeline, scoped Skill discovery, fail-closed approval, sandbox and persistence seams |
-| NVIDIA ACES / SkillEvaluator | Paired live evaluation with and without a Skill, trajectory grading and Skill Lift |
-| Kun Chen / backpass | Transcript-driven, budgeted, evidence-gated improvement of project-level agent memory |
-| Paperthin | Artifact restraint, clean-current-state rewrites, SSOT repair, eval independence, earned reuse, and cross-lens disagreement |
-| gstack | Workflow-composed Agent UX, progressive Skill routing, chained artifacts, review/test/ship/reflect sequencing, and cross-session learning surface |
-| GBrain | Persistent agent memory, bounded context packs, explicit gaps, hot/cold knowledge separation, fact/opinion distinction, synthesis, and governed retrieval surfaces |
-| Anthropic Context Engineering (Claude 5) | Unhobbling: remove redundant/prescriptive always-loaded guidance, prefer progressive disclosure, interfaces, and model judgment as capability improves |\n| Anthropic Commerce Agents | Agent-as-product architecture, backend integration contracts, runtime tool gates, provenance-bound writes, staged changes, host-owned approval, capability-aware tool/prompt surfaces, and live-recording/replay eval patterns |
-| IBM Loop Engineering | Goal, action, observation and adjustment cycles with verifiable stopping criteria |
-| LongHorizon-Harness | Explicit task state outside growing agent context; independently verified facts; manage/execute/audit separation |
-| LoopsBench | Long-horizon dependency structure and completed work retained as regression obligations |
-| Kubernetes Controllers | Desired-state vs actual-state control loops and reconciliation |
-| OpenGitOps | Declarative/versioned desired state and continuous reconciliation |
-| Google SRE | SLI/SLO, error budgets, reliability policy, escalation and learning |
-| DORA | Service-level baseline, constraint improvement, progress validation and repetition |
-| FinOps Framework | Iterative Inform → Optimize → Operate and measured technology value |
-| MCP | Provider-neutral tool boundary for evidence and workflow actions |
-| Independent authorization | Boundary for irreversible, destructive, financial, or production-impacting actions |
+## Reference roles
 
-## DeepSeek Harness
+| Layer | Primary references | What they contribute |
+| --- | --- | --- |
+| **Agent product / application runtime** | Anthropic Commerce Agents | single-agent product architecture, backend contracts, provenance-bound writes, staged changes, capability-aware surfaces, memory/runtime patterns, prompt-performance patterns |
+| **Harness / execution runtime** | DeepSeek Harness | append-only model-visible state, guarded tool pipeline, scoped Skill loading, fail-closed approval, persistence/recovery seams |
+| **Context / memory** | Anthropic Context Engineering, GBrain, Backpass | unhobbling, progressive disclosure, bounded retrieval, persistent contextual state, transcript-driven context improvement |
+| **Artifact / reflex quality** | Paperthin | clean-current-state rewrites, SSOT repair, restraint, independent lenses, eval-leakage reflexes |
+| **Evaluation** | NVIDIA ACES / SkillEvaluator, Paperthin Mandela principles | paired lift evaluation, trajectory grading, negative controls, independent ground-truth checks |
+| **Long-running reconciliation** | Kubernetes Controllers, OpenGitOps, LongHorizon-Harness, LoopsBench, IBM Loop Engineering | desired/actual state reconciliation, external task state, terminal conditions, regression obligations |
+| **Engineering domain truth** | Google SRE, DORA, FinOps Framework | reliability, delivery, and cost/value engineering models |
+| **Tool boundary** | MCP | provider-neutral evidence/workflow action interface |
+| **Authority boundary** | Independent authorization | irreversible, destructive, financial, privilege, or production-impacting actions require authority outside model prose |
 
-DeepSeek Harness is a developer-preview general Agent Runtime built around a plugin-composed architecture. Its strongest reusable runtime ideas are different from this project's engineering-domain semantics:
+This classification prevents multiple references that solve adjacent problems from becoming duplicate Runtime surfaces.
 
-- the append-only Session Event Log is the runtime source of truth;
-- anything model-visible must be reconstructable from logged state;
-- prompt sections, dynamic context and tool schemas are assembled through scoped providers;
-- Skills are discovered through provider registries, shown initially as bounded summaries and loaded lazily;
-- tool calls pass through pre-execute policy, monotonic guards, approval, execution wrappers, post-execute policy and authoritative normalized results;
-- approval is audited and fail closed; only a one-shot explicit grant permits the gated action;
-- sandbox policy is resolved per call and reports enforcement completeness instead of treating `sandbox=true` as proof;
-- persistence preserves committed events and represents interruption/recovery rather than erasing an incomplete execution;
-- same-session Goal state uses revisions so stale mutations can be rejected.
+---
 
-The harness adopts these ideas as a **Runtime Kernel reference**, not as a replacement for Infrastructure Engineering control-plane semantics. `runtime/` therefore adds append-only Runtime Events, revisioned state, Runtime Skill invocation policy, guarded Tool Pipeline contracts, one-shot Approval, sandbox evidence fields and deterministic tests.
+## 1. Agent product / application runtime
 
-One important boundary is intentionally stricter here: not everything is a replaceable plugin. Evidence provenance, independent production authorization, auditability and source-of-truth protection remain hard invariants. A runtime event records what the Agent saw or did; it becomes engineering evidence only after the appropriate environment/tool/human/test verification.
+### Anthropic Commerce Agents
 
-https://github.com/deepseek-ai/deepseek-harness
+`anthropics/commerce-agents` is the primary reference for the **Agent-as-product** direction.
 
-## NVIDIA ACES / SkillEvaluator
-
-ACES evaluates a target Skill as an executable agent artifact rather than only inspecting `SKILL.md`. It holds task, model, harness, workspace and scoring policy constant, runs a baseline without the Skill and a treatment with the Skill, then reports the difference as Skill Lift. The harness adopts the paired experiment shape, explicit/implicit/contextual/negative task design, runtime signals for security/discovery/workflow/outcome/efficiency, and the rule that checked-in fixtures do not count as live verification.
-
-https://arxiv.org/abs/2608.20614
-https://github.com/NVIDIA/SkillEvaluator
-
-## Kun Chen / backpass
-
-The article "Your AGENTS.md is a Neural Net" and the `backpass` project treat project-level agent memory as a bounded behavioral surface improved from the sessions that actually ran. Useful operational ideas include a token budget, deterministic transcript distillation, verbatim evidence, at least two independent sessions before adding a new instruction, small edit batches, human review, and extracting narrow instructions into Skills instead of growing always-loaded memory indefinitely.
-
-This harness adopts those ideas with a stricter infrastructure boundary: transcript evidence may propose changes to `AGENTS.md`, but it must not optimize durable source-of-truth artifacts such as Architecture, ADRs, Policies, Service Catalog, Domain definitions, Loop contracts, Evals, or Capability trust metadata. Candidate context revisions are evaluated with paired Context Lift experiments before claiming they improve agent behavior.
-
-https://blog.kunchenguid.com/p/your-agentsmd-is-a-neural-net
-https://github.com/kunchenguid/backpass
-
-## Paperthin
-
-Paperthin packages low-level agentic design patterns around restraint: clean an artifact instead of layering patches, consolidate duplicated truth into one canonical home, check a newly changed artifact with fresh verification, audit evaluations for circularity, preserve lessons and negative corpus across iterations, and surface disagreement across genuinely different lenses rather than averaging it away.
-
-The harness does not install Paperthin as an execution dependency. A pinned MIT-licensed revision is registered as `reference_only`, while the reusable principles are implemented through local governed Skills:
-
-- `artifact-hygiene` — clean current-state artifacts, preserve authoritative history, and allow a no-op when nothing improves;
-- `ssot-review` — read-only scatter/contradiction audit before any consolidation;
-- `eval-integrity` — independent-ground-truth and leakage review for Skill Lift, Context Lift, benchmarks, metrics, and experiments;
-- `loop-engineering` learning — preserve earned reuse, negative corpus, anti-patterns, and next-cycle quality gates instead of copying accidental architecture forward.
-
-The external `prism` pattern also reinforces an existing cross-domain rule: reliability, security, delivery, cost, and infrastructure constraints should not be averaged into one blended score when their disagreement is the material engineering fact.
-
-https://github.com/LilMGenius/paperthin
-
-## gstack
-
-gstack is used as a **workflow composition and Agent UX reference**, not as an infrastructure authority model. Its most relevant idea is that Skills are experienced as a connected process rather than an unstructured menu: upstream thinking/planning artifacts feed downstream review, QA, shipping and reflection.
-
-The harness adopts this in a provider-neutral form:
-
-- simple user intents expose useful Loop/Skill composition without forcing a universal routing chain;
-- users do not need to manually select every internal Skill;
-- workflow steps pass explicit artifacts/evidence forward;
-- review, verification and reflection remain distinct stages;
-- the simple workflow surface does not bypass internal policy, human gates or independent production authorization.
-
-This is documented in `docs/WORKFLOW-SURFACE.md`. Unlike gstack's software-shipping focus, this harness keeps infrastructure outcome verification and production control-plane authorization as independent hard boundaries.
-
-https://github.com/garrytan/gstack
-
-## GBrain
-
-GBrain is used as a **persistent memory, retrieval, context-pack and knowledge-consolidation reference**. Particularly reusable ideas are bounded context assembly, explicit knowledge gaps, cross-session persistence, and separating fast/recent memory from more durable consolidated knowledge.
-
-The harness translates those ideas into a stricter engineering epistemic model:
+Reusable architecture:
 
 ```text
-Observation
-    ↓ independent verification
-Verified Fact
-    ↓ engineering reasoning
-Engineering Assessment
-    ↓ outcome evidence
-Learning Candidate
-    ↓ governance
-Durable Organizational Knowledge
+User
+ ↓
+Single domain Agent
+ ↓
+Model judgment
+ ├─ minimal prompt/context
+ ├─ progressively loaded Skills
+ ├─ Tools
+ └─ Memory
+ ↓
+Runtime enforcement
+ ↓
+Backend contract
+ ↓
+Existing domain systems
 ```
 
-The harness therefore does **not** import a generic memory item directly as engineering truth. It keeps observations, verified facts, assessments and durable organizational knowledge separate; confidence is never a substitute for verification. `schemas/context-pack.schema.json` defines bounded task context with freshness and evidence gaps, while `schemas/knowledge-candidate.schema.json` defines the review boundary for learned material.
-
-GBrain's distinction between hot facts and cold/retrospective knowledge also motivates explicit consolidation after a Loop rather than uncontrolled growth of always-loaded context. The resulting model is documented in `docs/KNOWLEDGE-CONSOLIDATION.md`.
-
-https://github.com/garrytan/gbrain
-
-## Anthropic Context Engineering / Unhobbling
-
-Anthropic reported in July 2026 that it removed more than 80% of Claude Code's system prompt for newer Claude models without measurable loss on its coding evaluations, and described the previous context as overconstraining the model. The broader lesson is not "short prompts always win"; it is that accumulated rules must continue to earn their place as model capability changes.
-
-The Harness adopts this as an **unhobbling reference**:
-
-- keep always-loaded agent guidance small;
-- move narrow procedures to progressively disclosed Skills or references;
-- prefer interface/contract descriptions over fixed reasoning recipes;
-- let the model choose investigation order and next action when ordering is not itself a requirement;
-- enforce authority, evidence, state, approval, and verification through Runtime/schema/policy boundaries;
-- measure bare vs minimal vs richer Harness profiles instead of assuming more guidance is better.
-
-This motivates `docs/HARNESS-UNHOBBLING.md` and `harness-evals/`.
-
-https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models
-
-## Anthropic Commerce Agents
-
-`anthropics/commerce-agents` is used as an **agent product / backend / runtime-enforcement reference**. Its most reusable pattern is not commerce-specific: the shopping and merchant agents are user-facing products, while prompts, Skills, backend contracts, gates, executor/runtime, and approvals sit beneath them.
-
-The Infrastructure Engineering Agent adopts the same separation in provider-neutral form:
+Infrastructure translation:
 
 ```text
 Infrastructure Engineering Agent
@@ -152,102 +64,297 @@ Infrastructure Backend
 Provider Systems
 ```
 
-Particularly relevant patterns:
+Patterns adopted locally include:
 
-- **backend-owned credentials** — platform credentials remain server-side; the model sees normalized results;
-- **provenance-bound writes** — a model cannot safely target arbitrary identifiers merely by naming them; infrastructure mutation should bind to resources discovered/validated in the current trusted scope;
-- **stage → approve → apply** — mutation proposals are staged first and approval state is owned by the host/runtime, not inferred from chat text;
-- **tool-call enforcement** — safety and authorization rules hold in code even when the model misstates them;
-- **capability-aware surfaces** — when a capability is disabled, its tools and related prompt guidance disappear rather than remaining as dead context;
-- **progressive Skill loading** — the model receives bounded Skill summaries and loads bodies only when useful;
-- **delegation cannot expand authority** — read-only analysis/subagents do not gain write scope merely by discovering an identifier;
-- **live recording → replay eval** — real executions can be recorded once and deterministically re-scored in CI.
+- backend-owned credentials;
+- provenance-bound mutation targets;
+- stage → approve → apply separation;
+- apply-time revalidation;
+- untrusted-content fencing;
+- capability-aware tool/Skill surfaces;
+- progressive Skill loading;
+- external persistent memory;
+- stable-prefix prompt assembly and latency/cache telemetry;
+- deterministic execution recording/replay integrity.
 
-The current reference runtime now implements the deterministic local form of several of these ideas through `runtime/provenance.py`, `runtime/fencing.py`, `runtime/change_control.py`, `runtime/recording.py`, and capability projection in `runtime/skill_registry.py`. Live provider enforcement remains experimental.
+The repository does **not** depend on Commerce Agents as a package. Commerce-specific concepts, Anthropic-only request shapes, presentation components, and merchant/shopping abstractions stay outside the provider-neutral core.
 
-The project remains stricter on independent engineering verification, epistemic classes, Loop reconciliation, regression obligations, and cross-provider neutrality.
+Provider-specific optimizations may reproduce the relevant mechanism in a provider adapter rather than leaking it into the core Runtime.
 
-https://claude.com/blog/the-anatomy-of-effective-commerce-agents\nhttps://github.com/anthropics/commerce-agents
+References:
+- https://claude.com/blog/the-anatomy-of-effective-commerce-agents
+- https://github.com/anthropics/commerce-agents
+- local mapping: `docs/COMMERCE-AGENT-PATTERNS.md`
 
-## IBM Loop Engineering
+---
 
-IBM describes loop engineering as designing agentic workflows that iteratively guide agents through goals, action, observation and adjustment. This harness adopts bounded loops but adds infrastructure-specific reconciliation, independent authorization and provenance.
+## 2. Harness / execution runtime
 
-https://www.ibm.com/think/topics/loop-engineering
+### DeepSeek Harness
 
-## LongHorizon-Harness
+DeepSeek Harness is a Runtime Kernel reference rather than an Infrastructure Engineering semantics reference.
 
-LongHorizon-Harness frames long-running agent execution as task-state management. Its Manage-Execute-Audit model keeps task state explicit outside execution and updates it with independently verified environment facts. This motivates `loop-state`, external `verified_facts`, and one-iteration-at-a-time execution.
+Reusable ideas:
 
-https://arxiv.org/abs/2608.01964
+- append-only Session/Event Log as runtime truth;
+- every model-visible input/tool result reconstructable from logged state;
+- dynamically assembled context/tool surfaces;
+- lazily loaded Skills;
+- pre-policy → monotonic guard → approval → execution → normalized result pipeline;
+- audited fail-closed approval;
+- explicit sandbox enforcement state;
+- persistent/recoverable session state;
+- revision checks against stale mutations.
 
-## LoopsBench
+Infrastructure-specific boundaries remain stricter locally: Runtime Events are not automatically Engineering Evidence, and availability of a runtime/tool never grants production authority.
 
-LoopsBench evaluates sustained agent loops using dependency DAGs and keeps completed units as regression obligations. The harness generalizes this beyond coding: recovered reliability, data integrity, security scope, delivery stability and cost traceability can remain obligations in later iterations.
+Reference:
+- https://github.com/deepseek-ai/deepseek-harness
 
-https://arxiv.org/abs/2608.00267
+---
 
-## Kubernetes Controllers and OpenGitOps
+## 3. Context and memory
 
-Kubernetes controllers continually observe actual state and try to move it toward desired state. OpenGitOps adds declarative/versioned desired state and continuous reconciliation. The harness applies the same idea to engineering outcomes even when Terraform, Kubernetes or GitOps are not used.
+### Anthropic Context Engineering / Unhobbling
 
-https://kubernetes.io/docs/concepts/architecture/controller/
-https://opengitops.dev/
+Anthropic's Claude 5 context-engineering guidance is the main reference for reducing accumulated prompt constraints as model capability improves.
 
-## Google SRE
+Local consequences:
 
-SRE provides the reliability control signals used by the SRE loops: SLI/SLO, error budget, incident response and error-budget policy.
+- keep always-loaded Agent guidance small;
+- prefer interfaces/contracts over reasoning recipes;
+- progressively disclose Skills/context;
+- remove rules already enforced by Runtime/schema/policy;
+- use Harness Lift instead of assuming more context is better.
 
-https://sre.google/sre-book/service-level-objectives/
-https://sre.google/workbook/error-budget-policy/
+Reference:
+- https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models
+- local design: `docs/HARNESS-UNHOBBLING.md`
 
-## DORA
+### GBrain
 
-DORA recommends application/service-level measurement, establishing a baseline, identifying the dominant constraint, making an improvement, checking progress and repeating. `delivery-improvement` follows this pattern and protects stability as a regression obligation.
+GBrain is a reference for bounded context retrieval, persistent memory, explicit gaps, and hot/cold knowledge separation.
 
-https://dora.dev/guides/dora-metrics/
+Infrastructure adaptation deliberately separates:
 
-## FinOps Framework
+```text
+User / Session Memory
+Organizational Knowledge
+Evolution Knowledge
+Engineering Evidence
+```
 
-FinOps is performed iteratively through Inform, Optimize and Operate. `finops-optimization` adds realized-value verification so expected savings are compared with actual cost/value and reliability outcomes.
+A stored memory item does not become a Verified Fact simply because it persists.
 
-https://www.finops.org/framework/
-https://www.finops.org/framework/phases/
+Reference:
+- https://github.com/garrytan/gbrain
+
+### Backpass / Kun Chen
+
+Backpass treats project-level agent context as a bounded behavior surface that should improve from actual execution traces rather than grow indefinitely.
+
+Local adaptation:
+
+- transcript evidence may propose AGENTS/context changes;
+- narrow rules should move into Skills;
+- context changes are human-reviewed;
+- paired Context Lift must justify claims of improvement;
+- Durable Organizational Knowledge is protected from automatic prompt-learning writeback.
+
+References:
+- https://blog.kunchenguid.com/p/your-agentsmd-is-a-neural-net
+- https://github.com/kunchenguid/backpass
+
+---
+
+## 4. Artifact and reflex quality
+
+### Paperthin
+
+Paperthin remains a valid and important reference, but **not a Runtime Skill dependency**.
+
+Its durable contribution is restraint:
+
+- rewrite drifted artifacts into a clean current state instead of layering patches;
+- consolidate duplicated truth into one canonical home;
+- allow a no-op when nothing improves;
+- preserve lessons/negative learning without preserving accidental architecture;
+- inspect evals for circularity and leakage;
+- preserve disagreement across independent lenses instead of averaging it away.
+
+These principles are already absorbed into locally governed Skills/contracts:
+
+```text
+Paperthin re0       → skills/artifact-hygiene
+Paperthin ssotize   → skills/ssot-review
+Paperthin mandela   → skills/eval-integrity
+Paperthin cycle     → skills/loop-engineering + knowledge-candidate contracts
+Paperthin prism     → independent cross-domain review principle
+```
+
+Therefore `paperthin-*` entries are intentionally **not** exposed through `capabilities/registry.yaml`. Exposing both original reference Skills and local adaptations created duplicate intent and unnecessary model choice.
+
+Paperthin remains design provenance and a source for future pattern review. If a new Paperthin pattern is useful, adapt it into a local governed contract only when it adds measured value instead of exposing the upstream Skill directly.
+
+Reference:
+- https://github.com/LilMGenius/paperthin
+
+---
+
+## 5. Evaluation
+
+### NVIDIA ACES / SkillEvaluator
+
+ACES is the main reference for evaluating a Skill as an executable artifact rather than reviewing only its text.
+
+Local adaptation holds task/model/workspace/tools/scoring constant and compares baseline vs treatment as **Skill Lift**. Fixture runs validate evaluator plumbing; only live runs may support live-effectiveness claims.
+
+Reference:
+- https://arxiv.org/abs/2608.20614
+- https://github.com/NVIDIA/SkillEvaluator
+
+### Paperthin Mandela principles
+
+Paperthin's eval-leakage patterns remain useful as an **independence audit**, even though the upstream Skill is not exposed to Runtime.
+
+The locally governed `eval-integrity` Skill checks:
+
+- independent ground truth;
+- scorer/designer separation;
+- variable isolation;
+- control leakage;
+- fixture/live distinction;
+- negative controls;
+- trajectory evidence when behavior is part of the claim.
+
+This complements rather than duplicates ACES: ACES supplies the paired experiment shape; eval-integrity asks whether the experiment can independently falsify its own claim.
+
+---
+
+## 6. Long-running reconciliation
+
+### Kubernetes Controllers + OpenGitOps
+
+Controllers provide the durable desired-state/actual-state reconciliation model. OpenGitOps reinforces declarative/versioned desired state and continuous reconciliation.
+
+References:
+- https://kubernetes.io/docs/concepts/architecture/controller/
+- https://opengitops.dev/
+
+### LongHorizon-Harness
+
+LongHorizon-Harness motivates explicit task state outside an ever-growing model context and separation of manage/execute/audit concerns.
+
+Reference:
+- https://arxiv.org/abs/2608.01964
+
+### LoopsBench
+
+LoopsBench motivates dependency-aware long-running evaluation and retaining completed work as regression obligations.
+
+Reference:
+- https://arxiv.org/abs/2608.00267
+
+### IBM Loop Engineering
+
+IBM's Loop Engineering framing contributes Goal → Action → Observation → Adjustment cycles with verifiable stopping criteria.
+
+Reference:
+- https://www.ibm.com/think/topics/loop-engineering
+
+Engineering Loops remain optional: ordinary one-shot Agent work does not enter a Loop merely because a Loop definition exists.
+
+---
+
+## 7. Engineering domain truth
+
+### Google SRE
+
+Used for SLI/SLO, error budgets, incident response, reliability policy, and escalation/learning models.
+
+References:
+- https://sre.google/sre-book/service-level-objectives/
+- https://sre.google/workbook/error-budget-policy/
+
+### DORA
+
+Used for delivery performance baselines, dominant-constraint improvement, and validating progress without sacrificing stability.
+
+Reference:
+- https://dora.dev/guides/dora-metrics/
+
+### FinOps Framework
+
+Used for iterative Inform → Optimize → Operate and measured realized technology value rather than expected savings alone.
+
+References:
+- https://www.finops.org/framework/
+- https://www.finops.org/framework/phases/
+
+These references define domain semantics; they do not become Agent Runtime architecture.
+
+---
+
+## 8. Tool and authority boundaries
+
+### MCP
+
+MCP is used as a provider-neutral boundary for evidence retrieval and governed workflow actions. Tool availability is not production authorization.
+
+Reference:
+- https://modelcontextprotocol.io/
+
+### Independent authorization
+
+Irreversible, destructive, privilege-expanding, financial, and production-impacting actions require authorization outside model prose. This is a project invariant rather than an external package dependency.
+
+---
+
+## Adoption rule
+
+A new external reference should answer all four questions before being added:
+
+1. **Which layer does it improve?**
+2. **Is that role already covered by a stronger reference/local contract?**
+3. **Does it introduce a new mechanism or merely duplicate terminology?**
+4. **Should it be design provenance, a Runtime reference source, or an actual managed local implementation?**
+
+Default decision:
+
+```text
+Useful external idea
+       ↓
+Reference Model
+       ↓
+local adaptation only if needed
+       ↓
+evaluate lift / integrity
+       ↓
+expose to Runtime only when it earns the surface area
+```
 
 ## Synthesis
 
 ```text
 Desired Outcome
        ↓
-Minimal Seed Context
+Infrastructure Engineering Agent
        ↓
-Model Judgment
-   ↙          ↘
-Pull Context   Use Tools / Skills / Capabilities
-   ↘          ↙
-      Proposed Action
-            ↓
-Runtime / Evidence / Permission / Approval Boundary
-            ↓
-Independently Authorized Action
-            ↓
+Minimal Context + Model Judgment
+   ↙                         ↘
+Skills / Capabilities       Pull Evidence / Context
+   ↘                         ↙
+          Proposed Action
+                ↓
+Runtime / Provenance / Permission / Approval Boundary
+                ↓
+Independently Authorized Execution when required
+                ↓
 Independent Verification
-            ↓
-Reconcile Goal + State + Constraints + Regression
-            ↓
-continue / terminal
-            ↓
+                ↓
+Reconcile only when the task needs a Loop
+                ↓
+Verified Outcome
+                ↓
 Learning Candidate → Governance → Durable Knowledge
 ```
-
-The Infrastructure Engineering Agent is free to choose a better reasoning path. Its internal harness/runtime remains strict about what the model cannot self-assert: independent truth, protected authority, production control, and verified completion.
-
-Guidance itself is evaluated:
-
-```text
-Skill behavior   → paired Skill Lift
-AGENTS behavior  → paired Context Lift
-Whole Harness    → bare / minimal / full Harness Lift
-```
-
-Neither evaluation path may rewrite engineering truth or bypass authorization. Richer guidance must earn its complexity; deletion is a valid optimization when live evidence shows equal or better outcomes without safety or evidence regression.
