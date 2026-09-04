@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Infrastructure Engineering Agent Memory Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["memory_id", "scope", "owner_id", "kind", "content", "source", "created_at", "updated_at"],
+  "properties": {
+    "memory_id": {"type": "string", "minLength": 1},
+    "scope": {"enum": ["user", "session"]},
+    "owner_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": ["string", "null"]},
+    "kind": {"enum": ["preference", "working_context", "task_checkpoint"]},
+    "content": {"type": "object"},
+    "source": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"},
+    "deleted_at": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"scope": {"const": "session"}}},
+      "then": {"properties": {"session_id": {"type": "string", "minLength": 1}}, "required": ["session_id"]}
+    }
+  ]
+}
