@@ -10,16 +10,15 @@ def test_local_artifact_reflex_skills_exist():
         assert f"name: {skill}" in text
 
 
-def test_paperthin_is_pinned_reference_only():
+def test_paperthin_is_reference_model_not_runtime_skill_source():
     registry = yaml.safe_load((ROOT / "capabilities" / "registry.yaml").read_text(encoding="utf-8"))
-    source = next(s for s in registry["sources"] if s["id"] == "paperthin")
-    assert source["trust"] == "pinned_reference"
-    assert source["execution"] == "reference_only"
-    assert source["revision"] == "3bca079a51bcfff5dafb53d1d7f9f523d66ee317"
+    assert all(source["id"] != "paperthin" for source in registry["sources"])
+    assert all(not capability["id"].startswith("paperthin-") for capability in registry["capabilities"])
 
-    referenced = [c for c in registry["capabilities"] if c["source"] == "paperthin"]
-    assert referenced
-    assert all(c["execution_policy"] == "reference_only" for c in referenced)
+    references = (ROOT / "docs" / "REFERENCE-MODELS.md").read_text(encoding="utf-8")
+    assert "### Paperthin" in references
+    assert "not a Runtime Skill dependency" in references
+    assert "https://github.com/LilMGenius/paperthin" in references
 
 
 def test_local_reflexes_are_governed():
