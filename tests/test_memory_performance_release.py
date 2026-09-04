@@ -6,7 +6,12 @@ import unittest
 import yaml
 from jsonschema import Draft202012Validator
 
-from runtime.context_assembly import ContextSection, LatencyTracker, assemble_prompt_context
+from runtime.context_assembly import (
+    ContextSection,
+    LatencyBudget,
+    LatencyTracker,
+    assemble_prompt_context,
+)
 from runtime.memory import PersistentMemoryStore
 from runtime.release_control import SkillReleaseController
 from runtime.skill_registry import RuntimeSkillRegistry
@@ -114,6 +119,11 @@ class MemoryPerformanceReleaseTests(unittest.TestCase):
         self.assertEqual(2, summary["tool_calls"])
         self.assertEqual(1500, summary["accounted_ms"])
         self.assertEqual(0.7, summary["cache_read_ratio"])
+        failures = tracker.budget_failures(
+            LatencyBudget(max_model_turns=1, max_tool_calls=1, max_accounted_ms=1400)
+        )
+        self.assertIn("TOOL_CALL_BUDGET_EXCEEDED", failures)
+        self.assertIn("LATENCY_BUDGET_EXCEEDED", failures)
 
     def test_release_policy_schema_validates(self):
         schema = json.loads(
@@ -121,6 +131,14 @@ class MemoryPerformanceReleaseTests(unittest.TestCase):
         )
         policy = yaml.safe_load((ROOT / "runtime" / "release-policy.yaml").read_text(encoding="utf-8"))
         Draft202012Validator(schema).validate(policy)
+
+    def test_default_release_policy_is_loaded_by_registry(self):
+        registry = RuntimeSkillRegistry.from_files(
+            ROOT / "capabilities" / "registry.yaml",
+            ROOT / "runtime" / "skill-policy.yaml",
+        )
+        self.assertIsNotNone(registry.release_controller)
+        self.assertIn("incident-analysis", {item.id for item in registry.list(for_model=True)})
 
     def test_kill_switch_removes_skill_from_model_surface(self):
         controller = SkillReleaseController(
