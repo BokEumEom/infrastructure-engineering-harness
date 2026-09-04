@@ -1,28 +1,28 @@
 # Capability Model
 
-Capabilities are the implementation, verification, and operational knowledge layer used **after** the harness has resolved the engineering decision and constraints.
+Capabilities are the implementation, verification, and operational knowledge exposed to the **Infrastructure Engineering Agent** after current scope, evidence, and constraints are understood.
 
 ```text
-Knowledge + Evidence
+User Intent + Evidence
         ↓
-Domain / Decision Skill
+Infrastructure Engineering Agent
         ↓
-Capability Routing
+Decision / Control Skill
+        ↓
+Capability Selection
         ↓
 Implementation / Verification Capability
         ↓
 Code / Config / Procedure / Runbook / Review
         ↓
-Validation + Human/Policy Gate
+Runtime Guard + Human/Policy Gate
         ↓
-Execution System
-        ↓
-Loop Verification
+Execution / Verification
 ```
 
 ## Why this is separate from Decision Skills
 
-A Decision Skill answers **what should be done and why**. An implementation Capability answers **how to build, configure, inspect, or operate a specific technology**. A verification/control Capability can add cross-cutting reflexes such as artifact hygiene, SSOT review, or eval integrity without becoming a new engineering Domain.
+A Decision Skill answers **what should be done and why**. An implementation Capability answers **how to build, configure, inspect, or operate a specific technology**. A verification/control Skill can add cross-cutting reflexes such as artifact hygiene, SSOT review, or eval integrity without becoming a new engineering Domain.
 
 Examples:
 
@@ -30,41 +30,56 @@ Examples:
 - `kubernetes-ops` can provide Kubernetes implementation knowledge.
 - `sre-review` decides whether reliability controls are sufficient.
 - `opentelemetry` can provide telemetry implementation knowledge.
-- `artifact-hygiene` checks that a changed artifact is clean, current, and safe to hand off.
-- `eval-integrity` checks that an evaluation has an independent signal rather than circular scoring.
+- `artifact-hygiene` checks that a changed artifact is clean and current.
+- `eval-integrity` checks that an evaluation contains independent evidence rather than circular scoring.
 
-This separation prevents technology-specific or low-level reference instructions from silently overriding architecture, security, reliability, cost, source-of-truth, or approval constraints.
+This separation prevents technology-specific or low-level reference instructions from silently overriding architecture, security, reliability, cost, source-of-truth, or authorization constraints.
 
-## External Capability Sources
+## Runtime Capability Sources vs Design References
 
-`registry.yaml` can point to external skill libraries. External sources are not automatically trusted executors.
+`registry.yaml` contains only sources that may contribute entries to the Runtime Skill/Capability catalog.
 
-Default policy for a third-party GitHub source:
+A third-party project does **not** belong in this registry merely because it influenced the design. Design provenance belongs in `docs/REFERENCE-MODELS.md`.
+
+Default policy for a third-party Runtime Capability source:
 
 1. pin an immutable commit revision;
 2. record its license;
-3. treat skill content as reference material;
+3. treat its Skill content as reference material unless explicitly governed locally;
 4. never execute referenced scripts or commands automatically;
-5. translate useful guidance into a local proposal, code/config diff, runbook, verification plan, or governed local Skill;
-6. apply normal harness policy, evidence, validation, and human gates;
-7. promote a capability to `managed` only after organizational review/vendorization.
+5. expose only a small useful subset through the Capability Registry;
+6. apply normal Runtime evidence, authorization, validation, and human gates;
+7. promote a capability beyond `reference_only` only after local ownership/review.
 
-Current reference sources:
+Current external Runtime Capability source:
 
-- `BagelHole/DevOps-Security-Agent-Skills` — selected DevOps, security, observability, CI/CD, runbook, and compliance implementation knowledge;
-- `LilMGenius/paperthin` — selected low-level artifact hygiene, SSOT, eval-integrity, cycle-learning, restart, and cross-lens review patterns.
+- `BagelHole/DevOps-Security-Agent-Skills` — selected DevOps, security, observability, CI/CD, runbook, and compliance implementation knowledge.
 
-Both are pinned to reviewed commit revisions and remain `reference_only`. The harness intentionally selects a small subset instead of importing entire catalogs into every agent context.
+### Why Paperthin is no longer a Runtime Capability source
+
+Paperthin remains an important **design/reference model**, but its key patterns have already been absorbed into locally governed Skills:
+
+```text
+Paperthin re0       → artifact-hygiene
+Paperthin ssotize   → ssot-review
+Paperthin mandela   → eval-integrity
+Paperthin cycle     → loop-engineering / learning contracts
+Paperthin prism     → independent cross-domain lenses
+```
+
+Keeping both the local adaptations and `paperthin-*` reference Skills in the model-visible catalog duplicated intent, increased Skill-selection ambiguity, and conflicted with the project's unhobbling/minimal-surface principle.
+
+Paperthin attribution and design provenance therefore remain in `docs/REFERENCE-MODELS.md`, while the Runtime catalog exposes only the locally governed implementations.
 
 ## Build and Operate
 
-Capability routing supports both build and operations work:
+Capability selection supports both build and operations work:
 
 ```text
 Design → Build → Deploy → Operate → Observe → Improve → Learn
 ```
 
-A build request may select delivery, cloud, orchestration and security capabilities. An operational incident may select observability, on-call, runbook and platform capabilities. Artifact reflexes can run after either path before handoff. The same production safety model applies throughout.
+A build request may select delivery, cloud, orchestration and security capabilities. An operational incident may select observability, on-call, runbook and platform capabilities. Artifact-quality reflexes can run after either path before handoff. The same production safety model applies throughout.
 
 ## Registry validation
 
