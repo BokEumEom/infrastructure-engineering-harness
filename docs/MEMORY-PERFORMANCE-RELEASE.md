@@ -1,6 +1,6 @@
 # Memory, Prompt Performance, and Skill Release Control
 
-These runtime capabilities strengthen the Infrastructure Engineering Agent without adding more always-loaded prompt rules.
+These runtime capabilities strengthen the Infrastructure Engineering Agent without adding more always-loaded prompt rules or rebuilding provider-specific runtimes inside the core.
 
 ## 1. Persistent user / session memory
 
@@ -39,6 +39,24 @@ This is intentionally separate from:
 - Evolution Knowledge — Skill/Harness learning, rejected changes, negative corpus;
 - Evidence — current provider/tool observations.
 
+### Memory scope boundary
+
+The project should **not** grow `runtime/memory.py` into a generic memory framework that duplicates a model/provider runtime.
+
+The local layer owns only infrastructure-specific memory policy and the provider-neutral storage contract:
+
+```text
+Memory Contract
+    ├─ scope / permission
+    ├─ retention / forget
+    ├─ secret / sensitive-data filtering
+    └─ epistemic classification
+          ↓
+Replaceable Store / Runtime Adapter
+```
+
+Commerce Agents remains a reference for useful mechanisms such as tier-one facts, recall-on-demand, post-turn extraction, purge-safe writes, and stronger write filtering. Those mechanisms should be adopted only where they improve this Agent's memory contract; they should not cause a second full Commerce memory runtime to be recreated here.
+
 ## 2. Prompt caching and latency
 
 `runtime/context_assembly.py` keeps context in three deterministic tiers:
@@ -68,21 +86,43 @@ The runtime computes a stable-prefix SHA-256 and approximate token counts for bu
 
 `LatencyBudget` can flag excessive model turns, tool calls, or accounted latency.
 
-This layer is provider-neutral. It does **not** claim that Claude, OpenAI, or another model provider actually produced a cache hit until live provider telemetry proves it.
+### Core vs provider-specific optimization
 
-The optimization priority is:
+The core owns the **layout and measurements**, not vendor request syntax:
 
 ```text
-reduce unnecessary turns
+runtime/context_assembly.py
+        ↓ provider-neutral
+stable / session / volatile context
+latency + cache telemetry contract
         ↓
-reduce unnecessary tool calls / serialize only when required
-        ↓
-keep stable context prefix cacheable
-        ↓
-measure real provider latency/cache telemetry later
+Provider Optimization Adapter
+        ├─ Anthropic cache breakpoints / rolling cache / eager dispatch
+        ├─ OpenAI-specific request/context optimizations
+        └─ other provider-specific mechanisms
 ```
 
-Performance optimizations must not bypass evidence, provenance, authorization, or verification.
+Provider adapters may use their native features aggressively as long as they preserve the same Agent/Runtime safety contracts.
+
+For example, Anthropic Commerce Agents demonstrates static-system and tool cache breakpoints, rolling conversation cache markers, eager tool dispatch, and history compaction. These are useful **Anthropic adapter references**, not reasons to add Anthropic-only `cache_control` fields to the provider-neutral core.
+
+The optimization priority remains:
+
+```text
+reduce unnecessary model turns
+        ↓
+parallelize independent reads / serialize only where correctness requires it
+        ↓
+reduce unnecessary tool calls
+        ↓
+keep stable context cacheable
+        ↓
+apply provider-native optimization
+        ↓
+measure actual provider telemetry later
+```
+
+This layer does **not** claim that Claude, OpenAI, or another provider actually produced a cache hit until live telemetry proves it. Performance optimizations must never bypass evidence, provenance, authorization, approval, or independent verification.
 
 ## 3. Skill canary and kill switch
 
@@ -119,7 +159,9 @@ A disabled Skill cannot be re-enabled by:
 
 The host/runtime owns release policy.
 
-`runtime/release-policy.yaml` defaults all Skills to active. Production environments may supply an environment-specific policy.
+`runtime/release-policy.yaml` defaults all locally managed and selected Runtime-reference Skills to active. Production environments may supply an environment-specific policy.
+
+Design references such as Paperthin are **not** added to the Capability Registry merely so they can be disabled later. If a reference pattern is already absorbed into a local Skill, only the local Skill occupies Runtime surface area.
 
 ## Release workflow
 

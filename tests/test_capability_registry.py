@@ -41,6 +41,18 @@ class CapabilityRegistryTests(unittest.TestCase):
         errors = module.validate_registry(data)
         self.assertTrue(any("must require a human gate" in e for e in errors))
 
+    def test_paperthin_is_design_provenance_not_runtime_surface(self):
+        source_ids = {source["id"] for source in self.registry["sources"]}
+        capability_ids = {capability["id"] for capability in self.registry["capabilities"]}
+        self.assertNotIn("paperthin", source_ids)
+        self.assertFalse(any(skill_id.startswith("paperthin-") for skill_id in capability_ids))
+
+        # The useful patterns remain available through locally governed adaptations.
+        self.assertTrue(
+            {"artifact-hygiene", "ssot-review", "eval-integrity", "loop-engineering"}
+            <= capability_ids
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
