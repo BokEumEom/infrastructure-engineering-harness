@@ -26,17 +26,37 @@ class RuntimeSkillSummary:
 
 
 class RuntimeSkillRegistry:
-    def __init__(self, capability_registry: dict[str, Any], invocation_policy: dict[str, Any]):
+    def __init__(
+        self,
+        capability_registry: dict[str, Any],
+        invocation_policy: dict[str, Any],
+        release_controller: SkillReleaseController | None = None,
+    ):
         self.capability_registry = capability_registry
         self.invocation_policy = invocation_policy
+        self.release_controller = release_controller
         self._sources = {item["id"]: item for item in capability_registry["sources"]}
         self._rules = {item["skill_id"]: item for item in invocation_policy.get("rules", [])}
 
     @classmethod
-    def from_files(cls, capability_path: Path, policy_path: Path) -> "RuntimeSkillRegistry":
+    def from_files(
+        cls,
+        capability_path: Path,
+        policy_path: Path,
+        release_policy_path: Path | None = None,
+    ) -> "RuntimeSkillRegistry":
+        if release_policy_path is None:
+            candidate = policy_path.with_name("release-policy.yaml")
+            release_policy_path = candidate if candidate.exists() else None
+        release_controller = (
+            SkillReleaseController.from_file(release_policy_path)
+            if release_policy_path is not None
+            else None
+        )
         return cls(
             yaml.safe_load(capability_path.read_text(encoding="utf-8")),
             yaml.safe_load(policy_path.read_text(encoding="utf-8")),
+            release_controller,
         )
 
     def _invocation(self, skill_id: str) -> dict[str, bool]:
@@ -48,6 +68,11 @@ class RuntimeSkillRegistry:
             "catalog_visible": rule.get("catalog_visible", defaults["catalog_visible"]),
         }
 
+    def _release_controller(
+        self, override: SkillReleaseController | None
+    ) -> SkillReleaseController | None:
+        return override if override is not None else self.release_controller
+
     def list(
         self,
         *,
@@ -57,6 +82,7 @@ class RuntimeSkillRegistry:
         release_controller: SkillReleaseController | None = None,
         rollout_key: str | None = None,
     ) -> tuple[RuntimeSkillSummary, ...]:
+        controller = self._release_controller(release_controller)
         summaries: list[RuntimeSkillSummary] = []
         for capability in self.capability_registry["capabilities"]:
             skill_id = capability["id"]
@@ -64,8 +90,8 @@ class RuntimeSkillRegistry:
                 continue
 
             release_state = "active"
-            if release_controller is not None:
-                release = release_controller.decision(skill_id, rollout_key=rollout_key)
+            if controller is not None:
+                release = controller.decision(skill_id, rollout_key=rollout_key)
                 release_state = release.state
                 if not release.enabled:
                     continue
@@ -113,8 +139,10 @@ class RuntimeSkillRegistry:
             raise KeyError(skill_id)
         if enabled_capability_ids is not None and skill_id not in enabled_capability_ids:
             raise PermissionError(f"skill {skill_id} is not enabled in the current runtime surface")
-        if release_controller is not None:
-            release = release_controller.decision(skill_id, rollout_key=rollout_key)
+
+        controller = self._release_controller(release_controller)
+        if controller is not None:
+            release = controller.decision(skill_id, rollout_key=rollout_key)
             if not release.enabled:
                 raise PermissionError(f"skill {skill_id} blocked by release policy: {release.reason}")
 
@@ -122,7 +150,7 @@ class RuntimeSkillRegistry:
             item.id: item
             for item in self.list(
                 enabled_capability_ids=enabled_capability_ids,
-                release_controller=release_controller,
+                release_controller=controller,
                 rollout_key=rollout_key,
             )
         }
