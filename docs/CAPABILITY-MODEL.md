@@ -1,43 +1,52 @@
-# Decision Skills and Capability Skills
+# Capability Model
 
-Infrastructure Engineering Harness separates **engineering judgment** from **technology implementation knowledge**, then exposes trusted capability metadata to the Runtime Skill Registry.
+The Infrastructure Engineering Agent exposes a simple model-visible surface while keeping richer trust and routing metadata inside the runtime.
 
-## Model
+## Model-visible surface
+
+The model should primarily reason over:
 
 ```text
-Organizational Knowledge + Current Evidence
-                    ↓
-             Domain Decision Skill
-                    ↓
-             Engineering Decision
-                    ↓
-             Capability Routing
-                    ↓
-       Implementation / Verification Capability
-                    ↓
-       Code / Config / Pipeline / Runbook / Procedure
-                    ↓
-             Review + Validation
-                    ↓
-              Runtime Kernel
-         Skill / Tool / Guard / Approval
-                    ↓
-        Independently Authorized Execution
-                    ↓
-              Loop Verification
-                    ↓
-                  Learn
+Context
+Skills
+Tools
 ```
 
-## Decision Skills
+It should not need to traverse a mandatory `Domain → Decision Skill → Capability Routing → Implementation Capability → Loop` chain.
 
-Decision Skills are intentionally provider-neutral. They decide architecture, reliability, delivery, cost, incident and change questions using durable context and evidence.
+## Runtime metadata
 
-They must not outsource the engineering decision to a technology-specific reference.
+Internally, the runtime may still use:
 
-## Capability Skills
+- **Domain** — optional engineering lens/classification;
+- **Capability** — implementation/verification availability and trust metadata;
+- **Binding** — resource, evidence, and permission scope;
+- **Workflow** — convenience entrypoint;
+- **Loop** — optional reconciliation state when repeated external-state work is needed.
 
-Capability Skills encode implementation or operational know-how: Kubernetes, CI/CD, telemetry, cloud platforms, runbooks, security controls, supply-chain verification, and similar topics.
+These concepts help the runtime constrain and project the available Agent surface; they do not prescribe the model's reasoning order.
+
+## Capability registry
+
+`capabilities/registry.yaml` records durable source/trust/risk metadata. `runtime/skill-policy.yaml` controls invocation/visibility, and `runtime/release-policy.yaml` controls active/canary/disabled release state.
+
+```text
+Capability Registry
+      ×
+Invocation Policy
+      ×
+Release Policy
+      ×
+Connected / discovered environment
+      ↓
+Available Agent Surface
+      ↓
+model-visible Skills / Tools
+```
+
+A future Surface Resolver should perform this projection once per turn/session so unavailable or disabled capabilities disappear before model invocation.
+
+## Capability sources
 
 A capability may be:
 
@@ -45,86 +54,58 @@ A capability may be:
 - **managed** — reviewed and controlled by the adopting organization;
 - **pinned reference** — third-party material at an immutable revision.
 
-Pinned references never receive execution authority by registration alone.
+Pinned references never receive execution authority merely because they are registered or model-readable.
 
-## Runtime discovery
+The current external implementation reference library is `BagelHole/DevOps-Security-Agent-Skills` (MIT). Paperthin is **not** registered as a Runtime capability source; its useful patterns have been absorbed into local governed Skills such as `artifact-hygiene`, `ssot-review`, and `eval-integrity`.
 
-`capabilities/registry.yaml` is the durable trust/risk/source registry. `runtime/skill-policy.yaml` is a separate invocation-visibility overlay.
+## Decision vs implementation guidance
 
-The split answers different questions:
+Local Skills may still be classified as decision, implementation, verification, workflow, or control guidance. Classification is useful metadata, but the Agent may select the smallest relevant Skill set directly.
 
-```text
-Capability Registry
-→ where did this Skill come from?
-→ what is its trust level and risk?
-→ is it local, managed, or reference-only?
-
-Runtime Skill Policy
-→ may the model discover/load it?
-→ may a human invoke it?
-→ should it appear in the current catalog?
-```
-
-All directly discoverable local `skills/*/SKILL.md` entries must be represented as `harness-local` capabilities; CI checks this parity. This prevents a Runtime catalog from silently omitting a repository Skill.
-
-The Runtime initially exposes bounded summaries and lazily loads Skill bodies. A third-party `reference_only` Skill may be readable by the model while still having `execution_authority: none`.
-
-## Third-party skill libraries
-
-A large external skill catalog is useful for breadth but introduces context, freshness and supply-chain concerns. The harness therefore does not copy every skill into the active agent context.
-
-Instead:
-
-1. register the source and immutable revision;
-2. map only useful skills to intents;
-3. route to the minimum relevant capability;
-4. expose only bounded runtime summaries;
-5. load reference material progressively;
-6. generate local, reviewable artifacts;
-7. validate locally;
-8. execute only through separately authorized tools/systems;
-9. verify outcomes through an Engineering Loop.
-
-The first registered implementation reference library is `BagelHole/DevOps-Security-Agent-Skills` (MIT), selected for practical DevOps/SRE/Security implementation knowledge. Paperthin is separately registered for artifact/eval reflex references. Neither is an authorization boundary or runtime dependency.
-
-## Build and operations examples
-
-### Build
+Examples:
 
 ```text
-"Build a new containerized API"
-        ↓
-architecture-review + sre-review
-        ↓
-Decision and constraints
-        ↓
-capability-routing
-        ↓
-kubernetes-ops + helm-charts + github-actions + opentelemetry
-        ↓
-reviewable manifests/pipeline/telemetry plan
-        ↓
-change-review
-        ↓
-Runtime guard / approval / external execution
+"Why is latency high?"
+      ↓
+Context + incident-analysis + relevant read tools
+      ↓
+model judgment
+      ↓
+current evidence
+      ↓
+independent verification
 ```
-
-### Operate
 
 ```text
-"Latency alert is firing"
-        ↓
-incident-analysis
-        ↓
-verified hypothesis
-        ↓
-capability-routing
-        ↓
-opentelemetry + alerting-oncall + runbook-creation
-        ↓
-local diagnostic/operational artifacts
-        ↓
-incident-response loop verifies recovery and writes learning back
+"Implement this reviewed deployment design"
+      ↓
+Context + relevant implementation Skills / Tools
+      ↓
+model judgment
+      ↓
+reviewable artifact
+      ↓
+change-review only if production impact requires it
 ```
 
-This is how the harness can support the lifecycle `Design → Build → Deploy → Operate → Observe → Improve → Learn` without granting arbitrary third-party instructions production authority.
+`capability-routing` remains an optional implementation-planning Skill. It is not a required architecture node; the Orchestrator and surface projection should already make only relevant capabilities available.
+
+## Binding and authority
+
+A Bound Capability narrows an existing capability to explicit resource ids, evidence sources, and permission scope.
+
+Binding may reduce authority but must never increase it. Third-party `reference_only` material remains non-executable even when bound to a real resource. Optional specialist delegation follows the same rule: delegate capability/resource scope must be a subset of the parent, and delegate output cannot expand mutation eligibility.
+
+## Third-party references
+
+When an external Skill is used:
+
+1. use the pinned revision;
+2. load only the relevant material;
+3. treat its commands/scripts/assets as untrusted reference content;
+4. translate useful patterns into local reviewable artifacts;
+5. validate locally;
+6. execute only through the governed control plane and authorized backend;
+7. independently verify material outcomes.
+
+This keeps broad implementation knowledge available without turning external instructions into production authority.
