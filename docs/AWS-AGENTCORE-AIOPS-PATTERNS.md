@@ -7,6 +7,24 @@ Primary references:
 - https://aws.amazon.com/ko/blogs/tech/agentcore-aiops-samsung-1/
 - https://aws.amazon.com/ko/blogs/tech/agentcore-aiops-samsung-2/
 
+## Key distinction: Orchestrator Runtime vs Orchestrator Agent
+
+This project now has an explicit **Agent Orchestrator / Turn Runtime**. It is not an LLM router Agent.
+
+```text
+User / Channel
+      ↓
+Deterministic Agent Orchestrator
+      ↓
+Single Infrastructure Engineering Agent
+      ↓
+optional constrained specialist only when earned
+```
+
+The Orchestrator owns turn flow, context/surface assembly, model/tool iteration, budgets, telemetry correlation, and completion transition. It does not own engineering truth or production authorization.
+
+Samsung's Orchestrator → Supervisor → Sub-agent hierarchy remains a **scale-out option**, not the base architecture.
+
 ## What we adopt
 
 ### 1. Trace/span observability
@@ -14,6 +32,8 @@ Primary references:
 A production Agent should make a request reconstructable across model, tool, backend, verification, and optional delegate work.
 
 ```text
+Runtime Event Log
+      ↓
 trace
 ├─ agent span
 ├─ model span
@@ -23,11 +43,9 @@ trace
 └─ optional delegate span
 ```
 
-The provider-neutral reference is `runtime/observability.py`. It deliberately does not depend on AgentCore or OpenTelemetry; exporters may map the contract later.
+`runtime/observability.py` is provider-neutral. Span lifecycle can be committed to the same Runtime Event Log so AgentCore/OpenTelemetry exporters do not become competing execution truth stores.
 
 ### 2. Many channels, one turn path
-
-Slack, Web, CLI, GitHub, MCP, or API should not each implement their own memory, guard, routing, and approval semantics.
 
 ```text
 CLI ─────┐
@@ -38,41 +56,28 @@ MCP ─────┤
          ↓
 normalized TurnRequest
          ↓
-Infrastructure Agent Turn Runtime
+Agent Orchestrator / Turn Runtime
 ```
 
-`runtime/channel.py` defines the normalized ingress contract. Authentication/authorization is host-owned and happens before normalization. Channel metadata never expands authority.
+`runtime/channel.py` defines normalized ingress. Authentication/authorization happens before normalization. Channel metadata never expands authority.
 
 ### 3. Task-specific evaluation
 
-Evaluation should reflect the task being performed rather than forcing one universal score across all infrastructure work.
-
-`evals/task-profiles.yaml` defines initial profiles for incident, change, FinOps, and delivery work. These profiles select metrics and weights; they do not replace Skill Lift, Context Lift, Harness Lift, Domain Eval, or Loop Eval.
+`evals/task-profiles.yaml` defines initial incident, change, FinOps, and delivery profiles. These select outcome metrics/weights and complement Artifact Lift, Runtime invariant, and Loop/regression evaluation rather than creating a second universal scoring system.
 
 ### 4. Optional specialist delegation
 
-Samsung's environment found value in hierarchical specialist agents at large organizational/tool scale. This project retains **Single Agent by default**.
+Single Agent remains the default.
 
-Delegation becomes available only as an optional scaling mechanism when evaluation demonstrates that a narrower specialist improves outcomes enough to justify handoff/context cost.
+Delegation becomes available only when measured complexity shows that a narrower specialist improves outcomes enough to justify handoff/context cost.
 
-```text
-Infrastructure Engineering Agent
-              ↓
-     optional specialist
-              ↓
-        read-only analysis
-```
+`runtime/delegation.py` enforces:
 
-`runtime/delegation.py` enforces two invariants:
-
-- delegated capabilities/resource scope cannot exceed the parent;
+- delegate capability/resource scope cannot exceed the parent;
+- delegation is read-only by default;
 - delegate output cannot make newly named resources mutation-eligible.
 
-No Orchestrator → Supervisor → Sub-agent hierarchy is required by the base architecture.
-
 ### 5. Semantic learning stops at Learning Candidate
-
-Operational conversations may reveal repeated procedures, corrections, or useful patterns. Automatic extraction can propose them, but repetition does not make them organizational truth.
 
 ```text
 conversation / run pattern
@@ -86,13 +91,11 @@ evidence + review + governance
 Durable Knowledge only if promoted
 ```
 
-`runtime/learning.py` materializes this boundary through the existing Knowledge Candidate contract.
+`runtime/learning.py` materializes this boundary. Repetition does not create Policy, Runbook truth, ADRs, Service Catalog truth, or Verified Facts.
 
 ## What we do not copy
 
 ### Mandatory three-level multi-agent hierarchy
-
-Samsung operates at a scale where domain/tool growth justified hierarchical agent specialization. This project starts with one Infrastructure Engineering Agent and progressively filtered capabilities/Skills.
 
 Rule:
 
@@ -100,49 +103,47 @@ Rule:
 
 ### Automatic operational-rule promotion from memory
 
-A repeated statement, correction, or pattern remains provisional until independently supported and governed. Persistent Memory is not a Policy or Verified Fact store.
+Persistent Memory remains contextual state. Any durable operational learning must pass the existing epistemic and governance path.
 
-### AgentCore-specific runtime dependency
+### AgentCore-specific core dependency
 
-AgentCore Runtime, Observability, Evaluation, Memory, Identity, and Guardrails are useful product references, but the core remains provider-neutral. AWS-specific integrations belong in provider/runtime adapters.
+AgentCore Runtime, Observability, Evaluation, Memory, Identity, and Guardrails are useful product references. AWS-specific implementations belong in provider/runtime adapters; the core remains provider-neutral.
 
 ## Autonomy mapping
 
-Samsung's staged Level 1 → Level 2 autonomy strongly aligns with the local authority model:
+Samsung's staged autonomy aligns with the local authority model:
 
 ```text
-Level 1
 read / analyze / propose
-
-Level 2
+        ↓
 stage exact change
-      ↓
+        ↓
 independent approval
-      ↓
+        ↓
 apply-time revalidation
-      ↓
+        ↓
 execute
-      ↓
+        ↓
 independent verification
 ```
 
-The local runtime intentionally keeps production write authority outside model prose.
+The reference Orchestrator is read-only and therefore cannot bypass this governed change path.
 
 ## Relationship to Commerce Agents
 
-The two references answer different scaling questions:
-
-- **Commerce Agents:** start with a capable single Agent, progressive Skills/tools, backend-owned credentials, and runtime-enforced safety.
-- **Samsung AgentCore AIOps:** when an AIOps platform grows across teams/domains/channels, add strong observability/evaluation and specialize only where scale demands it.
+- **Commerce Agents** answers how to start with one capable Agent, a standard model/tool loop, progressive Skills/tools, backend-owned credentials, and runtime-enforced safety.
+- **Samsung AgentCore AIOps** shows the production pressures that appear across teams, domains, tools, and channels: observability, task-specific evaluation, shared runtime modules, staged autonomy, and optional specialization.
 
 Local synthesis:
 
 ```text
+Agent Orchestrator / Turn Runtime
+              ↓
 Single Infrastructure Engineering Agent
               ↓
-filtered Skills / Capabilities / Tools
+Context / Skills / Tools
               ↓
-shared Runtime / Harness boundary
+Harness / Control Plane
               ↓
 trace + task-specific evaluation
               ↓
