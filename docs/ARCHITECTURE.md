@@ -1,148 +1,247 @@
 # Architecture
 
-The harness separates durable knowledge, environment discovery, current evidence, bounded context retrieval, model judgment, optional domain/Skill guidance, runtime enforcement, production execution, and governed knowledge consolidation. Its core rule is: **constrain authority and truth, not intelligence**.
+The **Infrastructure Engineering Agent** is the product. A thin **Agent Orchestrator / Turn Runtime** runs each interaction. The internal **Harness / Control Plane** constrains authority, evidence, execution, and verified completion.
+
+Core rule:
+
+> **Let the model choose the reasoning path; make execution flow explicit; constrain authority and truth at the control-plane boundary.**
+
+## Canonical architecture
 
 ```text
-Durable Knowledge                 Live Environment
-Service Catalog / ADR / Policy    Cloud / K8s / CI / Observability
-          │                                  │
-          └──────────────┬───────────────────┘
-                         ↓
-                  Minimal Seed Context
-                         ↓
-                    Model Judgment
-                  ↙                   ↘
-          Pull Context            Tools / Skills
-                  ↘                   ↙
-                         Action
-                           ↓
-                Runtime / Harness Boundary
-       Evidence / State / Guard / Approval / Permission
-                           ↓
-              Independently Authorized Execution
-                           ↓
-                Independent Verification
-                           ↓
-                    Reconciliation Loop
-        goal + constraints + terminal conditions + budget
-                           ↓
-                   Verified Outcome
-                           ↓
-                  Learning Candidate
-                           ↓
-              Knowledge Consolidation
-                           ↓
-                Governed Knowledge
+USER / CHANNEL
+CLI / Web / Slack / GitHub / MCP / API
+                    │
+                    ▼
+          Agent Orchestrator / Turn Runtime
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+     Context      Memory    Available Surface
+                              Skills / Tools
+        └───────────┼───────────┘
+                    ▼
+       Infrastructure Engineering Agent
+               Model Judgment
+                    │
+               next action
+                    ▼
+              Tool Executor
+                    │
+                    ▼
+          Harness / Control Plane
+    Provenance · Scope · Guard · Approval
+    Change Revision · Audit · Recording
+                    │
+                    ▼
+            Capability Backends
+ Resource · Evidence · Delivery · Change · Verify
+                    │
+                    ▼
+ AWS / K8s / CI/CD / Observability / Cost / Security
+                    │
+                    ▼
+        Independent Verification
+               ┌────┴────┐
+               │         │
+              DONE   RECONCILE
+                         │
+                Engineering Loop
+                 only when needed
+                         │
+                         ▼
+                 Verified Outcome
+                         │
+                         ▼
+                 Learning Candidate
+                         │
+                    Governance
+                         │
+                         ▼
+                  Durable Knowledge
 ```
 
-## Shared core
+A simple review, analysis, or bounded read task may finish after independent verification. It does **not** enter an Engineering Loop merely because Loop contracts exist.
 
-The core owns contracts that should not vary by model, provider or discipline: progressive context loading, bounded Context Packs, explicit evidence gaps, service/dependency model, evidence/provenance, ADR/incident knowledge, epistemic classes, knowledge candidates, domain profiles, change/ticket contracts, capability source trust, environment/resource binding, loop state and provider-neutral eval infrastructure.
+## 1. Product: one Infrastructure Engineering Agent
 
-## Environment discovery and resource graph
+Infrastructure, Operations, DevOps, SRE, FinOps, and Security are capability domains/lenses inside one Agent. Separate agents are not the default architecture.
 
-`environment/` defines the provider-neutral layer between live infrastructure and task context.
+The model owns:
 
-Discovery adapters may inspect cloud, Kubernetes, CI/CD, observability, cost and security systems in read-only mode and normalize discovered resources into `schemas/resource-graph.schema.json`. A Resource Graph records resources, typed relationships and discovery provenance.
+- engineering reasoning;
+- hypothesis formation;
+- next-action judgment;
+- selection among the currently available Context, Skills, and Tools.
 
-Discovery is not durable organizational truth and is not automatically a Loop verified fact. It may enrich current context while Architecture, ADRs, Policies and Service Catalog remain protected sources of truth.
+The model does **not** own credentials, engineering truth, approval state, production authority, or verified completion.
 
-A **Bound Capability** combines an existing capability with explicit resource ids, evidence sources and permission scope. Binding may narrow authority but must never increase it. A third-party `reference_only` capability remains non-executable even when bound to a real production resource.
+Optional specialist delegation is a scaling mechanism only. A delegate must stay inside the parent capability/resource scope and cannot expand mutation eligibility.
 
-## Evidence adapters
+## 2. Application Runtime: Orchestrator
 
-Provider-specific operational data enters through `adapters/evidence/`.
+`runtime/orchestrator.py` is the reference **Agent Turn Runtime**. It converges normalized channel requests onto one execution lifecycle:
 
 ```text
-Provider API → read-only adapter → adapter result → normalization → Evidence → independent verification
+TurnRequest
+    ↓
+resolve Context + available surface
+    ↓
+model turn
+    ↓
+read-only tool calls when requested
+    ↓
+model continuation
+    ↓
+independent verification
+    ↓
+verified / unverified / budget-exceeded outcome
 ```
 
-Adapter results require provenance and observation time. They may be useful current evidence, but the adapter and model cannot self-promote observations into Loop `verified_facts`.
+The Orchestrator owns **flow**, not truth or authorization.
 
-## Context Pack and evidence gaps
+Production workflow/change execution is deliberately not implemented directly in the reference Orchestrator. Mutation-capable actions must continue through `ToolPipeline`, `ChangeControl`, resource provenance, approval, and an authorized backend.
 
-Context Pack is a retrieval interface and materialized task context, not a prompt dump. Start from minimal seed context and let the model/runtime pull additional material when uncertainty or the task requires it.
+All product channels normalize through `runtime/channel.py`. Channel metadata never expands authority.
 
-A Context Pack may combine only the information needed for the current decision:
+## 3. Model-visible surface: Context, Skills, Tools
 
-- authoritative or governed organizational knowledge;
-- current evidence and verified facts;
-- resource/dependency scope;
-- freshness metadata;
-- token budget;
-- explicit unknowns and required evidence.
-
-A missing signal is represented as a `gap`, not hidden behind confidence language. A blocking gap prevents the downstream Loop condition from being treated as verified.
-
-Context Pack assembly does not change authority. A provisional learning candidate remains provisional even when included in context, and stale evidence remains stale.
-
-## Agent judgment, Domain, Skill, Capability and Loop
-
-These layers have different responsibilities:
+The model should need only three primary concepts:
 
 ```text
-Agent/Model → chooses the next useful reasoning/action path
-Context     → supplies bounded knowledge/evidence/gaps on demand
-Domain      → optional lens for relevant engineering constraints
-Skill       → optional task-specific guidance/interface
-Capability  → implementation or verification knowledge/tooling
-Binding     → narrows resource/evidence/permission scope
-Runtime     → enforces hard execution, approval, audit, and state rules
-Loop        → reconciles goal/state/constraints/terminal conditions
+Context
+Skills
+Tools
 ```
 
-The current domain lenses are Infrastructure, SRE, DevOps, FinOps and Security. Domain and Skill guidance should be progressively disclosed rather than forced through a universal routing chain.
+Other project concepts are primarily runtime metadata:
 
-## Capability trust boundary
+- **Domain** — optional engineering lens/classification;
+- **Capability** — availability, trust, source, risk, and implementation metadata;
+- **Binding** — resource/evidence/permission scope;
+- **Workflow** — convenience entrypoint;
+- **Loop** — optional external reconciliation state machine.
 
-`capabilities/registry.yaml` records local and external capability sources.
+The Agent should not be forced through `Domain → Skill → Capability Routing → Loop` as a universal chain.
 
-Third-party sources are `pinned_reference` by default:
+### Context facade
 
-- immutable revision required;
-- license recorded;
-- minimum relevant Skill loaded progressively;
-- scripts/commands/assets treated as reference material;
-- external commands are not automatically executed;
-- useful patterns are translated into local reviewable artifacts;
-- current-state claims still require environment/tool/human/test evidence;
-- execution remains separately authorized.
+The model-facing Context Resolver may assemble bounded material from several internal stores:
 
-An organization can vendor/review selected capabilities and register them as managed/local sources.
+```text
+User / Session Memory
+Organizational Knowledge
+Evolution Knowledge
+Engineering Evidence
+Resource Graph
+        ↓
+Context Resolver
+        ↓
+Context Pack
+```
 
-## Runtime Kernel
+Storage classes remain separate because they have different truth and governance semantics, but the model receives one bounded contextual surface with provenance, freshness, and explicit gaps.
 
-`runtime/` defines the initial provider-neutral execution contract. It is a reference kernel, not yet a production daemon.
+## 4. Harness / Control Plane
 
-The Runtime Kernel adopts several strong agent-runtime patterns while keeping infrastructure-specific hard invariants outside replaceable plugin seams:
+The Harness is the non-optional safety and truth boundary beneath model judgment.
 
-- append-only typed Runtime Event Log;
-- **model-visible means logged** reconstructability;
-- revisioned run state with stale-update rejection;
-- lazy Runtime Skill Registry over the trusted Capability Registry;
-- guarded Tool Execution Pipeline;
-- monotonic hard-deny guards;
-- fail-closed one-shot approval;
-- explicit sandbox enforcement facts;
-- normalized tool result before Evidence promotion.
+Hard responsibilities include:
 
-Runtime plugins/providers may vary model adapters, persistence backends, tool implementations, sandboxes and remote execution systems. They must not replace Evidence provenance, independent production authorization, auditability or source-of-truth protection.
+- Evidence and Resource Provenance;
+- resource and permission scope;
+- untrusted-content fencing;
+- monotonic guards;
+- external production authorization;
+- revision-bound staged change approval;
+- apply-time revalidation;
+- audit and runtime state;
+- recording/replay integrity;
+- independent verification and regression obligations;
+- protected organizational truth.
 
-Runtime events answer what the Agent actually saw/requested/executed. They are not automatically engineering truth. Environment/tool/human/test verification is still required before a claim enters Loop `verified_facts`.
+Hard boundaries belong in Runtime/schema/policy/backend enforcement rather than repeated prompt prose.
 
-## Scenario evaluation
+## 5. Runtime Event Log is execution SSOT
 
-`evals/scenarios/` holds infrastructure scenarios with explicit ground truth, required evidence, red herrings, prohibited actions, expected behavior and success conditions. These scenarios are intended for future live runners and paired Skill/Context experiments, while schema validation keeps the scenario contract deterministic in CI.
+`RuntimeEventLog` is the canonical record of what one Agent run saw, requested, executed, and verified.
 
-## Loop state
+```text
+Runtime Event Log
+        │
+   ┌────┼─────────┐
+   ▼    ▼         ▼
+ Trace Metrics  Recording
+   │    │         │
+   └────┴────┬────┘
+             ▼
+          Evaluation
+```
 
-Loop state is explicit outside agent prose and is updated only with independently verified facts. Adaptive Loops define goals, hard constraints, terminal conditions, budgets, and available actions while leaving next-action selection to model judgment. Sequential steps remain supported when ordering is itself an engineering requirement. A successful condition can remain a regression obligation in later iterations.
+Trace/span data, latency/cache metrics, and immutable recordings are observations or projections of the same execution history; they must not become competing truth stores.
 
-Runtime state and Loop state are intentionally separate. Runtime state reconstructs agent execution; Loop state reconciles an engineering objective against independently verified world state.
+`runtime/observability.py` can append span lifecycle events to the same Runtime Event Log. `LatencyTracker.from_event_log(...)` derives model/tool performance counters from committed runtime events.
 
-## Knowledge consolidation
+Runtime events are still **execution facts**, not automatically Engineering Evidence or Verified Facts.
 
-Loop learning is not automatically organizational truth. The harness uses the following epistemic sequence:
+## 6. Environment, Resource Graph, and Evidence
+
+`environment/` normalizes discovered cloud, Kubernetes, CI/CD, observability, cost, and security resources into the provider-neutral Resource Graph.
+
+Trusted discovery establishes resource provenance. A mutation target must remain inside the appropriate Bound Capability resource scope.
+
+Provider-specific read-only observations enter through evidence adapters and require source provenance plus observation time. Tool output is not promoted to verified engineering truth merely because a call succeeded.
+
+## 7. Backend boundary
+
+`InfrastructureEngineeringBackend` remains the current facade. Its responsibilities naturally separate into four capability contracts:
+
+```text
+Resource Discovery
+Evidence Collection
+Change Management
+Outcome Verification
+```
+
+Future provider implementations should prefer narrow typed protocols behind the facade rather than growing a single `dict[str, Any]` API indefinitely.
+
+Credentials remain server/runtime-owned and are never model context.
+
+## 8. Independent Verification and optional Engineering Loop
+
+Independent Verification answers whether a material claim or outcome is supported by current environment/tool/human/test evidence.
+
+For ordinary bounded work:
+
+```text
+Action / Assessment
+      ↓
+Independent Verification
+      ↓
+Done or Unverified
+```
+
+For genuinely long-running work:
+
+```text
+Goal + Current State + Constraints + Terminal Conditions + Budget
+      ↓
+model chooses next action
+      ↓
+control-plane enforcement
+      ↓
+independent observation
+      ↓
+reconcile
+      ↓
+repeat only while useful
+```
+
+Runtime state and Loop state remain separate: Runtime reconstructs execution; Loop state reconciles an engineering objective against independently verified world state.
+
+## 9. Learning and durable knowledge
+
+Persistence or repetition does not create truth.
 
 ```text
 Observation
@@ -152,30 +251,43 @@ Verified Fact
 Engineering Assessment
     ↓ outcome evidence
 Learning Candidate
-    ↓ artifact owner / governance review
+    ↓ owner / governance review
 Durable Organizational Knowledge
 ```
 
-`schemas/knowledge-candidate.schema.json` defines the proposal boundary. Supporting and contradicting evidence remain attached to the candidate. Confidence may describe an assessment but does not replace verification.
+Semantic memory extraction may create a Learning Candidate, but cannot automatically promote conversation patterns into Policy, Runbook truth, ADRs, Service Catalog, or Verified Facts.
 
-Consolidation may deduplicate, group, detect contradictions and propose target updates. It must not silently overwrite Architecture, ADRs, Policies, Service Catalog, Runbooks, or other protected truth. Failed hypotheses and prohibited paths remain available as negative corpus/eval candidates.
+## 10. Evaluation and release
 
-See `docs/KNOWLEDGE-CONSOLIDATION.md`.
+Evaluation is grouped by purpose instead of accumulating unrelated scoring frameworks:
 
-## Workflow surface
+- **Artifact lift** — Skill Lift, Context Lift, Harness Lift;
+- **Task outcome** — incident, change, delivery, FinOps, security scenario profiles;
+- **Runtime invariants** — provenance, approval, fencing, delegation, recording;
+- **Long-running behavior** — Loop/regression evaluation;
+- **Release** — canary, live recordings, outcome/cost/latency telemetry.
 
-The user-facing workflow surface may route simple intents such as incident, reliability, delivery, FinOps, security, change and learn into the appropriate Domain/Loop/Skills. This is progressive disclosure only: routing never increases authority or bypasses evidence, approval, regression, or production boundaries.
+Domain is primarily classification/lens metadata for task evaluation, not another mandatory execution layer.
 
-See `docs/WORKFLOW-SURFACE.md`.
+## Reference roles
 
-## Production boundary
+Primary structural references:
 
-The Infrastructure Engineering Agent may analyze, design, generate code/config/pipelines/runbooks, verify available checks and create workflow artifacts, but production execution remains independently authorized. `change-validation` can orchestrate precheck → approval → external execution → post-verification without making the model or runtime the authorization boundary.
+- Anthropic Commerce Agents — Agent product, standard Agent loop, Skills/tools/backend/runtime safety;
+- Anthropic Context Engineering — unhobbling, minimal always-loaded context, progressive disclosure;
+- Samsung Account AgentCore AIOps — production observability, channel convergence, task evaluation, scale-out pressure;
+- Kubernetes Controllers + LongHorizon-Harness — explicit external state and reconciliation;
+- NVIDIA SkillEvaluator / ACES — artifact/effect evaluation.
 
-## Agent and tool adapters
+Supporting references:
 
-Codex/Kiro use `AGENTS.md`; Claude Code additionally exposes local Skills. Cloud/runtime/observability/delivery/cost systems are optional discovery and evidence adapters. Jira/Linear workflow actions use MCP. External Skill libraries are optional capability references. Tool output must be normalized before it is treated as evidence.
+- DeepSeek Harness — event/runtime extensibility patterns, not the authority model for the whole control plane;
+- GBrain — memory/knowledge separation;
+- Backpass — context evolution;
+- Paperthin — artifact hygiene, SSOT, eval-integrity reflexes;
+- LoopsBench — long-running evaluation;
+- MCP/OpenGitOps — tool/declarative supporting standards.
 
-Future execution adapters should implement the contracts under `runtime/` instead of bypassing them with direct model-to-provider mutation.
+Engineering domain truth remains grounded in Google SRE, DORA, and FinOps Framework.
 
-See `agents/infrastructure_engineering/README.md`, `environment/README.md`, `adapters/evidence/README.md`, `runtime/README.md`, `capabilities/README.md`, `docs/CAPABILITY-MODEL.md`, `docs/HARNESS-UNHOBBLING.md`, `docs/WORKFLOW-SURFACE.md`, `docs/KNOWLEDGE-CONSOLIDATION.md`, `loops/README.md` and `docs/REFERENCE-MODELS.md`.
+See `docs/REFERENCE-MODELS.md` for reference provenance and adoption rules.
