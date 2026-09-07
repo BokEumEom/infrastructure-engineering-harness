@@ -6,9 +6,9 @@ A provider-neutral **Infrastructure Engineering Agent** for investigating, revie
 
 > **Let the agent reason freely; constrain authority and truth at the runtime boundary.**
 
-> **Status: Research Preview.** The Agent contract, Skills, Resource Graph, deterministic scenarios, evaluation plumbing, and local CLI are available. Live adapters, persistent runtime, and controlled execution remain experimental.
+> **Status: Research Preview.** The Agent contract, reference Turn Runtime, Skills, Resource Graph, deterministic scenarios, evaluation plumbing, and local CLI are available. Live adapters, persistent production runtime, and controlled execution remain experimental.
 
-The repository keeps the historical name `infrastructure-engineering-harness` for compatibility. **The product identity is now Infrastructure Engineering Agent; the harness is its internal control plane.**
+The repository keeps the historical name `infrastructure-engineering-harness` for compatibility. **The product is the Infrastructure Engineering Agent; the harness is its internal control plane.**
 
 ## Try the Agent
 
@@ -28,8 +28,6 @@ agent.cmd demo
 
 The legacy `./harness` / `harness.cmd` entrypoints remain compatible during the Research Preview.
 
-See the [5-minute Quickstart](QUICKSTART.md).
-
 `demo` uses checked-in fixtures only. It does not connect to a cloud account, Kubernetes cluster, observability system, or production environment. `DEMO PASS` confirms deterministic contract consistency; it does **not** prove live-agent effectiveness.
 
 ## One Agent, multiple engineering capabilities
@@ -47,107 +45,158 @@ Infrastructure Engineering Agent
         └─ Security
 ```
 
-Examples:
-
-- "Review this Terraform change."
-- "Why did payment-api latency increase?"
-- "Improve this deployment pipeline."
-- "Is this service burning its error budget?"
-- "Find the main infrastructure cost driver."
-- "Review the IAM and trust boundaries."
-
-These are capability domains/lenses inside one Agent, not separate agents by default.
+These are capability domains/lenses inside one Agent, not separate Agents by default.
 
 ## Architecture
 
 ```text
-Organizational Knowledge + Live Environment
+CLI / Web / Slack / GitHub / MCP / API
                     ↓
-              Minimal Context
+          Agent Orchestrator / Turn Runtime
+                    ↓
+          Context + Memory + Skills + Tools
                     ↓
        Infrastructure Engineering Agent
                     ↓
               Model Judgment
-          ↙         ↓         ↘
-      Context     Skills    Capabilities
-          ↘         ↓         ↙
-                   Action
                     ↓
-       Agent Runtime / Harness Control Plane
- Evidence · Resource Provenance · State · Guard
- Permission · Approval · Audit · Verification
+               Tool Executor
                     ↓
-          Infrastructure Backend
+          Harness / Control Plane
+ Provenance · Scope · Guard · Approval · Audit
+          Change Control · Recording
+                    ↓
+            Capability Backends
                     ↓
  AWS / K8s / CI/CD / Observability / Cost / Security
                     ↓
           Independent Verification
-                    ↓
-             Verified Outcome
-                    ↓
-                  Learn
+             ↙              ↘
+           done       reconcile if needed
+                           ↓
+                    Engineering Loop
 ```
 
-The Agent owns reasoning and next-action judgment. It does not own credentials, independent truth, approval state, production authority, or verified completion.
+The **Orchestrator owns execution flow**. The **Harness owns authority/truth boundaries**. The model owns reasoning and next-action judgment. None of them may self-grant production authority or self-certify successful completion.
+
+See [Architecture](docs/ARCHITECTURE.md).
+
+## Agent Turn Runtime
+
+`runtime/orchestrator.py` is a provider-neutral reference Turn Runtime that converges normalized requests onto one model/tool/verification loop.
+
+It is intentionally read-only. Production workflow/change execution must continue through resource provenance, `ToolPipeline`, `ChangeControl`, independent approval, and an authorized backend.
+
+```text
+request
+  ↓
+context + available surface
+  ↓
+model
+  ↓
+read tools when needed
+  ↓
+model continuation
+  ↓
+independent verification
+  ↓
+verified / unverified
+```
+
+## Runtime Event Log is execution SSOT
+
+The canonical execution record is the append-only `RuntimeEventLog`.
+
+```text
+Runtime Event Log
+  ├─ trace/span observability
+  ├─ latency/cache metrics
+  ├─ immutable recording
+  └─ evaluation
+```
+
+Telemetry and recordings should be correlated to or projected from the same Runtime Events rather than becoming independent execution truth stores.
 
 ## Agent contract and backend
 
 The product contract lives at [agents/infrastructure_engineering/agent.yaml](agents/infrastructure_engineering/agent.yaml).
 
-The provider-neutral backend interface lives at [agents/infrastructure_engineering/backend.py](agents/infrastructure_engineering/backend.py). It separates:
+The provider-neutral backend facade lives at [agents/infrastructure_engineering/backend.py](agents/infrastructure_engineering/backend.py):
 
 ```text
-discover_resources / collect_evidence
+discover resources / collect evidence
                  ↓
              judgment
                  ↓
-            stage_change
+            stage change
                  ↓
          review / approval
                  ↓
-      apply_approved_change
+        apply-time revalidation
                  ↓
-          verify_outcome
+      apply approved change
+                 ↓
+          verify outcome
 ```
 
-Platform credentials stay behind the backend/runtime boundary. Model-visible text approval is never equivalent to independently owned authorization.
+Future provider implementations should prefer narrower typed Resource / Evidence / Change / Verification protocols behind this facade instead of growing one generic API indefinitely.
+
+Platform credentials stay behind the backend/runtime boundary. Model-visible chat approval is never equivalent to independently owned authorization.
+
+## Model-visible surface
+
+The model should primarily need three concepts:
+
+```text
+Context
+Skills
+Tools
+```
+
+Domain, Capability, Binding, Workflow, and Loop remain useful runtime metadata but are not a mandatory reasoning chain. `capability-routing` is an optional implementation-planning Skill rather than a required hop.
 
 ## Core building blocks
 
-- **Agent Contract** — the user-facing Infrastructure Engineering Agent role, capabilities, authority, backend, and completion boundary
+- **Agent Orchestrator / Turn Runtime** — one execution lifecycle for every channel
 - **Minimal Agent Context** — small always-loaded truth/authorization/verification invariants
-- **Workflow Surface** — natural user intents without forcing a fixed reasoning route
-- **Context Pack** — pull-oriented task context with provenance, freshness, and explicit evidence gaps
-- **Skill / Capability** — progressively loaded engineering guidance and implementation/verification knowledge
+- **Context Pack** — bounded task context with provenance, freshness, and explicit gaps
+- **Skills / Tools** — progressively exposed task guidance and actions
+- **Capability Registry** — internal source/trust/risk/availability metadata
 - **Resource Graph** — provider-neutral resources, dependencies, and discovery provenance
-- **Bound Capability** — Capability + Resource Scope + Permission Scope + Evidence Source
-- **Runtime Kernel** — internal Event Log, Tool Pipeline, Guard, Approval, Sandbox, and state reference runtime
-- **Engineering Loop** — goal + external state + constraints + terminal conditions; adaptive when reasoning order is not itself a requirement
-- **Knowledge Consolidation** — Observation → Verified Fact → Engineering Assessment → Learning Candidate → governed Durable Knowledge
-- **Skill Lift / Context Lift / Harness Lift** — evaluation of whether guidance actually improves or hobbles the Agent
-- **Artifact Reflex** — Paperthin-inspired artifact hygiene, SSOT, and eval-integrity rules
-
-Detailed architecture: [Agent model](agents/infrastructure_engineering/README.md), [Architecture](docs/ARCHITECTURE.md), [Commerce Agent Patterns](docs/COMMERCE-AGENT-PATTERNS.md), [Harness Unhobbling](docs/HARNESS-UNHOBBLING.md), [Reference Models](docs/REFERENCE-MODELS.md), [Workflow Surface](docs/WORKFLOW-SURFACE.md), and [Knowledge Consolidation](docs/KNOWLEDGE-CONSOLIDATION.md).
+- **Harness / Control Plane** — Event Log, provenance, scope, guard, approval, change control, audit, recording
+- **Independent Verification** — environment/tool/human/test evidence for material outcomes
+- **Engineering Loop** — optional repeated reconciliation when external state requires it
+- **Knowledge Consolidation** — Observation → Verified Fact → Assessment → Learning Candidate → governed Durable Knowledge
+- **Evaluation / Release** — artifact lift, task outcomes, runtime invariants, Loop regression, canary/kill controls
 
 ## Safety model
 
 - Read-only discovery/evidence is the default authority.
-- Mutation-capable tools can enforce **no mutation without Resource Provenance**: the target must be discovered and remain inside the Bound Capability resource scope.
+- Mutation-capable tools require trusted Resource Provenance and bound scope.
 - Tool output is not automatically a verified engineering fact.
 - `verified_by: agent` is invalid.
-- External logs, tickets, PR text, tags, annotations and similar content are untrusted data and should be fenced before becoming model-visible context.
-- Chat text cannot grant production authorization; approval binds to an exact staged change revision and is revalidated before apply.
+- External logs, tickets, PR text, tags, annotations, and similar content are fenced/bounded as untrusted data.
+- Chat text cannot grant production authorization.
+- Approval binds to an exact staged revision and is revalidated before apply.
 - Production mutation, destructive action, privilege expansion, and financial commitments require independent authorization.
+- Delegation cannot expand parent authority.
 - Hard boundaries belong in Runtime/schema/policy/backend enforcement rather than repeated prompt prose.
-- The Agent may reason freely; it cannot self-certify truth, authority, or successful completion.
 
 ## Reference models
 
-The project learns from external systems without granting them authority. Important references include DeepSeek Harness, NVIDIA SkillEvaluator/ACES, Paperthin, gstack, GBrain, WikiSkill, Kubernetes Controllers, SRE/DORA/FinOps, and Anthropic's **commerce-agents**.
+Primary structural references are intentionally few:
 
-Commerce Agents is particularly relevant for the separation of **agent product surface → backend contract → provenance gates → staged writes → host approval → runtime enforcement**. Those patterns inform this Agent direction while the project remains provider-neutral and infrastructure-specific.
+- **Anthropic Commerce Agents** — Agent product / standard model-tool loop / backend/runtime patterns
+- **Anthropic Context Engineering** — minimal context / progressive disclosure / unhobbling
+- **Samsung Account AgentCore AIOps** — production observability / channel convergence / task eval / scale-out pressure
+- **Kubernetes Controllers + LongHorizon-Harness** — reconciliation and external task state
+- **NVIDIA ACES / SkillEvaluator** — artifact/effect evaluation
 
-See [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md) and [capabilities/README.md](capabilities/README.md).
+Supporting references include DeepSeek Harness for event/runtime extensibility, GBrain for memory taxonomy, Backpass for context evolution, Paperthin for artifact/eval hygiene, LoopsBench for long-running evaluation, MCP/OpenGitOps as supporting standards, and Google SRE/DORA/FinOps for engineering domain truth.
+
+> **Reference widely, expose narrowly.**
+
+See [Reference Models](docs/REFERENCE-MODELS.md), [Commerce Agent Patterns](docs/COMMERCE-AGENT-PATTERNS.md), and [Samsung AgentCore AIOps Patterns](docs/AWS-AGENTCORE-AIOPS-PATTERNS.md).
 
 ## Contribute
 
@@ -181,7 +230,7 @@ Legacy compatibility:
 
 ## Localization
 
-English is the canonical language for machine-readable contracts, schemas, Skills, policies, and evaluation definitions. Korean, Japanese, and Simplified Chinese README / Quickstart files remain first-class entry documentation.
+English is canonical for machine-readable contracts, schemas, Skills, policies, and evaluation definitions. Korean, Japanese, and Simplified Chinese README / Quickstart files remain first-class entry documentation.
 
 See [Localization Policy](docs/LOCALIZATION.md).
 
@@ -189,9 +238,10 @@ See [Localization Policy](docs/LOCALIZATION.md).
 
 This project is intentionally explicit about what is not yet proven:
 
+- the Orchestrator is a reference read-only Turn Runtime, not a production model/provider runtime;
 - live discovery/evidence adapters are still limited;
-- the Runtime Kernel is a reference implementation, not a production daemon;
-- the Infrastructure Engineering Backend is a contract, not a complete AWS/Kubernetes implementation;
+- the Harness / Control Plane is a reference implementation, not a production daemon;
+- the Infrastructure Engineering Backend is still a facade/contract, not a complete AWS/Kubernetes implementation;
 - autonomous production mutation is not promised;
 - real Agent effectiveness requires `source: live` validation evidence.
 
