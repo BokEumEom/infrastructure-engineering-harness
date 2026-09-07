@@ -44,6 +44,9 @@ runtime_boundary:
     - cache_aware_context_assembly
     - latency_metrics
     - skill_release_control
+    - trace_span_observability
+    - channel_normalization
+    - constrained_delegation
 
 authority:
   default: read_only
