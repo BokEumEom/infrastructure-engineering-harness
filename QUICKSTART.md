@@ -35,26 +35,72 @@ Reference Context Validation
         ↓
 Resource Graph + Evidence Fixture
         ↓
-SRE Dependency Saturation Scenario
-        ↓
-Safety / Consistency Check
+Scenario Contract Validation
         ↓
 DEMO PASS / FAIL
 ```
 
-A successful demo confirms that the deterministic Agent/runtime contracts and scenario wiring are coherent. It does **not** prove that a live AI agent performs better.
+A successful demo confirms deterministic contract and fixture wiring. It does **not** execute a live model or prove live-agent effectiveness.
+
+## Run the reference Agent through a scenario
+
+```bash
+./agent scenario evals/scenarios/sre-dependency-saturation.json
+```
+
+The default `scenario` command now runs the checked-in scenario through the reference Agent Orchestrator:
+
+```text
+Scenario
+   ↓
+Context + Resource Graph
+   ↓
+Deterministic fixture model
+   ↓
+evidence.list
+   ↓
+evidence.read
+   ↓
+assessment
+   ↓
+Independent Verification
+   ↓
+Scenario Scorer
+   ↓
+Fixture Runtime Recording
+```
+
+Hidden evaluator data such as `ground_truth`, `required_evidence`, and success conditions are not placed in model-visible Context. The fixture model discovers available evidence through read-only tools before forming an assessment.
+
+This is still a **credential-free deterministic fixture run**, not a live model benchmark.
+
+## Scenario commands
+
+```text
+./agent scenario <path>
+    Run the scenario through the reference Orchestrator and score the result.
+
+./agent scenario run <path>
+    Explicit form of the default scenario run.
+
+./agent scenario eval <path>
+    Run and also print detailed scorer diagnostics.
+
+./agent scenario check <path>
+    Only validate scenario/fixture references. No Agent turn is executed.
+```
 
 ## Useful commands
 
 ```text
 ./agent demo
-    Fast, credential-free first experience.
+    Fast, credential-free contract demo.
 
 ./agent validate
     Contributor-facing deterministic validation.
 
 ./agent scenario evals/scenarios/sre-dependency-saturation.json
-    Validate one scenario and its referenced fixtures.
+    Execute one fixture scenario through the reference Agent Orchestrator.
 
 ./agent doctor
     Show local runtime/dependency status.
@@ -80,5 +126,6 @@ Before opening a PR:
 - Add an evidence/discovery adapter: `CONTRIBUTING.md`
 - Read the architecture: `docs/ARCHITECTURE.md`
 
-The current `demo` is deterministic by design. Live agent execution is recorded separately through `source: live` Validation Reports; fixture results must not be presented as live-agent benchmarks.
-\nLegacy compatibility: `./harness` and `harness.cmd` remain available as internal-harness entrypoints during the Research Preview.\n
+Fixture recordings use `source: fixture`. Live agent execution remains a separate later validation phase using `source: live`; fixture results must not be presented as live-agent benchmarks.
+
+Legacy compatibility: `./harness` and `harness.cmd` remain available as internal-harness entrypoints during the Research Preview.

@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 AGENT = ROOT / "agent"
 HARNESS = ROOT / "harness"
+SCENARIO = "evals/scenarios/sre-dependency-saturation.json"
 
 
 class AgentCliTests(unittest.TestCase):
@@ -38,6 +39,26 @@ class AgentCliTests(unittest.TestCase):
         self.assertIn("DEMO PASS", result.stdout)
         self.assertIn("Production mutation: none", result.stdout)
         self.assertIn("not live agent effectiveness", result.stdout)
+
+    def test_agent_scenario_default_runs_orchestrator_and_evaluation(self) -> None:
+        result = self.run_cli(AGENT, "scenario", SCENARIO)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Infrastructure Engineering Agent · scenario", result.stdout)
+        self.assertIn("Evidence catalog discovered", result.stdout)
+        self.assertIn("classification: dependency_saturation", result.stdout)
+        self.assertIn("Model turns: 3", result.stdout)
+        self.assertIn("Read-only tool calls: 3", result.stdout)
+        self.assertIn("ASSESSMENT_EVIDENCE_BACKED", result.stdout)
+        self.assertIn("SCENARIO PASS", result.stdout)
+        self.assertIn("Score: 5/5", result.stdout)
+        self.assertIn("Recording:", result.stdout)
+        self.assertIn("no live provider", result.stdout)
+
+    def test_agent_scenario_check_remains_static_contract_validation(self) -> None:
+        result = self.run_cli(AGENT, "scenario", "check", SCENARIO)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("binds 3 resources, 2 observations, 3 red herrings", result.stdout)
+        self.assertNotIn("Model turns:", result.stdout)
 
     def test_harness_entrypoint_remains_compatible(self) -> None:
         result = self.run_cli(HARNESS, "doctor")
