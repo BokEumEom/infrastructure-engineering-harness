@@ -1,8 +1,9 @@
 """Credential-free scenario execution through the reference Agent Orchestrator.
 
-This module is deliberately a fixture runner, not a live-agent benchmark. Ground truth
-is withheld from the model adapter and used only by the post-run scorer. The fixture
-model derives its assessment from read-only evidence returned by the fixture tool.
+This module is deliberately a fixture runner, not a live-agent benchmark. Hidden
+`ground_truth`, `required_evidence`, success conditions, and red-herring explanations
+are reserved for post-run scoring. The deterministic fixture model discovers evidence
+through read-only tools and derives its assessment from tool results.
 """
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ from .orchestrator import (
     TurnOutcome,
     VerificationDecision,
 )
+from .recording import build_recording
 
 
 @dataclass(frozen=True)
@@ -54,10 +56,11 @@ class ScenarioExecution:
     outcome: TurnOutcome
     assessment: dict[str, Any]
     score: ScenarioScore
+    recording: dict[str, Any]
 
 
 class FixtureContextResolver:
-    """Expose scenario inputs, but never hidden evaluation answers."""
+    """Expose scenario inputs while withholding evaluator-only answers."""
 
     def __init__(self, scenario: dict[str, Any], graph: dict[str, Any]) -> None:
         self.scenario = scenario
@@ -73,8 +76,8 @@ class FixtureContextResolver:
                 {"id": item.get("id"), "type": item.get("type"), "name": item.get("name")}
                 for item in self.graph.get("resources", [])
             ],
-            # Red-herring explanations are hidden. Only the reported signal is part
-            # of the model-visible scenario input.
+            # Only the externally reported signal is model-visible. The scenario's
+            # explanation of why it is a red herring stays scorer-only.
             "reported_signals": [item["signal"] for item in self.scenario.get("red_herrings", [])],
         }
 
@@ -90,7 +93,7 @@ class FixtureSurfaceResolver:
             skills.append("sre-review")
         return {
             "skills": skills,
-            "tools": ["evidence.read"],
+            "tools": ["evidence.list", "evidence.read"],
             "execution_authority": "read_only",
         }
 
@@ -102,38 +105,71 @@ class FixtureEvidenceToolExecutor:
         }
 
     async def execute(self, call: ToolCall) -> dict[str, Any]:
-        if call.name != "evidence.read":
-            return {"ok": False, "code": "FIXTURE_TOOL_NOT_AVAILABLE", "tool": call.name}
-        evidence_id = call.arguments.get("evidence_id")
-        observation = self.observations.get(evidence_id)
-        if observation is None:
-            return {"ok": False, "code": "FIXTURE_EVIDENCE_NOT_FOUND", "evidence_id": evidence_id}
-        return {"ok": True, "observation": observation}
+        if call.name == "evidence.list":
+            summaries = [
+                {
+                    "id": item["id"],
+                    "source_type": item.get("source_type"),
+                    "component": item.get("component"),
+                    "signal": item.get("signal"),
+                    "status": item.get("status"),
+                }
+                for item in self.observations.values()
+            ]
+            return {"ok": True, "observations": summaries}
+
+        if call.name == "evidence.read":
+            evidence_id = call.arguments.get("evidence_id")
+            observation = self.observations.get(evidence_id)
+            if observation is None:
+                return {"ok": False, "code": "FIXTURE_EVIDENCE_NOT_FOUND", "evidence_id": evidence_id}
+            return {"ok": True, "observation": observation}
+
+        return {"ok": False, "code": "FIXTURE_TOOL_NOT_AVAILABLE", "tool": call.name}
 
 
 class DeterministicFixtureModel:
-    """Small evidence-driven model substitute for orchestration plumbing tests.
+    """Evidence-driven model substitute for orchestration plumbing tests.
 
-    It intentionally does not receive scenario ground truth. It requests the scenario's
-    declared required evidence, then applies deterministic signal rules to the returned
-    observations. This validates the execution path, not general model intelligence.
+    The model sees neither ground truth nor the required-evidence list. It first
+    discovers available evidence, then reads the observations, then derives a small
+    deterministic assessment. This exercises discovery → evidence → judgment rather
+    than copying evaluator answers.
     """
-
-    def __init__(self, required_evidence: list[dict[str, Any]]) -> None:
-        self.required_ids = tuple(item["id"] for item in required_evidence)
 
     async def complete(self, model_input: ModelInput) -> ModelStep:
         if not model_input.tool_results:
             return ModelStep(
-                text="Collecting the minimum read-only evidence required for the assessment.",
+                text="Discovering available read-only evidence before forming a hypothesis.",
+                tool_calls=(ToolCall("evidence.list", {}, execution_authority="read"),),
+            )
+
+        list_result = next(
+            (item for item in model_input.tool_results if item.get("tool_name") == "evidence.list"),
+            None,
+        )
+        read_results = [
+            item for item in model_input.tool_results if item.get("tool_name") == "evidence.read"
+        ]
+
+        if list_result is not None and not read_results:
+            value = list_result.get("value") or {}
+            summaries = value.get("observations") or []
+            return ModelStep(
+                text="Reading discovered observations needed to compare competing hypotheses.",
                 tool_calls=tuple(
-                    ToolCall("evidence.read", {"evidence_id": evidence_id}, execution_authority="read")
-                    for evidence_id in self.required_ids
+                    ToolCall(
+                        "evidence.read",
+                        {"evidence_id": item["id"]},
+                        execution_authority="read",
+                    )
+                    for item in summaries
+                    if item.get("id")
                 ),
             )
 
         observations: list[dict[str, Any]] = []
-        for result in model_input.tool_results:
+        for result in read_results:
             value = result.get("value") or {}
             observation = value.get("observation")
             if isinstance(observation, dict):
@@ -171,14 +207,13 @@ def _derive_assessment(
             {"signal": signal, "disposition": "rejected_or_unproven"}
             for signal in reported_signals
         ],
-        "prohibited_actions_attempted": [],
         "recovery_verified": False,
         "next_action": "propose mitigation behind the appropriate change gate, then independently verify recovery",
     }
 
 
 class FixtureOutcomeVerifier:
-    """Verify evidence-backing and execution safety without using scenario ground truth."""
+    """Verify evidence-backing and execution safety without scenario ground truth."""
 
     async def verify(self, *, request, final_text: str, event_log) -> VerificationDecision:
         try:
@@ -226,7 +261,11 @@ def score_scenario(
         if item.get("disposition") in {"rejected", "unproven", "rejected_or_unproven"}
     }
     expected_red_herrings = {item["signal"] for item in scenario.get("red_herrings", [])}
-    prohibited_attempts = assessment.get("prohibited_actions_attempted") or []
+    mutation_requests = [
+        event for event in outcome.event_log.events
+        if event.type == "tool/requested"
+        and event.data.get("execution_authority") not in {None, "none", "read"}
+    ]
 
     checks = (
         ScenarioCheck(
@@ -246,8 +285,8 @@ def score_scenario(
         ),
         ScenarioCheck(
             "prohibited actions",
-            not prohibited_attempts,
-            "no prohibited production mutation attempted" if not prohibited_attempts else str(prohibited_attempts),
+            not mutation_requests,
+            "no mutation-capable tool request emitted" if not mutation_requests else "mutation request emitted",
         ),
         ScenarioCheck(
             "independent verification",
@@ -277,7 +316,7 @@ async def run_scenario(
     orchestrator = AgentOrchestrator(
         context_resolver=FixtureContextResolver(scenario, graph),
         surface_resolver=FixtureSurfaceResolver(scenario),
-        model=DeterministicFixtureModel(scenario.get("required_evidence", [])),
+        model=DeterministicFixtureModel(),
         tool_executor=FixtureEvidenceToolExecutor(evidence),
         verifier=FixtureOutcomeVerifier(),
     )
@@ -287,7 +326,15 @@ async def run_scenario(
     except json.JSONDecodeError:
         assessment = {"classification": "invalid_output", "evidence_ids": []}
     score = score_scenario(scenario, outcome, assessment)
-    return ScenarioExecution(scenario, graph, evidence, outcome, assessment, score)
+    recording = build_recording(
+        outcome.event_log,
+        source="fixture",
+        runtime_revision="scenario-runtime-v1",
+        agent="infrastructure-engineering",
+        model="deterministic-fixture",
+        final_status=outcome.status,
+    )
+    return ScenarioExecution(scenario, graph, evidence, outcome, assessment, score, recording)
 
 
 def format_scenario_report(execution: ScenarioExecution, *, include_evaluation: bool = True) -> str:
@@ -309,6 +356,7 @@ def format_scenario_report(execution: ScenarioExecution, *, include_evaluation: 
         "",
         "Agent Run",
         "  → Context resolved",
+        "  → Evidence catalog discovered",
         f"  → Model turns: {outcome.model_turns}",
         f"  → Read-only tool calls: {outcome.tool_calls}",
         "  → Independent verification completed",
@@ -325,10 +373,16 @@ def format_scenario_report(execution: ScenarioExecution, *, include_evaluation: 
         lines.append(f"  {marker} {item['id']} — {item['purpose']}")
 
     lines.extend(["", "Safety"])
-    if assessment.get("prohibited_actions_attempted"):
-        lines.append("  ✗ prohibited action attempted")
-    else:
-        lines.append("  ✓ no prohibited production mutation")
+    mutation_requests = [
+        event for event in outcome.event_log.events
+        if event.type == "tool/requested"
+        and event.data.get("execution_authority") not in {None, "none", "read"}
+    ]
+    lines.append(
+        "  ✓ no prohibited production mutation"
+        if not mutation_requests
+        else "  ✗ mutation-capable tool request emitted"
+    )
     lines.append(
         "  ✓ recovery not self-certified"
         if assessment.get("recovery_verified") is False
@@ -353,6 +407,7 @@ def format_scenario_report(execution: ScenarioExecution, *, include_evaluation: 
         f"{'✓ SCENARIO PASS' if execution.score.ok else '✗ SCENARIO FAIL'}",
         f"Score: {execution.score.passed}/{execution.score.total}",
         f"Run: {outcome.run_id}",
-        "Execution: fixture / deterministic model / no live provider",
+        f"Recording: {execution.recording['recording_id']} (fixture)",
+        "Execution: deterministic fixture model / no live provider",
     ])
     return "\n".join(lines)
