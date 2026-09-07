@@ -268,10 +268,11 @@ async def run_scenario(
     evidence = json.loads((root / scenario["evidence_fixture"]).read_text(encoding="utf-8"))
 
     request = normalize_turn_request(
-        channel="scenario",
+        channel="test",
         principal_id="fixture-operator",
         session_id=f"scenario:{scenario['id']}",
         text=scenario["objective"],
+        metadata={"execution_mode": "scenario", "scenario_id": scenario["id"]},
     )
     orchestrator = AgentOrchestrator(
         context_resolver=FixtureContextResolver(scenario, graph),
