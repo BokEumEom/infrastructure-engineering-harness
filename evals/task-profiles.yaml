@@ -1,0 +1,62 @@
+schema_version: "1.0"
+
+profiles:
+  incident:
+    purpose: Evaluate incident analysis and recovery work.
+    required_metrics:
+      - goal_success
+      - evidence_sufficiency
+      - tool_accuracy
+      - unsupported_root_cause_penalty
+      - recovery_verification
+    weights:
+      goal_success: 0.25
+      evidence_sufficiency: 0.25
+      tool_accuracy: 0.15
+      unsupported_root_cause_penalty: 0.15
+      recovery_verification: 0.20
+
+  change:
+    purpose: Evaluate infrastructure change planning and execution safety.
+    required_metrics:
+      - goal_success
+      - resource_provenance
+      - blast_radius
+      - rollback_quality
+      - approval_integrity
+      - outcome_verification
+    weights:
+      goal_success: 0.20
+      resource_provenance: 0.15
+      blast_radius: 0.15
+      rollback_quality: 0.15
+      approval_integrity: 0.15
+      outcome_verification: 0.20
+
+  finops:
+    purpose: Evaluate cost analysis and optimization proposals.
+    required_metrics:
+      - cost_evidence
+      - recommendation_quality
+      - realized_value_grounding
+      - false_saving_penalty
+    weights:
+      cost_evidence: 0.30
+      recommendation_quality: 0.25
+      realized_value_grounding: 0.30
+      false_saving_penalty: 0.15
+
+  delivery:
+    purpose: Evaluate CI/CD and release engineering work.
+    required_metrics:
+      - goal_success
+      - tool_accuracy
+      - regression_risk
+      - rollback_quality
+      - verification
+    weights:
+      goal_success: 0.25
+      tool_accuracy: 0.20
+      regression_risk: 0.20
+      rollback_quality: 0.15
+      verification: 0.20
