@@ -26,6 +26,8 @@ agent.cmd setup
 agent.cmd demo
 ```
 
+See the [5-minute Quickstart](QUICKSTART.md).
+
 `demo` uses checked-in fixtures only. `DEMO PASS` proves deterministic contract plumbing, not live-agent effectiveness.
 
 ## One Agent, multiple engineering capabilities
