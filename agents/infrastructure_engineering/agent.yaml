@@ -4,8 +4,9 @@ name: Infrastructure Engineering Agent
 description: >
   A provider-neutral infrastructure engineering agent for architecture, operations,
   delivery, reliability, cost, and security work. The model chooses the reasoning path;
-  the runtime independently constrains evidence, resource scope, permissions, approval,
-  execution, release state, memory persistence, and verified completion.
+  the application runtime orchestrates turns while the harness/control plane independently
+  constrains evidence, resource scope, permissions, approval, execution, release state,
+  memory persistence, and verified completion.
 
 surface:
   product: agent
@@ -29,6 +30,8 @@ judgment:
 runtime_boundary:
   implementation: harness
   owns:
+    - turn_orchestration
+    - telemetry_event_ssot
     - evidence_provenance
     - resource_provenance
     - permission_scope
