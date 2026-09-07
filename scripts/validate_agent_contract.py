@@ -35,6 +35,9 @@ def main() -> int:
         "cache_aware_context_assembly",
         "latency_metrics",
         "skill_release_control",
+        "trace_span_observability",
+        "channel_normalization",
+        "constrained_delegation",
     }
     owned = set(contract.get("runtime_boundary", {}).get("owns", []))
     missing = sorted(required_runtime_ownership - owned)
