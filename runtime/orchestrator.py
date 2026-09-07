@@ -128,8 +128,6 @@ class AgentOrchestrator:
 
     async def run(self, request: TurnRequest) -> TurnOutcome:
         log = RuntimeEventLog(run_id=request.request_id)
-        trace = AgentTrace(trace_id=f"trace-{request.request_id}", event_log=log)
-        root = trace.start_span("agent-turn", kind="agent", attributes={"channel": request.channel})
         log.append(
             "run/started",
             {
@@ -139,6 +137,8 @@ class AgentOrchestrator:
                 "session_id": request.session_id,
             },
         )
+        trace = AgentTrace(trace_id=f"trace-{request.request_id}", event_log=log)
+        root = trace.start_span("agent-turn", kind="agent", attributes={"channel": request.channel})
 
         context = await self.context_resolver.resolve(request)
         surface = await self.surface_resolver.resolve(request)
@@ -222,7 +222,7 @@ class AgentOrchestrator:
                         "details": verification.details,
                         "duration_ms": verify_duration_ms,
                     },
-                    evidence_refs=list(verification.evidence_refs),
+                    evidence_refs=verification.evidence_refs,
                 )
                 status = "verified" if verification.verified else "unverified"
                 log.append("run/ended", {"status": status})
