@@ -1,12 +1,20 @@
 # Workflow Surface
 
-The **Infrastructure Engineering Agent** is the user-facing workflow surface. The internal harness/runtime provides the rigorous control plane. The surface provides entrypoints and discoverability; it does not prescribe the model's reasoning path.
+The **Infrastructure Engineering Agent** is the user-facing product. Every channel converges on the same **Agent Orchestrator / Turn Runtime**; the internal Harness / Control Plane provides evidence, permission, approval, audit, and verification boundaries.
 
-The design is influenced by workflow-composed agent systems such as gstack: the user should not need to manually select every Skill when the intent already identifies the engineering workflow.
+## Entry surfaces
 
-## User-facing intents
+```text
+CLI / Web / Slack / GitHub / MCP / API
+                 ↓
+          normalized TurnRequest
+                 ↓
+      Agent Orchestrator / Turn Runtime
+                 ↓
+     Infrastructure Engineering Agent
+```
 
-Canonical entry intents:
+Natural language is the primary interaction model. Convenience intents may include:
 
 ```text
 incident
@@ -18,73 +26,77 @@ change
 learn
 ```
 
-CLI/chat surfaces may expose these as:
+These are discovery/routing hints, not separate Agents or mandatory reasoning pipelines.
+
+## Turn model
 
 ```text
-agent incident
-agent reliability
-agent delivery
-agent finops
-agent security
-agent change
-agent learn
-```
-
-These workflow commands are future/optional convenience surfaces; natural-language requests remain the primary Agent interaction model.
-
-Natural-language requests may route to the same entrypoints.
-
-## Routing model
-
-```text
-User Intent
+TurnRequest
     ↓
-Infrastructure Engineering Agent
-    ↓
-Minimal seed context
+Context Resolver + Available Surface
     ↓
 Model Judgment
-   ↙        ↘
-Skill/Tool     pull additional
-Capability    context/evidence
-   ↘        ↙
-      Action
-        ↓
-Runtime / verification boundary
-        ↓
-Engineering Loop only when repeated reconciliation is useful
+  ↙          ↘
+Skills      Tools
+  ↘          ↙
+   new evidence / result
+           ↓
+      model continuation
+           ↓
+Independent Verification
+      ↙             ↘
+    done       reconcile if needed
+                    ↓
+             Engineering Loop
 ```
 
-Mappings are recommendations for discovery, not a mandatory chain. A one-shot review or analysis does not need an Engineering Loop merely because a Loop definition exists. The model may skip irrelevant layers or choose another relevant Skill/Capability while hard Runtime, evidence, permission, and verification boundaries remain unchanged.
+A one-shot review or analysis normally ends after verification. Engineering Loops activate only when repeated observation/reconciliation against external state materially helps.
 
-## Suggested mapping
+## Available Agent Surface
 
-| Intent | Primary Loop / workflow | Typical Skills |
+Users and models should not need to reason about every internal registry layer. The Orchestrator/runtime should project the currently relevant surface from:
+
+```text
+Capability Registry
+× Invocation Policy
+× Release Policy
+× connected/discovered environment
+× permission/resource scope
+        ↓
+Context + Skills + Tools
+```
+
+Domain, Capability, Binding, and Workflow remain useful runtime metadata but do not prescribe the reasoning order.
+
+`capability-routing` is an optional implementation-planning Skill, not a mandatory hop.
+
+## Suggested intent metadata
+
+| Intent | Typical task profile | Typical local Skills |
 | --- | --- | --- |
-| incident | `incident-response` | incident-analysis, sre-review, ticketing |
-| reliability | `reliability-improvement` | sre-review, architecture-review |
-| delivery | `delivery-improvement` | delivery-review, change-review |
-| finops | `finops-optimization` | finops-review, architecture-review |
-| security | security-review workflow | security-review, change-review |
-| change | `change-validation` | change-review, architecture-review |
-| learn | knowledge consolidation | loop-engineering, artifact-hygiene, eval-integrity |
+| incident | incident | incident-analysis, sre-review |
+| reliability | incident/reliability | sre-review, architecture-review |
+| delivery | delivery | delivery-review, change-review |
+| finops | finops | finops-review, architecture-review |
+| security | security | security-review, change-review |
+| change | change | change-review, architecture-review |
+| learn | governance | loop-engineering, artifact-hygiene, eval-integrity |
 
-## Progressive disclosure
+Mappings are recommendations for progressive disclosure only. The Agent may select a smaller or different relevant Skill/Tool set while the hard control-plane boundaries remain unchanged.
 
-Users should see the engineering outcome, evidence gaps, approval gates, and next action. They should not need to understand internal schema names unless they ask.
+## Optional delegation
 
-A concise run summary should answer:
+The Infrastructure Engineering Agent remains single by default. A specialist delegate may be used only when measured complexity justifies handoff cost.
 
-- what is known;
-- what remains unknown;
-- what the current assessment is;
-- what evidence is required next;
-- whether a human gate is pending;
-- whether the Loop is done, waiting, escalated, or failed;
-- what learning candidate was produced.
+Delegation must:
+
+- remain read-only by default;
+- stay within parent capability and resource scope;
+- never grant production authority;
+- never make newly named resources mutation-eligible.
 
 ## No implicit authority
 
-Routing a request to a workflow never grants permission.
+Routing, a Skill, a channel, or a delegate never grants permission.
 
-A request such as "fix production" may select `change-validation`, but production mutation still requires independently authorized execution and any configured human gate.
+A user request such as "fix production" can cause the Orchestrator to prepare a change path, but production mutation still requires provenance, independently owned authorization, exact staged revision approval, apply-time revalidation, and independent outcome verification.
