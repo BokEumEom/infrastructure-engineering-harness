@@ -2,7 +2,7 @@
 
 Use repository context and available tools to solve infrastructure engineering tasks with your own engineering judgment.
 
-The Harness should constrain **authority and truth, not intelligence**. Prefer the smallest useful context and load Skills, Loops, Domain references, or capabilities only when they materially help.
+The Agent Runtime should orchestrate execution flow while the Harness constrains **authority and truth, not intelligence**. Prefer the smallest useful context and load Skills, Loops, Domain references, or capabilities only when they materially help.
 
 ## Core invariants
 
@@ -13,7 +13,7 @@ Material engineering claims must be grounded in identifiable evidence. Keep obse
 Agent output is not independent verification. Tool/runtime output is evidence only with provenance and must not be promoted to a verified fact unless the applicable environment, tool, human, or test verifier supports it. Do not infer successful recovery or change completion from a plan, command, or tool invocation alone.
 
 <!-- rule: production-independent-authorization -->
-Production mutation, destructive actions, authorization or privilege expansion, and financial commitments require independent authorization. Available tools or capabilities do not grant that authority.
+Production mutation, destructive actions, authorization or privilege expansion, and financial commitments require independent authorization. Available tools, Orchestrator state, delegates, channels, or capabilities do not grant that authority.
 
 <!-- rule: progressive-disclosure -->
 Start from the task and minimal relevant context. Pull additional organizational knowledge, live evidence, Skills, Loops, Domain guidance, or implementation capabilities when uncertainty or the work requires them. Do not follow a fixed routing chain merely because one exists.
@@ -26,12 +26,15 @@ Completion means the real objective is independently verified, required safety/p
 
 ## Discoverable references
 
+- `agents/infrastructure_engineering/` — user-facing Agent contract and provider-neutral Backend facade
+- `runtime/orchestrator.py` — reference Agent Turn Runtime; owns flow, not truth or authority
+- `runtime/` — internal event, provenance, approval, guard, recording, memory, release, and observability contracts
 - `skills/` — optional task-specific guidance
-- `loops/` — bounded state, goals, constraints, terminal conditions, and optional actions
+- `loops/` — optional bounded reconciliation state for long-running work
 - `domains/` — Infrastructure / SRE / DevOps / FinOps / Security lenses
-- `capabilities/` — implementation and verification capability trust metadata
+- `capabilities/` — implementation/verification source, trust, risk, and availability metadata
 - `environment/` and `adapters/evidence/` — live resource/evidence contracts
-- `agents/infrastructure_engineering/` — user-facing Agent contract and provider-neutral Backend interface\n- `runtime/` — internal hard execution, approval, guard, audit, and sandbox boundaries
+- `docs/ARCHITECTURE.md` — canonical synthesized architecture
 - `docs/HARNESS-UNHOBBLING.md` — why always-loaded guidance is intentionally small
 
-Use these as interfaces and evidence sources, not as a substitute for task-specific reasoning.
+The model-facing surface should usually remain **Context / Skills / Tools**. Treat Domain, Capability, Binding, Workflow, and Loop as internal metadata unless the task specifically needs them.

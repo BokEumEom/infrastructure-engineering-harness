@@ -1,161 +1,158 @@
-# Runtime Kernel
+# Runtime
 
-The Runtime Kernel is the internal execution layer beneath the **Infrastructure Engineering Agent**. Together with provenance, fencing, approval, change control, and recording contracts, it forms the internal harness/control plane.
+`runtime/` contains two related but distinct layers beneath the **Infrastructure Engineering Agent**:
 
-It is inspired by mature agent-runtime patterns, including DeepSeek Harness, but keeps infrastructure-specific safety invariants non-swappable.
+1. **Agent Runtime / Orchestrator** — owns turn flow, context/surface assembly, model/tool iteration, budgets, observability, and completion transition.
+2. **Harness / Control Plane** — owns hard evidence, provenance, permission, guard, approval, change-control, audit, recording, and verification boundaries.
+
+The product is the Agent. The Orchestrator runs it. The Harness constrains what may be treated as true, authorized, executed, or complete.
+
+## Canonical flow
 
 ```text
-Organizational Knowledge + Evidence
-              ↓
-Infrastructure Engineering Agent
-Model Judgment → Skill / Capability
-              ↓
-        Runtime Kernel
-  Event Log / Context / Skills
-  Tool Pipeline / Approval
-  Sandbox / Persistence
-              ↓
-       Execution Systems
-              ↓
-        Actual World State
-              ↓
-           Evidence
+TurnRequest
+    ↓
+AgentOrchestrator
+    ↓
+Context + Memory + Available Skills/Tools
+    ↓
+Model Judgment
+    ↓
+read-only tool execution / model continuation
+    ↓
+Harness / Control Plane for governed actions
+    ↓
+Backend
+    ↓
+Independent Verification
+    ↓
+verified / unverified / reconcile
 ```
 
-## Status
+`runtime/orchestrator.py` is a deterministic provider-neutral reference Turn Runtime. It is intentionally read-only: workflow/change authority is rejected there and must use the governed ToolPipeline / ChangeControl / backend path.
 
-`runtime/` is a provider-neutral **reference kernel**, not yet a production daemon, scheduler, worker fleet, or credential broker. It defines deterministic contracts that future runtimes and adapters must preserve.
+## Runtime Event Log is SSOT
+
+`RuntimeEventLog` is the canonical record of what one run saw, requested, executed, and verified.
+
+```text
+Runtime Event Log
+      │
+ ┌────┼─────────┐
+ ▼    ▼         ▼
+Trace Metrics Recording
+      │         │
+      └────┬────┘
+           ▼
+        Evaluation
+```
+
+Trace/span lifecycle can be appended to the same event log. Latency/cache counters can be projected with `LatencyTracker.from_event_log(...)`. Recordings preserve the normalized event stream, including event source and evidence references.
+
+Observability data is useful operational telemetry; it is not an independent engineering truth store.
 
 ## Hard invariants
 
-These rules are not replaceable by plugins or provider adapters:
+These rules are not replaceable by model adapters, provider adapters, Skills, or delegates:
 
-1. **Model-visible means logged** — every input, injected context snapshot, tool schema set, and tool result that can affect a model request must be reconstructable from the append-only Runtime Event Log.
-2. **Append-only event truth** — committed runtime events are never rewritten. Derived views may be rebuilt from the log.
-3. **Contiguous sequence** — each run appends the next `seq`; gaps, duplicate sequence numbers, and stale revisions fail.
-4. **Revisioned state** — runtime-state mutations use compare-and-set semantics so stale workers cannot overwrite newer state.
-5. **Monotonic guards** — a hard deny cannot be changed to allow by a later hook, plugin, model, or retry.
-6. **Fail-closed approval** — `allowed_once` is the only granting approval outcome. Rejected, cancelled, unavailable, malformed, or missing approval denies the action.
-7. **Authorization is external** — possession of a runtime, tool, Skill, ticket permission, or sandbox does not grant production mutation authority.
-8. **Execution claims are evidence-backed** — tool output is normalized before becoming Evidence; agent prose is never execution proof.
-9. **Sandbox enforcement is a fact** — record requested mode, actual mode, enforcement completeness, and known limitations. `sandbox=true` is not sufficient evidence.
-10. **Source-of-truth remains protected** — runtime learning and plugins do not silently rewrite Architecture, ADRs, Policies, Service Catalog, or authorization metadata.
-11. **No mutation without resource provenance** — when a mutation-capable tool requires provenance, every target must have been discovered by the trusted Resource Graph and remain inside the Bound Capability resource scope.
-12. **Untrusted external text stays data** — logs, tickets, PR text, tags, annotations, comments, and similar content are bounded/fenced before becoming model-visible context; they never grant runtime authority.
-13. **Approval binds to an exact change revision** — apply-time checks revalidate the staged change digest, change revision, Resource Graph snapshot, policy revision, and one-shot approval.
-14. **Runtime recordings are immutable inputs to replay** — live or fixture recordings preserve the normalized event stream and verify integrity before deterministic re-scoring.
+1. **Model-visible means logged** — inputs, injected context, tool surfaces/results that affect a model request are reconstructable from Runtime Events.
+2. **Append-only event truth** — committed Runtime Events are never rewritten.
+3. **Contiguous sequence** — sequence gaps/duplicates are invalid.
+4. **Revisioned runtime state** — stale state mutation is rejected.
+5. **Monotonic guards** — a hard deny cannot become allow later in the pipeline.
+6. **Fail-closed approval** — only an exact `allowed_once` grant authorizes an approval-gated action.
+7. **Authorization is external** — model text, tool availability, Skills, delegates, or channels do not grant production authority.
+8. **Execution claims are evidence-backed** — model prose and a successful call do not self-certify outcome.
+9. **Sandbox enforcement is recorded as fact**, including limitations.
+10. **Protected truth stays protected** — learning does not silently rewrite ADR/Policy/Service Catalog/governed Runbooks.
+11. **No mutation without resource provenance** — mutation targets must come from trusted discovery and remain in bound scope.
+12. **Untrusted external text stays data** — logs, tickets, PR text, tags, annotations, and third-party content are fenced/bounded.
+13. **Approval binds to the exact staged revision** — change digest, Resource Graph, policy revision, and one-shot approval are revalidated at apply.
+14. **Runtime recordings are immutable replay inputs**.
+15. **Orchestration cannot grant truth or authority** — the Orchestrator owns execution flow only.
+16. **Delegation cannot expand authority** — delegate capabilities/resources are subsets of the parent and newly named resources do not become mutation-eligible.
 
 ## Event vocabulary
 
-The initial event contract is defined by `schemas/runtime-event.schema.json`.
+Core event families include:
 
-Core event families:
-
-- `run/*` — lifecycle and recovery boundaries;
+- `run/*` — run lifecycle;
 - `context/*` — model-visible context snapshots;
-- `skill/*` — catalog and loaded Skill identity;
-- `model/*` — request envelope and response completion;
-- `tool/*` — requested call and authoritative normalized result;
-- `policy/*` — advisory and monotonic guard decisions;
-- `approval/*` — paired approval request/outcome audit;
-- `verification/*` — independent environment/tool/human/test result;
-- `loop/*` — Engineering Loop transition;
+- `skill/*` — projected/loaded Skill surface;
+- `model/*` — request/response;
+- `tool/*` — requested calls and normalized results;
+- `policy/*` — advisory/hard guard decisions;
+- `approval/*` — approval request/outcome;
+- `verification/*` — independent verification result;
+- `telemetry/*` — trace/span lifecycle correlated to the same event log;
+- `loop/*` — optional Engineering Loop transition;
 - `writeback/*` — proposed durable learning.
 
-Runtime implementations may add typed events, but an unknown non-ignorable event must prevent faithful replay rather than being silently discarded.
+Unknown non-ignorable events must prevent faithful replay rather than being silently discarded.
 
-## Tool execution pipeline
+## Tool execution boundary
+
+The reference `ToolPipeline` models guarded actions:
 
 ```text
 tool/requested
       ↓
-pre-policy hooks
+pre-policy
       ↓
-monotonic guards ── deny ──→ normalized denial
+monotonic guards
       ↓
-approval if required ── not allowed_once ──→ normalized denial
+approval when required
       ↓
-execution policy
-sandbox + credential scope
+execution boundary
       ↓
-tool execute
-      ↓
-post-policy inspection
-      ↓
-normalized immutable result
+normalized result
       ↓
 tool/result
-      ↓
-optional Evidence normalization
 ```
 
-The reference implementation in `runtime/kernel.py` models the policy/approval invariants without executing real tools. `runtime/provenance.py` adds resource-target validation for mutation-capable calls. A provider backend must still call the same checks immediately before real execution.
+For `execution_authority=change`, resource provenance is mandatory. A provider backend must re-run the applicable checks immediately before real execution.
 
-## Runtime Skill Registry
+The reference Orchestrator does **not** replace this boundary. It executes only `none/read` authority calls directly through its reference read-only executor seam.
 
-`runtime/skill_registry.py` provides a small reference registry over `capabilities/registry.yaml`.
+## Context / Memory / Surface
 
-It separates three different questions:
+- `channel.py` — normalizes CLI/Web/Slack/GitHub/MCP/API into `TurnRequest`;
+- `context_assembly.py` — stable global/session prefix + volatile per-turn suffix and performance projections;
+- `memory.py` — external user/session memory policy, not durable organizational truth;
+- `skill_registry.py` — progressively loaded managed Skill catalog;
+- `release_control.py` — active/canary/disabled Skill release state;
+- future surface resolution should combine capability availability, invocation policy, release policy, environment availability, and scope into one model-visible `Context / Skills / Tools` surface.
 
-- **discoverable** — can this Skill appear in a catalog for this runtime scope?
-- **model invocable** — may the model load it on demand?
-- **execution authority** — may following the Skill cause an action? This remains `none` for third-party `reference_only` Skills.
+## Observability
 
-The model should initially receive bounded Skill summaries and load bodies lazily. Large Skill bodies are not part of the always-loaded prompt.
+`observability.py` defines provider-neutral `AgentTrace` / `AgentSpan`. When connected to a Runtime Event Log, span start/end events are committed to that canonical record so exporters can later map them to OpenTelemetry, AgentCore, or another provider without creating a second execution truth source.
 
-The registry also supports an `enabled_capability_ids` projection. A host should derive this from actually connected/discovered systems so unavailable capabilities disappear from the model-visible Skill surface instead of remaining as dead prompt/tool context.
+## Delegation
 
-## Untrusted evidence fencing
+`delegation.py` models optional specialist delegation as a scale-out mechanism, not a default hierarchy or authorization mechanism.
 
-`runtime/fencing.py` provides a bounded reference transform for external text. It removes invisible/control formatting, prevents the external content from spoofing the runtime's own fence markers, caps payload size, and labels the payload as `untrusted_external_data`.
+Single Agent remains the default. Delegates are read-only and scoped by the parent.
 
-Fencing is not a claim that the content is correct or harmless. It is a context boundary: external text is evidence/data, never an instruction or authorization source.
+## Recording and replay
 
-## Staged change revalidation
+`recording.py` materializes Runtime Events into immutable recordings with an integrity digest. Current replay is deterministic **integrity replay**, not live model re-execution.
 
-`runtime/change_control.py` models host-owned staged changes and one-shot approvals:
+Live runners may later attach `source: live` recordings to Validation Reports for deterministic re-scoring.
+
+## Engineering Loops
+
+Engineering Loops are optional and activate only when repeated external-state reconciliation is useful.
 
 ```text
-trusted resource discovery
-        ↓
-stage exact change revision
-        ↓
-host/policy approval
-        ↓
-apply-time revalidation
-resource graph + policy + digest + scope
-        ↓
-execute
-        ↓
-independent verification
+bounded task → verify → done/unverified
+long-running task → verify → reconcile → repeat
 ```
 
-A chat message such as "approved" cannot create an `ApprovalGrant`.
+Runtime state reconstructs Agent execution. Loop state reconciles an engineering objective against independently verified world state. They remain separate.
 
-## Runtime recording and replay
+## Status
 
-`runtime/recording.py` snapshots the normalized append-only event stream and adds a SHA-256 integrity digest. `schemas/runtime-recording.schema.json` defines the portable recording contract.
-
-The current reference implementation performs deterministic **integrity replay** only. It does not pretend to re-run a live model. Future live runners can attach `source: live` recordings to Validation Reports and re-score those recordings in CI.
-
-## Persistence and recovery
-
-A production implementation should persist the append-only event log and rebuild `RuntimeRunState` from committed events. A crash during an open action must be represented as interrupted/recovery state; it must not erase committed calls or pretend the action never happened.
-
-Persistence providers are replaceable. Event truth, replayability, sequence monotonicity, and authorization semantics are not.
-
-## Relationship to Engineering Loops
-
-The standard Agent loop is the default interaction model. Engineering Loops are activated when the task benefits from repeated observation/reconciliation over external state, not for every request.
-
-Runtime state and Engineering Loop state solve different problems:
-
-- Runtime state: what the Agent runtime actually saw, requested, executed, and recorded.
-- Loop state: whether an engineering objective is verified, regressed, blocked, approved, or complete.
-
-A Runtime event can provide observations to a Loop, but it does not self-certify the Loop terminal state.
-
-## Reference implementation
+This is still a provider-neutral **reference runtime/control plane**, not a production daemon, worker fleet, scheduler, credential broker, AWS AgentCore runtime, or model-provider SDK implementation.
 
 ```bash
 python -m unittest discover -s tests

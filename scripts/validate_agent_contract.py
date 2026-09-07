@@ -23,6 +23,8 @@ def main() -> int:
         failures.append(f"{where}: {error.message}")
 
     required_runtime_ownership = {
+        "turn_orchestration",
+        "telemetry_event_ssot",
         "evidence_provenance",
         "resource_provenance",
         "permission_scope",
@@ -53,7 +55,7 @@ def main() -> int:
     print("AGENT CONTRACT PASSED")
     print(f"Product: {contract['name']}")
     print("Capabilities: " + ", ".join(contract["capability_domains"]))
-    print("Runtime: internal harness control plane")
+    print("Runtime: Agent Orchestrator + internal harness/control plane")
     return 0
 
 

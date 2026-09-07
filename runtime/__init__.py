@@ -1,4 +1,4 @@
-"""Provider-neutral runtime/control-plane primitives for Infrastructure Engineering Agent."""
+"""Provider-neutral application-runtime and control-plane primitives for Infrastructure Engineering Agent."""
 
 from .change_control import ApprovalGrant, ApplyCheck, ChangeControl, StagedChange
 from .channel import ALLOWED_CHANNELS, TurnRequest, normalize_turn_request
@@ -22,12 +22,21 @@ from .kernel import (
 from .learning import semantic_memory_to_learning_candidate
 from .memory import MemoryRecord, PersistentMemoryStore
 from .observability import AgentSpan, AgentTrace
+from .orchestrator import (
+    AgentOrchestrator,
+    ModelInput,
+    ModelStep,
+    ToolCall,
+    TurnOutcome,
+    VerificationDecision,
+)
 from .provenance import ProvenanceCheck, ResourceProvenanceIndex
 from .recording import ReplayCheck, build_recording, verify_recording
 from .release_control import SkillReleaseController, SkillReleaseDecision
 
 __all__ = [
     "ALLOWED_CHANNELS",
+    "AgentOrchestrator",
     "AgentSpan",
     "AgentTrace",
     "ApprovalGrant",
@@ -42,6 +51,8 @@ __all__ = [
     "LatencyBudget",
     "LatencyTracker",
     "MemoryRecord",
+    "ModelInput",
+    "ModelStep",
     "PersistentMemoryStore",
     "PromptAssembly",
     "ProvenanceCheck",
@@ -53,8 +64,11 @@ __all__ = [
     "SkillReleaseDecision",
     "StagedChange",
     "StaleRevisionError",
+    "ToolCall",
     "ToolPipeline",
+    "TurnOutcome",
     "TurnRequest",
+    "VerificationDecision",
     "assemble_prompt_context",
     "build_recording",
     "fence_untrusted_content",

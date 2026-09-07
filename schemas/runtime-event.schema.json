@@ -17,7 +17,8 @@
         "tool/requested", "tool/result",
         "policy/advisory", "policy/guard_decided",
         "approval/requested", "approval/decided",
-        "verification/result", "loop/transition", "writeback/proposed"
+        "verification/result", "loop/transition", "writeback/proposed",
+        "telemetry/span_started", "telemetry/span_ended"
       ]
     },
     "model_visible": {"type": "boolean"},

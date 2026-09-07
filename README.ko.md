@@ -4,11 +4,11 @@
 
 Infrastructure / Operations / DevOps / SRE / FinOps / Security 업무를 조사·검토·계획·검증하는 provider-neutral **Infrastructure Engineering Agent**입니다.
 
-> **에이전트의 판단은 열어두고, 권한과 사실의 경계는 Runtime이 통제합니다.**
+> **에이전트의 판단은 열어두고, 실행 흐름은 Orchestrator가 조율하며, 권한과 사실의 경계는 Harness / Control Plane이 통제합니다.**
 
-> **상태: Research Preview.** Agent contract, Skills, Resource Graph, deterministic scenario, evaluation plumbing, local CLI는 현재 사용할 수 있습니다. Live adapter, persistent runtime, controlled execution은 experimental 단계입니다.
+> **상태: Research Preview.** Agent contract, reference Turn Runtime, Skills, Resource Graph, deterministic scenario, evaluation plumbing, local CLI는 사용할 수 있습니다. Live adapter, persistent production runtime, controlled execution은 experimental 단계입니다.
 
-Repository 이름 `infrastructure-engineering-harness`는 기존 링크와 호환성을 위해 유지합니다. **제품의 중심은 Infrastructure Engineering Agent이고, Harness는 Agent 내부의 control plane입니다.**
+Repository 이름 `infrastructure-engineering-harness`는 기존 링크와 호환성을 위해 유지합니다. **제품은 Infrastructure Engineering Agent이고, Orchestrator는 Agent를 실행하며, Harness는 내부 control plane입니다.**
 
 ## 먼저 실행해보기
 
@@ -30,11 +30,9 @@ agent.cmd demo
 
 자세한 내용: [한국어 Quickstart](QUICKSTART.ko.md)
 
-`demo`는 Repository의 fixture만 사용하며 Cloud account, Kubernetes cluster, observability system, production environment에는 연결하지 않습니다. `DEMO PASS`는 deterministic contract가 일관된다는 의미이며 live Agent 성능을 증명하지 않습니다.
+`demo`는 fixture만 사용하며 Cloud account, Kubernetes cluster, observability system, production environment에는 연결하지 않습니다. `DEMO PASS`는 deterministic contract plumbing이 일관된다는 의미이며 live Agent 성능을 증명하지 않습니다.
 
 ## 하나의 Agent, 여러 Engineering Capability
-
-사용자가 먼저 "이건 Ops인가 SRE인가"를 결정할 필요가 없습니다.
 
 ```text
 Infrastructure Engineering Agent
@@ -47,99 +45,133 @@ Infrastructure Engineering Agent
         └─ Security
 ```
 
-예:
-
-- "이 Terraform 변경 검토해줘"
-- "payment-api latency가 왜 증가했지?"
-- "이 배포 파이프라인 개선해줘"
-- "이 서비스 Error Budget 괜찮아?"
-- "인프라 비용 증가 원인을 찾아줘"
-- "IAM과 Trust Boundary 검토해줘"
-
-이 영역들은 처음부터 별도 Agent가 아니라 하나의 Agent 내부 Capability/Lens입니다.
+이 영역들은 처음부터 별도 Agent가 아니라 하나의 Agent 내부 Capability/Lens입니다. Specialist delegate는 규모와 평가 결과가 필요성을 증명할 때만 선택적으로 사용합니다.
 
 ## Architecture
 
 ```text
-Organizational Knowledge + Live Environment
+CLI / Web / Slack / GitHub / MCP / API
                     ↓
-              Minimal Context
+          Agent Orchestrator / Turn Runtime
+                    ↓
+          Context + Memory + Skills + Tools
                     ↓
        Infrastructure Engineering Agent
                     ↓
               Model Judgment
-          ↙         ↓         ↘
-      Context     Skills    Capabilities
-          ↘         ↓         ↙
-                   Action
                     ↓
-       Agent Runtime / Harness Control Plane
- Evidence · Resource Provenance · State · Guard
- Permission · Approval · Audit · Verification
+               Tool Executor
                     ↓
-          Infrastructure Backend
+          Harness / Control Plane
+ Provenance · Scope · Guard · Approval · Audit
+          Change Control · Recording
+                    ↓
+            Capability Backends
                     ↓
  AWS / K8s / CI/CD / Observability / Cost / Security
                     ↓
           Independent Verification
-                    ↓
-             Verified Outcome
+             ↙              ↘
+           완료        반복 조정이 필요할 때
+                           ↓
+                    Engineering Loop
 ```
 
-Agent는 reasoning과 다음 행동의 판단을 담당합니다. Credential, 독립적인 사실 판정, Approval state, Production 권한, 완료 인증은 Agent가 소유하지 않습니다.
+- **Agent** — reasoning과 다음 행동 판단
+- **Orchestrator** — Turn lifecycle과 model/tool 흐름
+- **Harness / Control Plane** — 권한, provenance, approval, audit, change safety
+- **Independent Verification** — 실제 목표가 달성되었는지 독립적으로 확인
 
-## Agent Contract / Backend
+Orchestrator가 존재해도 Production 권한이나 사실 판정 권한이 생기지 않습니다.
 
-제품 계약은 [agents/infrastructure_engineering/agent.yaml](agents/infrastructure_engineering/agent.yaml)에 있습니다.
+## Agent Turn Runtime
 
-Provider-neutral Backend interface는 [agents/infrastructure_engineering/backend.py](agents/infrastructure_engineering/backend.py)에 있습니다.
+`runtime/orchestrator.py`는 provider-neutral reference Turn Runtime입니다.
 
 ```text
-discover / evidence
-       ↓
-  model judgment
-       ↓
-  stage_change
-       ↓
-review / approval
-       ↓
-apply_approved_change
-       ↓
- verify_outcome
+TurnRequest
+   ↓
+Context + Available Surface
+   ↓
+Model
+   ↓
+필요한 read-only Tool
+   ↓
+Model continuation
+   ↓
+Independent Verification
+   ↓
+verified / unverified
 ```
 
-Platform credential은 Backend/Runtime 내부에 있고 모델에게 전달하지 않습니다. Chat에서 "승인"이라고 입력하는 것과 독립적인 execution authorization은 다릅니다.
+Reference Orchestrator는 의도적으로 read-only입니다. Production workflow/change는 Resource Provenance, `ToolPipeline`, `ChangeControl`, 독립 승인, authorized backend 경계를 계속 통과해야 합니다.
+
+> **Orchestrator owns flow, not truth or authority.**
+
+## 모델이 보는 Surface
+
+모델은 기본적으로 세 가지를 알면 됩니다.
+
+```text
+Context
+Skills
+Tools
+```
+
+Domain, Capability, Binding, Workflow, Loop는 runtime 내부 metadata입니다. 고정된 `Domain → Skill → Capability Routing → Loop` 체인을 강제하지 않습니다.
+
+`capability-routing`은 필요한 경우 사용할 수 있는 implementation planning Skill이지 필수 architecture node가 아닙니다.
+
+## Runtime Event Log = 실행 SSOT
+
+```text
+Runtime Event Log
+  ├─ Trace / Span
+  ├─ Latency / Cache Metrics
+  ├─ Recording
+  └─ Evaluation
+```
+
+실행 중 모델이 본 것, Tool 요청/결과, verification 결과의 canonical record는 append-only Runtime Event Log입니다. Trace, Metrics, Recording은 별도 truth store가 아니라 동일한 Runtime Event를 기반으로 연결되거나 파생되어야 합니다.
 
 ## 핵심 구성
 
-- **Agent Contract** — Infrastructure Engineering Agent의 역할, Capability, 권한, Backend, 완료 경계
-- **Minimal Agent Context** — 항상 로드되는 최소 Truth / Authorization / Verification 규칙
-- **Workflow Surface** — 고정 reasoning route를 강제하지 않는 사용자 intent
-- **Context Pack** — provenance, freshness, evidence gap을 가진 pull-oriented context
-- **Skill / Capability** — 필요할 때 progressively load하는 Engineering guidance
+- **Agent Orchestrator / Turn Runtime** — 모든 channel을 하나의 Turn lifecycle로 통합
+- **Context Pack** — provenance, freshness, evidence gap을 가진 bounded Context
+- **Skills / Tools** — 필요할 때 progressively expose하는 guidance/action
+- **Capability Registry** — 내부 source/trust/risk/availability metadata
 - **Resource Graph** — 실제 Resource/Dependency와 discovery provenance
 - **Bound Capability** — Capability + Resource Scope + Permission Scope + Evidence Source
-- **Runtime Kernel** — 내부 Event Log / Tool Pipeline / Guard / Approval / Sandbox / State
-- **Engineering Loop** — Goal + State + Constraint + Terminal Condition 중심의 adaptive reconciliation
+- **Runtime Kernel** — Event Log, Tool Pipeline, Guard, Approval, State 등의 reference control-plane primitive
+- **Harness / Control Plane** — Provenance, Scope, Approval, Change Control, Audit, Recording
+- **Engineering Loop** — 반복적인 external-state reconciliation이 필요한 작업에서만 사용
 - **Knowledge Consolidation** — Observation → Verified Fact → Assessment → Learning Candidate → Durable Knowledge
-- **Skill Lift / Context Lift / Harness Lift** — Guidance가 실제 Agent 성능을 향상시키는지 검증
-- **Artifact Reflex** — Paperthin 기반 artifact hygiene, SSOT, eval integrity
+- **Skill Lift / Context Lift / Harness Lift** — Guidance가 실제 Agent 성능을 높이는지 검증
+- **Artifact Reflex** — Paperthin에서 흡수한 artifact hygiene, SSOT, eval-integrity 원칙
 
 ## Safety
 
 - Read-only discovery / Evidence 수집이 기본 권한입니다.
-- Production 변경 대상 Resource는 먼저 discovery/binding 되어야 합니다.
-- Tool output을 자동으로 Verified Fact로 승격하지 않습니다.
+- Production 변경 대상은 trusted Resource Graph에서 provenance가 확인되고 Bound Capability scope 안에 있어야 합니다.
+- Tool output은 자동으로 Verified Fact가 되지 않습니다.
 - `verified_by: agent`는 허용하지 않습니다.
-- Chat text는 Production authorization이 아닙니다.
-- Production mutation / destructive action / privilege expansion / financial commitment는 독립적인 승인이 필요합니다.
-- Hard boundary는 Prompt 반복보다 Runtime / Schema / Policy / Backend에서 강제합니다.
+- Chat text, Orchestrator state, delegate, channel은 Production authorization이 아닙니다.
+- Approval은 정확한 staged revision에 묶이고 apply 직전에 다시 검증됩니다.
+- Production mutation / destructive action / privilege expansion / financial commitment는 독립적인 authorization이 필요합니다.
 
 ## Reference Models
 
-DeepSeek Harness, NVIDIA SkillEvaluator/ACES, Paperthin, gstack, GBrain, WikiSkill, Kubernetes Controller, SRE/DORA/FinOps와 함께 Anthropic의 **commerce-agents**를 Reference Model로 사용합니다.
+Primary structural reference는 의도적으로 적게 유지합니다.
 
-특히 Commerce Agents의 **Agent product surface → Backend contract → Provenance Gate → Staged Write → Host Approval → Runtime Enforcement** 구조를 Infrastructure 영역에 맞게 참고합니다.
+- **Anthropic Commerce Agents** — Agent product / standard model-tool loop / Backend / Runtime safety
+- **Anthropic Context Engineering** — minimal context / progressive disclosure / unhobbling
+- **Samsung Account AgentCore AIOps** — production observability / channel convergence / task-specific evaluation / scale-out pressure
+- **Kubernetes Controllers + LongHorizon-Harness** — reconciliation / external task state
+- **NVIDIA ACES / SkillEvaluator** — artifact/effect evaluation
+
+Supporting reference는 DeepSeek Harness(event/runtime extensibility), GBrain(memory taxonomy), Backpass(context evolution), Paperthin(artifact/eval hygiene), LoopsBench(long-running eval), MCP/OpenGitOps를 사용합니다. Google SRE / DORA / FinOps는 Engineering domain truth의 기준입니다.
+
+> **Reference widely, expose narrowly.**
 
 자세한 내용: [docs/REFERENCE-MODELS.md](docs/REFERENCE-MODELS.md)
 

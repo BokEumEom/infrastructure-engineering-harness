@@ -43,11 +43,18 @@ class RuntimeEvent:
     timestamp: str
     model_visible: bool = False
     ignorable: bool = False
+    source: str | None = None
+    evidence_refs: tuple[str, ...] = ()
 
 
 @dataclass
 class RuntimeEventLog:
-    """Append-only in-memory reference event log."""
+    """Append-only in-memory reference event log.
+
+    The log is the canonical execution record. Trace, latency metrics, recordings,
+    and evaluation inputs should be correlated to or projected from these events
+    rather than becoming competing execution truth stores.
+    """
 
     run_id: str
     _events: list[RuntimeEvent] = field(default_factory=list)
@@ -63,7 +70,12 @@ class RuntimeEventLog:
         *,
         model_visible: bool = False,
         ignorable: bool = False,
+        source: str | None = None,
+        evidence_refs: Iterable[str] = (),
     ) -> RuntimeEvent:
+        refs = tuple(evidence_refs)
+        if any(not ref for ref in refs):
+            raise ValueError("evidence refs must be non-empty strings")
         event = RuntimeEvent(
             run_id=self.run_id,
             seq=len(self._events),
@@ -72,6 +84,8 @@ class RuntimeEventLog:
             timestamp=datetime.now(timezone.utc).isoformat(),
             model_visible=model_visible,
             ignorable=ignorable,
+            source=source,
+            evidence_refs=refs,
         )
         self._events.append(event)
         return event

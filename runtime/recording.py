@@ -41,6 +41,8 @@ def build_recording(
             "timestamp": event.timestamp,
             "model_visible": event.model_visible,
             "ignorable": event.ignorable,
+            "source": event.source,
+            "evidence_refs": list(event.evidence_refs),
         }
         for event in event_log.events
     ]

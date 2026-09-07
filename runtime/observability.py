@@ -1,10 +1,12 @@
-"""Provider-neutral trace/span observability for Infrastructure Engineering Agent runs."""
+"""Provider-neutral trace/span observability projected through Runtime Event Log."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
+
+from .kernel import RuntimeEventLog
 
 
 ALLOWED_SPAN_KINDS = {"agent", "model", "tool", "backend", "verification", "delegate"}
@@ -29,15 +31,21 @@ class AgentSpan:
 
 
 class AgentTrace:
-    """Small in-memory reference trace.
+    """Small provider-neutral trace view correlated to the canonical Runtime Event Log.
 
-    It mirrors the hierarchy expected from an AIOps runtime without depending on
-    AgentCore, OpenTelemetry, or a specific observability vendor. Provider adapters may
-    export these spans later.
+    Trace state is useful for exporters and summaries, but it is not an independent truth
+    store. When an event log is supplied, span lifecycle is also appended there so replay,
+    recording, metrics, and trace exports can share one canonical execution record.
     """
 
-    def __init__(self, *, trace_id: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        trace_id: str | None = None,
+        event_log: RuntimeEventLog | None = None,
+    ) -> None:
         self.trace_id = trace_id or f"trace-{uuid4().hex[:16]}"
+        self.event_log = event_log
         self._spans: list[AgentSpan] = []
 
     @property
@@ -66,6 +74,18 @@ class AgentTrace:
             attributes=dict(attributes or {}),
         )
         self._spans.append(span)
+        if self.event_log is not None:
+            self.event_log.append(
+                "telemetry/span_started",
+                {
+                    "trace_id": self.trace_id,
+                    "span_id": span.span_id,
+                    "parent_span_id": parent_span_id,
+                    "name": name,
+                    "kind": kind,
+                    "attributes": span.attributes,
+                },
+            )
         return span
 
     def end_span(
@@ -87,6 +107,19 @@ class AgentTrace:
         span.status = status
         if attributes:
             span.attributes.update(attributes)
+        if self.event_log is not None:
+            self.event_log.append(
+                "telemetry/span_ended",
+                {
+                    "trace_id": self.trace_id,
+                    "span_id": span.span_id,
+                    "name": span.name,
+                    "kind": span.kind,
+                    "duration_ms": duration_ms,
+                    "status": status,
+                    "attributes": span.attributes,
+                },
+            )
         return span
 
     def summary(self) -> dict[str, Any]:
