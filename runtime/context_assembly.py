@@ -2,12 +2,14 @@
 
 The runtime keeps stable context prefixes deterministic so model-provider prompt
 caching can be used when available, without making caching a provider dependency.
+Runtime Event Log remains the canonical execution record; latency summaries can be
+projected from it.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 import hashlib
-from typing import Iterable
+from typing import Any, Iterable
 
 
 TIERS = ("global", "session", "volatile")
@@ -80,6 +82,32 @@ class LatencyTracker:
         self.tool_ms += duration_ms
         self.tool_calls += tool_calls
         self._events.append({"kind": 2, "duration_ms": duration_ms})
+
+    @classmethod
+    def from_event_log(cls, event_log: Any) -> "LatencyTracker":
+        """Project performance counters from canonical Runtime Events.
+
+        This avoids treating a separate metrics accumulator as execution truth. Provider
+        telemetry may enrich model response data, but the projection consumes only what
+        was committed to the runtime log.
+        """
+        tracker = cls()
+        for event in event_log.events:
+            if event.type == "model/response":
+                data = event.data
+                tracker.record_model_turn(
+                    duration_ms=int(data.get("duration_ms", 0)),
+                    input_tokens=int(data.get("input_tokens", 0)),
+                    output_tokens=int(data.get("output_tokens", 0)),
+                    cache_read_tokens=int(data.get("cache_read_tokens", 0)),
+                    cache_write_tokens=int(data.get("cache_write_tokens", 0)),
+                )
+            elif event.type == "tool/result":
+                tracker.record_tool_batch(
+                    duration_ms=int(event.data.get("duration_ms", 0)),
+                    tool_calls=1,
+                )
+        return tracker
 
     def summary(self) -> dict[str, float | int]:
         denominator = self.input_tokens or 1
