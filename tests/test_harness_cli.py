@@ -44,12 +44,14 @@ class AgentCliTests(unittest.TestCase):
         result = self.run_cli(AGENT, "scenario", SCENARIO)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Infrastructure Engineering Agent · scenario", result.stdout)
+        self.assertIn("Evidence catalog discovered", result.stdout)
         self.assertIn("classification: dependency_saturation", result.stdout)
-        self.assertIn("Model turns: 2", result.stdout)
-        self.assertIn("Read-only tool calls: 2", result.stdout)
+        self.assertIn("Model turns: 3", result.stdout)
+        self.assertIn("Read-only tool calls: 3", result.stdout)
         self.assertIn("ASSESSMENT_EVIDENCE_BACKED", result.stdout)
         self.assertIn("SCENARIO PASS", result.stdout)
         self.assertIn("Score: 5/5", result.stdout)
+        self.assertIn("Recording:", result.stdout)
         self.assertIn("no live provider", result.stdout)
 
     def test_agent_scenario_check_remains_static_contract_validation(self) -> None:
