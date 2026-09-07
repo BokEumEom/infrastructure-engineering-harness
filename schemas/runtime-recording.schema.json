@@ -36,7 +36,9 @@
           "data",
           "timestamp",
           "model_visible",
-          "ignorable"
+          "ignorable",
+          "source",
+          "evidence_refs"
         ],
         "properties": {
           "run_id": {"type": "string", "minLength": 1},
@@ -45,7 +47,13 @@
           "data": {"type": "object"},
           "timestamp": {"type": "string", "format": "date-time"},
           "model_visible": {"type": "boolean"},
-          "ignorable": {"type": "boolean"}
+          "ignorable": {"type": "boolean"},
+          "source": {"type": ["string", "null"]},
+          "evidence_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
         }
       }
     },
