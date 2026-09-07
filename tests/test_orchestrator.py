@@ -1,6 +1,7 @@
 import unittest
 
 from runtime.channel import normalize_turn_request
+from runtime.context_assembly import LatencyTracker
 from runtime.orchestrator import (
     AgentOrchestrator,
     ModelInput,
@@ -8,6 +9,7 @@ from runtime.orchestrator import (
     ToolCall,
     VerificationDecision,
 )
+from runtime.recording import build_recording
 
 
 class _Context:
@@ -82,7 +84,7 @@ class OrchestratorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, outcome.model_turns)
         self.assertEqual(1, outcome.tool_calls)
         event_types = outcome.event_log.replay_types()
-        self.assertIn("run/started", event_types)
+        self.assertEqual("run/started", event_types[0])
         self.assertIn("context/snapshot", event_types)
         self.assertEqual(2, event_types.count("model/request"))
         self.assertEqual(2, event_types.count("model/response"))
@@ -92,6 +94,30 @@ class OrchestratorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("telemetry/span_started", event_types)
         self.assertIn("telemetry/span_ended", event_types)
         self.assertEqual("run/ended", event_types[-2])
+
+        verification_event = next(
+            event for event in outcome.event_log.events if event.type == "verification/result"
+        )
+        self.assertEqual(("metric:payment-api:p95",), verification_event.evidence_refs)
+
+        latency = LatencyTracker.from_event_log(outcome.event_log).summary()
+        self.assertEqual(2, latency["model_turns"])
+        self.assertEqual(1, latency["tool_calls"])
+        self.assertEqual(220, latency["input_tokens"])
+        self.assertEqual(44, latency["output_tokens"])
+
+        recording = build_recording(
+            outcome.event_log,
+            source="fixture",
+            runtime_revision="test",
+            agent="infrastructure-engineering",
+            model="scripted",
+            final_status=outcome.status,
+        )
+        recorded_verification = next(
+            event for event in recording["events"] if event["type"] == "verification/result"
+        )
+        self.assertEqual(["metric:payment-api:p95"], recorded_verification["evidence_refs"])
 
     async def test_orchestrator_cannot_execute_change_authority(self):
         class _WriteModel:
