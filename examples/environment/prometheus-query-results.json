@@ -1,0 +1,44 @@
+{
+  "observed_at": "2026-05-28T20:27:10Z",
+  "scope": {"service": "payment-api", "environment": "production"},
+  "queries": [
+    {
+      "name": "payment-api-latency-p95",
+      "query": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service='payment-api'}[5m])) by (le))",
+      "component": "svc:payment-api",
+      "signal": "request_latency_p95",
+      "unit": "seconds",
+      "response": {
+        "status": "success",
+        "data": {
+          "resultType": "vector",
+          "result": [
+            {
+              "metric": {"service": "payment-api"},
+              "value": [1780000010, "0.88"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "orders-db-connection-saturation",
+      "query": "max(db_connections_active{service='payment-api'}) / max(db_connections_limit{service='payment-api'})",
+      "component": "db:orders",
+      "signal": "connection_saturation",
+      "unit": "ratio",
+      "response": {
+        "status": "success",
+        "data": {
+          "resultType": "vector",
+          "result": [
+            {
+              "metric": {"resource": "db:orders"},
+              "value": [1780000020, "0.96"]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
