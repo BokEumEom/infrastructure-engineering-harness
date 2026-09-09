@@ -31,7 +31,6 @@ def _run(label: str, args: list[str], *, quiet: bool = False) -> bool:
         if not quiet:
             print(f"✓ {label}")
         return True
-
     print(f"✗ {label}")
     if result.stdout.strip():
         print(result.stdout.strip())
@@ -48,27 +47,45 @@ def _deps_ready() -> bool:
     return all(importlib.util.find_spec(name) is not None for name in ("yaml", "jsonschema"))
 
 
-def _write_evidence(payload: dict, *, output: str | None, observation_count: int) -> None:
+def _resolve_path(raw: str) -> Path:
+    path = Path(raw).expanduser()
+    return path if path.is_absolute() else Path.cwd() / path
+
+
+def _read_json_file(raw: str, *, label: str) -> dict:
+    path = _resolve_path(raw)
+    if not path.exists():
+        raise ValueError(f"{label} not found: {path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Unable to read {label}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must contain a JSON object")
+    return payload
+
+
+def _write_json(payload: dict, *, output: str | None, noun: str = "Result") -> None:
     rendered = json.dumps(payload, indent=2, ensure_ascii=False)
-    if output:
-        path = Path(output).expanduser()
-        if not path.is_absolute():
-            path = Path.cwd() / path
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(rendered + "\n", encoding="utf-8")
-        print(f"Evidence written: {path}", file=sys.stderr)
-        print(f"Observations: {observation_count}", file=sys.stderr)
-    else:
+    if not output:
         print(rendered)
+        return
+    path = _resolve_path(output)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(rendered + "\n", encoding="utf-8")
+    print(f"{noun} written: {path}", file=sys.stderr)
+
+
+def _write_evidence(payload: dict, *, output: str | None, observation_count: int) -> None:
+    _write_json(payload, output=output, noun="Evidence")
+    if output:
+        print(f"Observations: {observation_count}", file=sys.stderr)
 
 
 def command_setup(_: argparse.Namespace) -> int:
     print("Infrastructure Engineering Agent · setup")
     print("Installing the Research Preview dependencies into the current Python environment.")
-    ok = _run(
-        "install dependencies",
-        _python("-m", "pip", "install", "-r", str(ROOT / "requirements.txt")),
-    )
+    ok = _run("install dependencies", _python("-m", "pip", "install", "-r", str(ROOT / "requirements.txt")))
     if ok:
         print("\n✓ Ready. Run: ./agent demo")
     return 0 if ok else 1
@@ -87,16 +104,9 @@ def command_demo(_: argparse.Namespace) -> int:
     print("No cloud credentials or production access are used.")
     if not _require_deps():
         return 2
-
     checks = [
-        (
-            "reference context",
-            _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT)),
-        ),
-        (
-            "SRE dependency-saturation scenario contract",
-            _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(DEFAULT_SCENARIO)),
-        ),
+        ("reference context", _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT))),
+        ("SRE dependency-saturation scenario contract", _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(DEFAULT_SCENARIO))),
     ]
     passed = 0
     for label, args in checks:
@@ -104,7 +114,6 @@ def command_demo(_: argparse.Namespace) -> int:
             passed += 1
         else:
             break
-
     print("\n────────────────────────────────────────")
     if passed == len(checks):
         print("✓ DEMO PASS")
@@ -114,7 +123,6 @@ def command_demo(_: argparse.Namespace) -> int:
         print("\nThis proves deterministic agent/runtime contract plumbing, not live agent effectiveness.")
         print("Next: run `./agent scenario evals/scenarios/sre-dependency-saturation.json`.")
         return 0
-
     print("✗ DEMO FAIL")
     print("See the failing check above.")
     return 1
@@ -122,15 +130,12 @@ def command_demo(_: argparse.Namespace) -> int:
 
 def _scenario_path(raw: str) -> Path:
     scenario = Path(raw)
-    if not scenario.is_absolute():
-        scenario = ROOT / scenario
-    return scenario
+    return scenario if scenario.is_absolute() else ROOT / scenario
 
 
 def command_scenario(args: argparse.Namespace) -> int:
     if not _require_deps():
         return 2
-
     modes = {"check", "run", "eval"}
     if args.mode_or_path in modes:
         mode = args.mode_or_path
@@ -144,50 +149,36 @@ def command_scenario(args: argparse.Namespace) -> int:
             return 2
         mode = "run"
         raw_path = args.mode_or_path
-
     scenario = _scenario_path(raw_path)
     if not scenario.exists():
         print(f"Scenario not found: {scenario}", file=sys.stderr)
         return 2
-
     checker = _python(str(ROOT / "scripts" / "check_infra_scenario.py"), str(scenario))
     if mode == "check":
         return 0 if _run("scenario contract", checker) else 1
-
-    # Every runnable scenario must first satisfy the static fixture/reference contract.
     if not _run("scenario contract", checker, quiet=True):
         return 1
-
     from runtime.scenario_runner import format_scenario_report, run_scenario
-
     execution = asyncio.run(run_scenario(scenario, root=ROOT))
     print(format_scenario_report(execution, include_evaluation=True))
-
     if mode == "eval":
         print("\nEvaluation details")
         for check in execution.score.checks:
             marker = "PASS" if check.passed else "FAIL"
             print(f"  {marker:4}  {check.name}: {check.detail}")
-
     return 0 if execution.score.ok and execution.outcome.status == "verified" else 1
 
 
 def command_k8s_evidence(args: argparse.Namespace) -> int:
     print("Infrastructure Engineering Agent · Kubernetes evidence", file=sys.stderr)
     print("Collection mode: read-only", file=sys.stderr)
-
     from adapters.evidence.base import normalize_adapter_result
     from adapters.evidence.kubernetes import collect_kubernetes_evidence
-
     try:
-        adapter_result = collect_kubernetes_evidence(
-            namespace=args.namespace,
-            context=args.context,
-        )
+        adapter_result = collect_kubernetes_evidence(namespace=args.namespace, context=args.context)
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-
     payload = adapter_result if args.adapter_result else normalize_adapter_result(adapter_result)
     _write_evidence(payload, output=args.output, observation_count=len(adapter_result["observations"]))
     return 0
@@ -196,46 +187,74 @@ def command_k8s_evidence(args: argparse.Namespace) -> int:
 def command_prometheus_evidence(args: argparse.Namespace) -> int:
     print("Infrastructure Engineering Agent · Prometheus evidence", file=sys.stderr)
     print("Collection mode: read-only", file=sys.stderr)
-
     from adapters.evidence.base import normalize_adapter_result
     from adapters.evidence.prometheus import collect_prometheus_evidence
-
-    query_file = Path(args.query_file).expanduser()
-    if not query_file.is_absolute():
-        query_file = Path.cwd() / query_file
-    if not query_file.exists():
-        print(f"Query file not found: {query_file}", file=sys.stderr)
-        return 2
-
     try:
-        queries = json.loads(query_file.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        print(f"Unable to read Prometheus query file: {exc}", file=sys.stderr)
+        queries = _read_json_file(args.query_file, label="Prometheus query file")
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
         return 2
-    if not isinstance(queries, dict) or not queries:
+    if not queries:
         print("Prometheus query file must contain a non-empty JSON object", file=sys.stderr)
         return 2
-
     try:
         adapter_result = collect_prometheus_evidence(
             base_url=args.url,
             queries=queries,
-            scope={"namespace": args.namespace, "service": args.service, "query_file": str(query_file)},
+            scope={
+                "namespace": args.namespace,
+                "service": args.service,
+                "query_file": str(_resolve_path(args.query_file)),
+            },
         )
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 2
-
     payload = adapter_result if args.adapter_result else normalize_adapter_result(adapter_result)
     _write_evidence(payload, output=args.output, observation_count=len(adapter_result["observations"]))
     return 0
+
+
+def command_ops_review(args: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Agent · Ops review", file=sys.stderr)
+    print("Decision mode: evidence-backed / no mutation", file=sys.stderr)
+    from runtime.ops_review import review_ops_evidence
+    try:
+        k8s = _read_json_file(args.k8s, label="Kubernetes evidence")
+        prometheus = _read_json_file(args.prometheus, label="Prometheus evidence")
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    review = review_ops_evidence(k8s, prometheus)
+    _write_json(review, output=args.output, noun="Review")
+    print(f"State: {review['state']}", file=sys.stderr)
+    print(f"Findings: {len(review['findings'])}", file=sys.stderr)
+    print(f"Release guidance: {review['release_guidance']}", file=sys.stderr)
+    return 0 if review["state"] in {"healthy", "at_risk"} else 1
+
+
+def command_ops_compare(args: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Agent · Ops revalidation", file=sys.stderr)
+    from runtime.ops_review import compare_ops_reviews
+    try:
+        before = _read_json_file(args.before, label="Before review")
+        after = _read_json_file(args.after, label="After review")
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    comparison = compare_ops_reviews(before, after)
+    _write_json(comparison, output=args.output, noun="Comparison")
+    print(f"Resolved: {len(comparison['resolved'])}", file=sys.stderr)
+    print(f"Persistent: {len(comparison['persistent'])}", file=sys.stderr)
+    print(f"New: {len(comparison['new'])}", file=sys.stderr)
+    print(f"Verified recovery: {comparison['verified_recovery']}", file=sys.stderr)
+    return 0 if not comparison["regressed"] else 1
 
 
 def command_validate(_: argparse.Namespace) -> int:
     print("Infrastructure Engineering Agent · validate")
     if not _require_deps():
         return 2
-
     commands = [
         ("agent contract", _python(str(ROOT / "scripts" / "validate_agent_contract.py"))),
         ("context contracts", _python(str(ROOT / "scripts" / "validate_context.py"), str(DEFAULT_CONTEXT))),
@@ -273,78 +292,43 @@ def build_parser() -> argparse.ArgumentParser:
 
     setup = sub.add_parser("setup", help="install local Research Preview dependencies")
     setup.set_defaults(func=command_setup)
-
     demo = sub.add_parser("demo", help="run the credential-free 5-minute agent demo")
     demo.set_defaults(func=command_demo)
-
     validate = sub.add_parser("validate", help="run contributor-facing deterministic validation")
     validate.set_defaults(func=command_validate)
 
-    scenario = sub.add_parser(
-        "scenario",
-        help="run a credential-free scenario through the reference Agent Orchestrator",
-    )
-    scenario.add_argument(
-        "mode_or_path",
-        help="scenario path, or one of: check, run, eval",
-    )
-    scenario.add_argument(
-        "path",
-        nargs="?",
-        help="scenario path when using check/run/eval",
-    )
+    scenario = sub.add_parser("scenario", help="run a credential-free scenario through the reference Agent Orchestrator")
+    scenario.add_argument("mode_or_path", help="scenario path, or one of: check, run, eval")
+    scenario.add_argument("path", nargs="?", help="scenario path when using check/run/eval")
     scenario.set_defaults(func=command_scenario)
 
-    k8s_evidence = sub.add_parser(
-        "k8s-evidence",
-        help="collect read-only Kubernetes runtime evidence for agent review",
-    )
-    k8s_evidence.add_argument(
-        "--namespace",
-        default="demo-app",
-        help="application namespace to inspect in detail (default: demo-app)",
-    )
-    k8s_evidence.add_argument(
-        "--context",
-        help="optional kubectl context; current context is used by default",
-    )
-    k8s_evidence.add_argument(
-        "--output",
-        help="write JSON evidence to a file instead of stdout",
-    )
-    k8s_evidence.add_argument(
-        "--adapter-result",
-        action="store_true",
-        help="emit the provider adapter result instead of normalized Engineering Evidence",
-    )
+    k8s_evidence = sub.add_parser("k8s-evidence", help="collect read-only Kubernetes runtime evidence for agent review")
+    k8s_evidence.add_argument("--namespace", default="demo-app", help="application namespace to inspect in detail")
+    k8s_evidence.add_argument("--context", help="optional kubectl context; current context is used by default")
+    k8s_evidence.add_argument("--output", help="write JSON evidence to a file instead of stdout")
+    k8s_evidence.add_argument("--adapter-result", action="store_true", help="emit provider adapter result")
     k8s_evidence.set_defaults(func=command_k8s_evidence)
 
-    prometheus_evidence = sub.add_parser(
-        "prometheus-evidence",
-        help="collect read-only Prometheus query evidence for agent review",
-    )
-    prometheus_evidence.add_argument(
-        "--url",
-        default="http://127.0.0.1:9090",
-        help="Prometheus base URL (default: http://127.0.0.1:9090)",
-    )
-    prometheus_evidence.add_argument(
-        "--query-file",
-        required=True,
-        help="JSON object describing PromQL queries and signal metadata",
-    )
+    prometheus_evidence = sub.add_parser("prometheus-evidence", help="collect read-only Prometheus query evidence for agent review")
+    prometheus_evidence.add_argument("--url", default="http://127.0.0.1:9090", help="Prometheus base URL")
+    prometheus_evidence.add_argument("--query-file", required=True, help="JSON object describing PromQL queries")
     prometheus_evidence.add_argument("--namespace", help="optional namespace scope metadata")
     prometheus_evidence.add_argument("--service", help="optional service scope metadata")
-    prometheus_evidence.add_argument(
-        "--output",
-        help="write JSON evidence to a file instead of stdout",
-    )
-    prometheus_evidence.add_argument(
-        "--adapter-result",
-        action="store_true",
-        help="emit the provider adapter result instead of normalized Engineering Evidence",
-    )
+    prometheus_evidence.add_argument("--output", help="write JSON evidence to a file instead of stdout")
+    prometheus_evidence.add_argument("--adapter-result", action="store_true", help="emit provider adapter result")
     prometheus_evidence.set_defaults(func=command_prometheus_evidence)
+
+    ops_review = sub.add_parser("ops-review", help="correlate Kubernetes and Prometheus evidence into an Ops assessment")
+    ops_review.add_argument("--k8s", required=True, help="normalized Kubernetes evidence JSON")
+    ops_review.add_argument("--prometheus", required=True, help="normalized Prometheus evidence JSON")
+    ops_review.add_argument("--output", help="write the review JSON to a file")
+    ops_review.set_defaults(func=command_ops_review)
+
+    ops_compare = sub.add_parser("ops-compare", help="compare before/after Ops reviews for recovery or regression")
+    ops_compare.add_argument("--before", required=True, help="before Ops review JSON")
+    ops_compare.add_argument("--after", required=True, help="after Ops review JSON")
+    ops_compare.add_argument("--output", help="write the comparison JSON to a file")
+    ops_compare.set_defaults(func=command_ops_compare)
 
     doctor = sub.add_parser("doctor", help="show local runtime and dependency status")
     doctor.set_defaults(func=command_doctor)
