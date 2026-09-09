@@ -34,6 +34,19 @@ def k8s_obs(oid: str, value, status: str = "healthy"):
     }
 
 
+def deployment(name: str, role: str):
+    return {
+        "name": name,
+        "desired": 2,
+        "ready": 2,
+        "operational_env": {
+            "SERVICE_ROLE": role,
+            "FAULT_LATENCY_MS": "0",
+            "FAULT_ERROR_RATE_PERCENT": "0",
+        },
+    }
+
+
 def healthy_bundles():
     k8s = {
         "schema_version": "1.0",
@@ -43,9 +56,9 @@ def healthy_bundles():
             k8s_obs("k8s.nodes", {"total": 3, "ready": 3, "nodes": []}),
             k8s_obs("k8s.pods", {"unhealthy_count": 0, "unhealthy": [], "total_restarts": 0}),
             k8s_obs("k8s.deployments", {"items": [
-                {"name": "web", "desired": 2, "ready": 2},
-                {"name": "catalog", "desired": 2, "ready": 2},
-                {"name": "orders", "desired": 2, "ready": 2},
+                deployment("web", "web"),
+                deployment("catalog", "catalog"),
+                deployment("orders", "orders"),
             ]}),
             k8s_obs("k8s.gateways", {"items": []}),
             k8s_obs("k8s.httproutes", {"items": []}),
@@ -71,6 +84,8 @@ def healthy_bundles():
             prom_obs("prometheus.orders_target_up", 1),
             prom_obs("prometheus.catalog_error_ratio_5m", 0),
             prom_obs("prometheus.orders_error_ratio_5m", 0),
+            prom_obs("prometheus.catalog_p95_latency_5m", 0.04),
+            prom_obs("prometheus.orders_p95_latency_5m", 0.05),
             prom_obs("prometheus.demo_restarts_1h", 0),
             prom_obs("prometheus.oomkilled_containers", 0),
             prom_obs("prometheus.demo_hpa_saturation", 0.5),
@@ -112,6 +127,34 @@ class OpsReviewTests(unittest.TestCase):
         self.assertIn("platform_api.fast_error_budget_burn", ids)
         self.assertIn("dependency.orders_high_error_ratio", ids)
 
+    def test_gitops_fault_profile_is_correlated_with_orders_symptoms(self):
+        k8s, prom = healthy_bundles()
+        deployments = next(item for item in k8s["observations"] if item["id"] == "k8s.deployments")
+        orders = next(item for item in deployments["value"]["items"] if item["name"] == "orders")
+        orders["operational_env"]["FAULT_LATENCY_MS"] = "800"
+        orders["operational_env"]["FAULT_ERROR_RATE_PERCENT"] = "25"
+
+        for observation in prom["observations"]:
+            if observation["id"] == "prometheus.platform_api_error_ratio_5m":
+                observation["value"]["result"][0]["value"][1] = "0.20"
+            if observation["id"] == "prometheus.orders_error_ratio_5m":
+                observation["value"]["result"][0]["value"][1] = "0.25"
+            if observation["id"] == "prometheus.platform_api_p95_latency_5m":
+                observation["value"]["result"][0]["value"][1] = "0.95"
+            if observation["id"] == "prometheus.orders_p95_latency_5m":
+                observation["value"]["result"][0]["value"][1] = "0.82"
+
+        review = review_ops_evidence(k8s, prom)
+        ids = {item["id"] for item in review["findings"]}
+        self.assertEqual(review["state"], "acute")
+        self.assertIn("demo_app.controlled_fault_enabled", ids)
+        self.assertIn("dependency.orders_high_error_ratio", ids)
+        self.assertIn("dependency.orders_high_p95_latency", ids)
+        self.assertIn("dependency.orders_fault_injection_correlated", ids)
+        correlated = next(item for item in review["findings"] if item["id"] == "dependency.orders_fault_injection_correlated")
+        self.assertIn("k8s.deployments", correlated["evidence_refs"])
+        self.assertIn("prometheus.orders_error_ratio_5m", correlated["evidence_refs"])
+
     def test_missing_required_signal_is_insufficient_evidence(self):
         k8s, prom = healthy_bundles()
         prom["observations"] = [
@@ -140,6 +183,25 @@ class OpsReviewTests(unittest.TestCase):
         self.assertTrue(comparison["verified_recovery"])
         self.assertFalse(comparison["regressed"])
 
+    def test_p2_persistence_does_not_block_verified_recovery(self):
+        k8s, prom = healthy_bundles()
+        warnings = next(item for item in k8s["observations"] if item["id"] == "k8s.warning_events")
+        warnings["value"] = {"count": 1, "recent": [{"reason": "HistoricalWarning"}]}
+        for observation in prom["observations"]:
+            if observation["id"] == "prometheus.platform_api_error_ratio_5m":
+                observation["value"]["result"][0]["value"][1] = "0.10"
+        before = review_ops_evidence(k8s, prom)
+
+        k8s_after, prom_after = healthy_bundles()
+        warnings_after = next(item for item in k8s_after["observations"] if item["id"] == "k8s.warning_events")
+        warnings_after["value"] = {"count": 1, "recent": [{"reason": "HistoricalWarning"}]}
+        after = review_ops_evidence(k8s_after, prom_after)
+        comparison = compare_ops_reviews(before, after)
+
+        self.assertIn("cluster.warning_events_present", comparison["persistent"])
+        self.assertEqual(comparison["persistent_blocking"], [])
+        self.assertTrue(comparison["verified_recovery"])
+
     def test_persistent_finding_becomes_learning_candidate(self):
         k8s, prom = healthy_bundles()
         for observation in prom["observations"]:
@@ -150,6 +212,7 @@ class OpsReviewTests(unittest.TestCase):
         comparison = compare_ops_reviews(before, after)
 
         self.assertIn("platform_api.high_p95_latency", comparison["persistent"])
+        self.assertIn("platform_api.high_p95_latency", comparison["persistent_blocking"])
         self.assertTrue(any(item["type"] == "persistent_finding" for item in comparison["learning_candidates"]))
         self.assertFalse(comparison["verified_recovery"])
 
