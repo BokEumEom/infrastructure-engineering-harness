@@ -47,6 +47,13 @@ def _scalar(observation: dict[str, Any] | None) -> float | None:
         return None
 
 
+def _as_float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _finding(
     fid: str,
     severity: str,
@@ -65,6 +72,16 @@ def _finding(
         "recommendation": recommendation,
         "verification": verification,
     }
+
+
+def _deployment_env(deployments: Any, name: str) -> dict[str, str]:
+    if not isinstance(deployments, list):
+        return {}
+    for item in deployments:
+        if item.get("name") == name:
+            env = item.get("operational_env")
+            return env if isinstance(env, dict) else {}
+    return {}
 
 
 def review_ops_evidence(
@@ -151,6 +168,30 @@ def review_ops_evidence(
             ["all demo-app deployments ready==desired", "Gateway request succeeds", "error ratio returns to normal"],
         ))
 
+    active_faults: dict[str, dict[str, float]] = {}
+    for deployment_name in ("web", "catalog", "orders"):
+        env = _deployment_env(deployments, deployment_name)
+        latency_ms = _as_float(env.get("FAULT_LATENCY_MS"))
+        error_percent = _as_float(env.get("FAULT_ERROR_RATE_PERCENT"))
+        if latency_ms > 0 or error_percent > 0:
+            active_faults[deployment_name] = {
+                "latency_ms": latency_ms,
+                "error_percent": error_percent,
+            }
+    if active_faults:
+        rendered = ", ".join(
+            f"{name}(latency={values['latency_ms']:.0f}ms,error={values['error_percent']:.0f}%)"
+            for name, values in sorted(active_faults.items())
+        )
+        findings.append(_finding(
+            "demo_app.controlled_fault_enabled", "P2",
+            f"Controlled fault injection is enabled: {rendered}",
+            "Runtime symptoms may be intentional; incident conclusions should preserve the GitOps experiment context.",
+            ["k8s.deployments"],
+            "Correlate the enabled fault with service metrics/traces and remove it through GitOps for remediation.",
+            ["fresh k8s.deployments evidence shows FAULT_* values returned to zero", "affected service SLI recovers"],
+        ))
+
     argocd = k8s.get("k8s.argocd", {}).get("value", {}).get("items", [])
     unhealthy_apps = [
         item for item in argocd if item.get("sync") not in {None, "Synced"} or item.get("health") not in {None, "Healthy"}
@@ -234,8 +275,10 @@ def review_ops_evidence(
     for service in ("catalog", "orders"):
         target_ref = f"prometheus.{service}_target_up"
         error_ref = f"prometheus.{service}_error_ratio_5m"
+        p95_ref = f"prometheus.{service}_p95_latency_5m"
         target = _scalar(prom.get(target_ref))
         error_ratio = _scalar(prom.get(error_ref))
+        service_p95 = _scalar(prom.get(p95_ref))
         if target is not None and target < 1:
             findings.append(_finding(
                 f"dependency.{service}_target_down", "P1",
@@ -253,6 +296,31 @@ def review_ops_evidence(
                 [error_ref],
                 "Inspect dependency logs and traces before scaling or restarting; verify whether fault injection is enabled.",
                 ["dependency error ratio <5%", "platform-api error ratio recovers"],
+            ))
+        if service_p95 is not None and service_p95 > 0.5:
+            findings.append(_finding(
+                f"dependency.{service}_high_p95_latency", "P1",
+                f"{service}-service P95 latency is {service_p95:.3f}s",
+                "The dependency is slow enough to inflate end-to-end user latency.",
+                [p95_ref],
+                "Inspect the dependency trace span/log duration and compare with resource saturation before scaling.",
+                ["dependency P95 <500ms", "platform-api P95 returns below threshold"],
+            ))
+
+        fault = active_faults.get(service)
+        symptom_refs: list[str] = []
+        if error_ratio is not None and error_ratio > 0.05:
+            symptom_refs.append(error_ref)
+        if service_p95 is not None and service_p95 > 0.5:
+            symptom_refs.append(p95_ref)
+        if fault and symptom_refs:
+            findings.append(_finding(
+                f"dependency.{service}_fault_injection_correlated", "P1",
+                f"{service}-service has an active GitOps fault profile and matching service symptoms",
+                "The configured experiment is a strong causal candidate for the observed dependency degradation.",
+                ["k8s.deployments", *symptom_refs],
+                "Remove the FAULT_* values through GitOps, let Argo reconcile, then collect fresh metrics/traces/logs before closing the incident.",
+                ["FAULT_LATENCY_MS=0 and FAULT_ERROR_RATE_PERCENT=0", "dependency SLI recovers", "ops-compare verifies recovery"],
             ))
 
     p95 = _scalar(prom.get("prometheus.platform_api_p95_latency_5m"))
@@ -363,18 +431,27 @@ def compare_ops_reviews(before: dict[str, Any], after: dict[str, Any]) -> dict[s
     before_rank = STATE_RANK.get(before_state, 2)
     after_rank = STATE_RANK.get(after_state, 2)
 
+    persistent_blocking = sorted(
+        fid for fid in persistent
+        if after_findings.get(fid, {}).get("severity") in {"P0", "P1"}
+    )
+    new_blocking = sorted(
+        fid for fid in new
+        if after_findings.get(fid, {}).get("severity") in {"P0", "P1"}
+    )
+
     learning_candidates: list[dict[str, Any]] = []
-    if persistent:
+    if persistent_blocking:
         learning_candidates.append({
             "type": "persistent_finding",
-            "finding_ids": persistent,
+            "finding_ids": persistent_blocking,
             "proposal": "review whether the runbook, implementation capability, evidence query or remediation hypothesis is insufficient",
         })
-    if new:
+    if new_blocking:
         learning_candidates.append({
             "type": "regression",
-            "finding_ids": new,
-            "proposal": "treat new post-change findings as regression evidence and reopen the change review",
+            "finding_ids": new_blocking,
+            "proposal": "treat new post-change P0/P1 findings as regression evidence and reopen the change review",
         })
 
     return {
@@ -385,8 +462,10 @@ def compare_ops_reviews(before: dict[str, Any], after: dict[str, Any]) -> dict[s
         "resolved": resolved,
         "persistent": persistent,
         "new": new,
-        "improved": after_rank < before_rank and not new,
-        "regressed": after_rank > before_rank or bool(new),
-        "verified_recovery": bool(resolved) and not persistent and not new and after_state == "healthy",
+        "persistent_blocking": persistent_blocking,
+        "new_blocking": new_blocking,
+        "improved": after_rank < before_rank and not new_blocking,
+        "regressed": after_rank > before_rank or bool(new_blocking),
+        "verified_recovery": bool(resolved) and not persistent_blocking and not new_blocking and after_state == "healthy",
         "learning_candidates": learning_candidates,
     }
