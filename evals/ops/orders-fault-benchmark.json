@@ -1,0 +1,110 @@
+{
+  "id": "ops-orders-fault-v1",
+  "description": "A controlled orders-service latency/5xx fault must be localized with Kubernetes fault configuration plus Prometheus service symptoms, then verified as recovered from fresh evidence.",
+  "fault": {
+    "kubernetes": {
+      "schema_version": "1.0",
+      "bundle_id": "fixture:k8s:fault",
+      "observed_at": "2026-09-09T00:10:00+00:00",
+      "observations": [
+        {"id":"k8s.nodes","status":"healthy","value":{"total":3,"ready":3,"nodes":[]}},
+        {"id":"k8s.pods","status":"healthy","value":{"unhealthy_count":0,"unhealthy":[],"total_restarts":0}},
+        {"id":"k8s.deployments","status":"healthy","value":{"items":[
+          {"name":"web","desired":2,"ready":2,"operational_env":{"SERVICE_ROLE":"web","FAULT_LATENCY_MS":"0","FAULT_ERROR_RATE_PERCENT":"0"}},
+          {"name":"catalog","desired":2,"ready":2,"operational_env":{"SERVICE_ROLE":"catalog","FAULT_LATENCY_MS":"0","FAULT_ERROR_RATE_PERCENT":"0"}},
+          {"name":"orders","desired":2,"ready":2,"operational_env":{"SERVICE_ROLE":"orders","FAULT_LATENCY_MS":"800","FAULT_ERROR_RATE_PERCENT":"25"}}
+        ]}},
+        {"id":"k8s.gateways","status":"healthy","value":{"items":[]}},
+        {"id":"k8s.httproutes","status":"healthy","value":{"items":[]}},
+        {"id":"k8s.argocd","status":"healthy","value":{"items":[{"name":"platform","sync":"Synced","health":"Healthy"},{"name":"demo-app","sync":"Synced","health":"Healthy"}]}},
+        {"id":"k8s.warning_events","status":"attention","value":{"count":1,"recent":[{"reason":"HistoricalWarning"}]}}
+      ]
+    },
+    "prometheus": {
+      "schema_version": "1.0",
+      "bundle_id": "fixture:prom:fault",
+      "observed_at": "2026-09-09T00:10:00+00:00",
+      "observations": [
+        {"id":"prometheus.platform_api_target_up","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.platform_api_error_ratio_5m","status":"observed","value":{"result":[{"value":[1,"0.20"]}]}},
+        {"id":"prometheus.platform_api_error_ratio_1h","status":"observed","value":{"result":[{"value":[1,"0.04"]}]}},
+        {"id":"prometheus.platform_api_p95_latency_5m","status":"observed","value":{"result":[{"value":[1,"0.95"]}]}},
+        {"id":"prometheus.platform_api_burn_rate_5m","status":"observed","value":{"result":[{"value":[1,"200"]}]}},
+        {"id":"prometheus.platform_api_burn_rate_1h","status":"observed","value":{"result":[{"value":[1,"40"]}]}},
+        {"id":"prometheus.catalog_target_up","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.orders_target_up","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.catalog_error_ratio_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.orders_error_ratio_5m","status":"observed","value":{"result":[{"value":[1,"0.25"]}]}},
+        {"id":"prometheus.catalog_p95_latency_5m","status":"observed","value":{"result":[{"value":[1,"0.04"]}]}},
+        {"id":"prometheus.orders_p95_latency_5m","status":"observed","value":{"result":[{"value":[1,"0.82"]}]}},
+        {"id":"prometheus.demo_restarts_1h","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.oomkilled_containers","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.demo_hpa_saturation","status":"observed","value":{"result":[{"value":[1,"0.5"]}]}},
+        {"id":"prometheus.envoy_live","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.otel_failed_spans_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.otel_refused_spans_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}}
+      ]
+    }
+  },
+  "recovery": {
+    "kubernetes": {
+      "schema_version": "1.0",
+      "bundle_id": "fixture:k8s:recovery",
+      "observed_at": "2026-09-09T00:20:00+00:00",
+      "observations": [
+        {"id":"k8s.nodes","status":"healthy","value":{"total":3,"ready":3,"nodes":[]}},
+        {"id":"k8s.pods","status":"healthy","value":{"unhealthy_count":0,"unhealthy":[],"total_restarts":0}},
+        {"id":"k8s.deployments","status":"healthy","value":{"items":[
+          {"name":"web","desired":2,"ready":2,"operational_env":{"SERVICE_ROLE":"web","FAULT_LATENCY_MS":"0","FAULT_ERROR_RATE_PERCENT":"0"}},
+          {"name":"catalog","desired":2,"ready":2,"operational_env":{"SERVICE_ROLE":"catalog","FAULT_LATENCY_MS":"0","FAULT_ERROR_RATE_PERCENT":"0"}},
+          {"name":"orders","desired":2,"ready":2,"operational_env":{"SERVICE_ROLE":"orders","FAULT_LATENCY_MS":"0","FAULT_ERROR_RATE_PERCENT":"0"}}
+        ]}},
+        {"id":"k8s.gateways","status":"healthy","value":{"items":[]}},
+        {"id":"k8s.httproutes","status":"healthy","value":{"items":[]}},
+        {"id":"k8s.argocd","status":"healthy","value":{"items":[{"name":"platform","sync":"Synced","health":"Healthy"},{"name":"demo-app","sync":"Synced","health":"Healthy"}]}},
+        {"id":"k8s.warning_events","status":"attention","value":{"count":1,"recent":[{"reason":"HistoricalWarning"}]}}
+      ]
+    },
+    "prometheus": {
+      "schema_version": "1.0",
+      "bundle_id": "fixture:prom:recovery",
+      "observed_at": "2026-09-09T00:20:00+00:00",
+      "observations": [
+        {"id":"prometheus.platform_api_target_up","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.platform_api_error_ratio_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.platform_api_error_ratio_1h","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.platform_api_p95_latency_5m","status":"observed","value":{"result":[{"value":[1,"0.08"]}]}},
+        {"id":"prometheus.platform_api_burn_rate_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.platform_api_burn_rate_1h","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.catalog_target_up","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.orders_target_up","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.catalog_error_ratio_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.orders_error_ratio_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.catalog_p95_latency_5m","status":"observed","value":{"result":[{"value":[1,"0.04"]}]}},
+        {"id":"prometheus.orders_p95_latency_5m","status":"observed","value":{"result":[{"value":[1,"0.05"]}]}},
+        {"id":"prometheus.demo_restarts_1h","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.oomkilled_containers","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.demo_hpa_saturation","status":"observed","value":{"result":[{"value":[1,"0.5"]}]}},
+        {"id":"prometheus.envoy_live","status":"observed","value":{"result":[{"value":[1,"1"]}]}},
+        {"id":"prometheus.otel_failed_spans_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}},
+        {"id":"prometheus.otel_refused_spans_5m","status":"observed","value":{"result":[{"value":[1,"0"]}]}}
+      ]
+    }
+  },
+  "expected": {
+    "fault_state": "acute",
+    "fault_release_guidance": "hold",
+    "required_findings": [
+      "demo_app.controlled_fault_enabled",
+      "dependency.orders_high_error_ratio",
+      "dependency.orders_high_p95_latency",
+      "dependency.orders_fault_injection_correlated",
+      "platform_api.fast_error_budget_burn",
+      "platform_api.high_p95_latency"
+    ],
+    "recovery_state": "healthy",
+    "verified_recovery": true,
+    "persistent_blocking": [],
+    "new_blocking": []
+  }
+}
