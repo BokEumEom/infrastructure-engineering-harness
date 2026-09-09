@@ -24,7 +24,7 @@ class AgentCliTests(unittest.TestCase):
         result = self.run_cli(AGENT, "--help")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Infrastructure Engineering Agent CLI", result.stdout)
-        for command in ("setup", "demo", "validate", "scenario", "doctor"):
+        for command in ("setup", "demo", "validate", "scenario", "k8s-evidence", "doctor"):
             self.assertIn(command, result.stdout)
 
     def test_agent_doctor_is_credential_free(self) -> None:
