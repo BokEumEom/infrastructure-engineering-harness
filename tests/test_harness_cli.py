@@ -31,6 +31,8 @@ class AgentCliTests(unittest.TestCase):
             "scenario",
             "k8s-evidence",
             "prometheus-evidence",
+            "ops-review",
+            "ops-compare",
             "doctor",
         ):
             self.assertIn(command, result.stdout)
@@ -71,7 +73,6 @@ class AgentCliTests(unittest.TestCase):
     def test_harness_entrypoint_remains_compatible(self) -> None:
         result = self.run_cli(HARNESS, "doctor")
         self.assertEqual(result.returncode, 0, result.stderr)
-        # The compatibility command still presents the Agent product identity.
         self.assertIn("Infrastructure Engineering Agent · doctor", result.stdout)
 
 
