@@ -8,6 +8,15 @@ import subprocess
 from typing import Any
 
 
+SAFE_OPERATIONAL_ENV = {
+    "APP_VERSION",
+    "SERVICE_ROLE",
+    "FAULT_LATENCY_MS",
+    "FAULT_ERROR_RATE_PERCENT",
+    "OTEL_SERVICE_NAME",
+}
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -77,6 +86,22 @@ def _error_obs(oid: str, *, component: str, signal: str, reference: str, error: 
         source_type="status",
         status="unavailable",
     )
+
+
+def _safe_operational_env(spec: dict[str, Any]) -> dict[str, str]:
+    """Return only explicitly allow-listed literal env values from a Pod template.
+
+    SecretKeyRef/ConfigMapKeyRef values are intentionally excluded. The adapter
+    must never expand a deployment read into credential collection.
+    """
+    values: dict[str, str] = {}
+    pod_spec = spec.get("template", {}).get("spec", {})
+    for container in pod_spec.get("containers") or []:
+        for env in container.get("env") or []:
+            name = str(env.get("name") or "")
+            if name in SAFE_OPERATIONAL_ENV and "value" in env:
+                values[name] = str(env.get("value") or "")
+    return values
 
 
 def collect_kubernetes_evidence(*, namespace: str = "demo-app", context: str | None = None) -> dict[str, Any]:
@@ -233,6 +258,8 @@ def collect_kubernetes_evidence(*, namespace: str = "demo-app", context: str | N
                     "ready": status_obj.get("readyReplicas", 0),
                     "available": status_obj.get("availableReplicas", 0),
                     "updated": status_obj.get("updatedReplicas", 0),
+                    "labels": meta.get("labels", {}),
+                    "operational_env": _safe_operational_env(spec),
                 })
             elif resource == "horizontalpodautoscalers":
                 entry.update({
