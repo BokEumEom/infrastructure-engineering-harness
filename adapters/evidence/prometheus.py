@@ -13,14 +13,19 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _get_json(url: str, *, timeout: int = 10) -> tuple[dict[str, Any] | None, str | None]:
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "User-Agent": "infrastructure-engineering-agent/1",
-        },
-    )
+def _get_json(
+    url: str,
+    *,
+    timeout: int = 10,
+    headers: dict[str, str] | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    request_headers = {
+        "Accept": "application/json",
+        "User-Agent": "infrastructure-engineering-agent/1",
+    }
+    if headers:
+        request_headers.update(headers)
+    request = Request(url, headers=request_headers)
     try:
         with urlopen(request, timeout=timeout) as response:
             payload = response.read().decode("utf-8")
@@ -40,6 +45,7 @@ def collect_prometheus_evidence(
     base_url: str,
     queries: dict[str, dict[str, str]],
     scope: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Collect instant-query observations from a Prometheus HTTP API."""
     observed_at = _now()
@@ -47,7 +53,7 @@ def collect_prometheus_evidence(
     observations: list[dict[str, Any]] = []
 
     runtime_url = f"{base}/api/v1/status/runtimeinfo"
-    runtime, runtime_error = _get_json(runtime_url)
+    runtime, runtime_error = _get_json(runtime_url, headers=headers)
     if runtime_error:
         observations.append({
             "id": "prometheus.runtime",
@@ -77,8 +83,10 @@ def collect_prometheus_evidence(
             raise ValueError(f"query {qid!r} must define a non-empty 'query'")
         params = urlencode({"query": query})
         url = f"{base}/api/v1/query?{params}"
-        data, error = _get_json(url)
+        data, error = _get_json(url, headers=headers)
         provenance = {"reference": f"{base}/api/v1/query", "query": query}
+        if headers and headers.get("Host"):
+            provenance["host_header"] = headers["Host"]
         if error:
             observations.append({
                 "id": f"prometheus.{qid}",
