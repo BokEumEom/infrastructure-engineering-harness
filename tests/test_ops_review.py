@@ -5,13 +5,21 @@ import unittest
 from runtime.ops_review import compare_ops_reviews, review_ops_evidence
 
 
-def prom_obs(oid: str, value: float):
+def prom_obs(
+    oid: str,
+    value: float,
+    *,
+    component: str | None = None,
+    signal: str | None = None,
+):
+    inferred_component = component or "test"
+    inferred_signal = signal or oid
     return {
         "id": oid,
         "source_type": "metrics",
         "source": "prometheus",
-        "component": "test",
-        "signal": oid,
+        "component": inferred_component,
+        "signal": inferred_signal,
         "status": "observed",
         "value": {
             "resultType": "vector",
@@ -19,6 +27,19 @@ def prom_obs(oid: str, value: float):
         },
         "provenance": {"reference": "http://prometheus/api/v1/query", "query": oid},
     }
+
+
+def service_obs(prefix: str, component: str, *, target: float = 1, error: float = 0, p95: float = 0.05):
+    return [
+        prom_obs(f"prometheus.{prefix}_target_up", target, component=component, signal="target_up"),
+        prom_obs(f"prometheus.{prefix}_error_ratio_5m", error, component=component, signal="error_ratio_5m"),
+        prom_obs(
+            f"prometheus.{prefix}_p95_latency_5m",
+            p95,
+            component=component,
+            signal="p95_latency_seconds_5m",
+        ),
+    ]
 
 
 def k8s_obs(oid: str, value, status: str = "healthy"):
@@ -34,20 +55,45 @@ def k8s_obs(oid: str, value, status: str = "healthy"):
     }
 
 
-def deployment(name: str, role: str):
+def deployment(name: str, role: str, *, service_name: str | None = None):
+    operational_env = {
+        "SERVICE_ROLE": role,
+        "FAULT_LATENCY_MS": "0",
+        "FAULT_ERROR_RATE_PERCENT": "0",
+    }
+    if service_name:
+        operational_env["OTEL_SERVICE_NAME"] = service_name
     return {
         "name": name,
         "desired": 2,
         "ready": 2,
-        "operational_env": {
-            "SERVICE_ROLE": role,
-            "FAULT_LATENCY_MS": "0",
-            "FAULT_ERROR_RATE_PERCENT": "0",
-        },
+        "operational_env": operational_env,
     }
 
 
-def healthy_bundles():
+def healthy_bundles(*, expanded: bool = False):
+    deployments = [
+        deployment("web", "gateway", service_name="platform-api"),
+        deployment("catalog", "catalog", service_name="catalog-service"),
+        deployment("orders", "orders", service_name="orders-service"),
+    ]
+    dependency_observations = [
+        *service_obs("catalog", "catalog-service", p95=0.04),
+        *service_obs("orders", "orders-service", p95=0.05),
+    ]
+
+    if expanded:
+        deployments.extend([
+            deployment("inventory", "inventory", service_name="inventory-service"),
+            deployment("payments", "payments", service_name="payments-service"),
+            deployment("recommendations", "recommendations", service_name="recommendations-service"),
+        ])
+        dependency_observations.extend([
+            *service_obs("inventory", "inventory-service", p95=0.03),
+            *service_obs("payments", "payments-service", p95=0.04),
+            *service_obs("recommendations", "recommendations-service", p95=0.06),
+        ])
+
     k8s = {
         "schema_version": "1.0",
         "bundle_id": "k8s:healthy",
@@ -55,11 +101,7 @@ def healthy_bundles():
         "observations": [
             k8s_obs("k8s.nodes", {"total": 3, "ready": 3, "nodes": []}),
             k8s_obs("k8s.pods", {"unhealthy_count": 0, "unhealthy": [], "total_restarts": 0}),
-            k8s_obs("k8s.deployments", {"items": [
-                deployment("web", "web"),
-                deployment("catalog", "catalog"),
-                deployment("orders", "orders"),
-            ]}),
+            k8s_obs("k8s.deployments", {"items": deployments}),
             k8s_obs("k8s.gateways", {"items": []}),
             k8s_obs("k8s.httproutes", {"items": []}),
             k8s_obs("k8s.argocd", {"items": [
@@ -74,24 +116,24 @@ def healthy_bundles():
         "bundle_id": "prom:healthy",
         "observed_at": "2026-09-09T00:00:00+00:00",
         "observations": [
-            prom_obs("prometheus.platform_api_target_up", 1),
-            prom_obs("prometheus.platform_api_error_ratio_5m", 0),
-            prom_obs("prometheus.platform_api_error_ratio_1h", 0),
-            prom_obs("prometheus.platform_api_p95_latency_5m", 0.08),
-            prom_obs("prometheus.platform_api_burn_rate_5m", 0),
-            prom_obs("prometheus.platform_api_burn_rate_1h", 0),
-            prom_obs("prometheus.catalog_target_up", 1),
-            prom_obs("prometheus.orders_target_up", 1),
-            prom_obs("prometheus.catalog_error_ratio_5m", 0),
-            prom_obs("prometheus.orders_error_ratio_5m", 0),
-            prom_obs("prometheus.catalog_p95_latency_5m", 0.04),
-            prom_obs("prometheus.orders_p95_latency_5m", 0.05),
+            prom_obs("prometheus.platform_api_target_up", 1, component="platform-api", signal="target_up"),
+            prom_obs("prometheus.platform_api_error_ratio_5m", 0, component="platform-api", signal="error_ratio_5m"),
+            prom_obs("prometheus.platform_api_error_ratio_1h", 0, component="platform-api", signal="error_ratio_1h"),
+            prom_obs(
+                "prometheus.platform_api_p95_latency_5m",
+                0.08,
+                component="platform-api",
+                signal="p95_latency_seconds_5m",
+            ),
+            prom_obs("prometheus.platform_api_burn_rate_5m", 0, component="platform-api", signal="slo_burn_rate_5m"),
+            prom_obs("prometheus.platform_api_burn_rate_1h", 0, component="platform-api", signal="slo_burn_rate_1h"),
+            *dependency_observations,
             prom_obs("prometheus.demo_restarts_1h", 0),
             prom_obs("prometheus.oomkilled_containers", 0),
             prom_obs("prometheus.demo_hpa_saturation", 0.5),
-            prom_obs("prometheus.envoy_live", 1),
-            prom_obs("prometheus.otel_failed_spans_5m", 0),
-            prom_obs("prometheus.otel_refused_spans_5m", 0),
+            prom_obs("prometheus.envoy_live", 1, component="envoy-gateway", signal="proxy_live"),
+            prom_obs("prometheus.otel_failed_spans_5m", 0, component="otel-collector", signal="failed_spans_rate_5m"),
+            prom_obs("prometheus.otel_refused_spans_5m", 0, component="otel-collector", signal="refused_spans_rate_5m"),
         ],
     }
     return k8s, prom
@@ -105,6 +147,29 @@ class OpsReviewTests(unittest.TestCase):
         self.assertEqual(review["release_guidance"], "continue")
         self.assertEqual(review["findings"], [])
         self.assertEqual(review["evidence"]["missing_required"], [])
+        self.assertEqual(review["topology"]["dependencies"], ["catalog-service", "orders-service"])
+
+    def test_expanded_topology_is_discovered_without_hardcoded_service_logic(self):
+        k8s, prom = healthy_bundles(expanded=True)
+        review = review_ops_evidence(k8s, prom)
+        self.assertEqual(review["state"], "healthy")
+        self.assertEqual(review["topology"]["dependencies"], [
+            "catalog-service",
+            "inventory-service",
+            "orders-service",
+            "payments-service",
+            "recommendations-service",
+        ])
+
+    def test_new_dependency_failure_is_detected_generically(self):
+        k8s, prom = healthy_bundles(expanded=True)
+        for observation in prom["observations"]:
+            if observation["id"] == "prometheus.payments_error_ratio_5m":
+                observation["value"]["result"][0]["value"][1] = "0.25"
+        review = review_ops_evidence(k8s, prom)
+        ids = {item["id"] for item in review["findings"]}
+        self.assertEqual(review["state"], "at_risk")
+        self.assertIn("dependency.payments_high_error_ratio", ids)
 
     def test_dependency_failure_and_fast_burn_are_detected(self):
         k8s, prom = healthy_bundles()
@@ -166,6 +231,19 @@ class OpsReviewTests(unittest.TestCase):
         self.assertEqual(review["release_guidance"], "insufficient_evidence")
         self.assertIn("prometheus.envoy_live", review["evidence"]["missing_required"])
         self.assertTrue(any(item["type"] == "evidence_gap" for item in review["learning_candidates"]))
+
+    def test_missing_new_dependency_telemetry_is_insufficient_evidence(self):
+        k8s, prom = healthy_bundles(expanded=True)
+        prom["observations"] = [
+            item for item in prom["observations"]
+            if item["id"] != "prometheus.inventory_p95_latency_5m"
+        ]
+        review = review_ops_evidence(k8s, prom)
+        self.assertEqual(review["state"], "insufficient_evidence")
+        self.assertIn(
+            "prometheus.inventory.p95_latency_seconds_5m",
+            review["evidence"]["missing_required"],
+        )
 
     def test_post_change_review_can_verify_recovery(self):
         k8s, prom = healthy_bundles()
