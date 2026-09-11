@@ -1,8 +1,10 @@
 """Deterministic evidence-backed Ops review for live infrastructure bundles.
 
-This module intentionally does not mutate infrastructure or rewrite Agent Skills.
-It converts read-only evidence into review findings and explicit learning
-candidates. Independent post-change evidence is required to close findings.
+The reviewer is intentionally environment-aware but topology-generic: application
+services are discovered from Kubernetes Deployment evidence and matched to
+Prometheus observations by ``component`` and ``signal``. It does not mutate
+infrastructure or silently rewrite Agent Skills. Independent post-change
+evidence is required to close findings.
 """
 from __future__ import annotations
 
@@ -24,6 +26,16 @@ def _now() -> str:
 
 def _index(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {str(item.get("id")): item for item in bundle.get("observations", [])}
+
+
+def _component_signal_index(bundle: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+    indexed: dict[tuple[str, str], dict[str, Any]] = {}
+    for item in bundle.get("observations", []):
+        component = str(item.get("component") or "")
+        signal = str(item.get("signal") or "")
+        if component and signal:
+            indexed[(component, signal)] = item
+    return indexed
 
 
 def _scalar(observation: dict[str, Any] | None) -> float | None:
@@ -84,12 +96,46 @@ def _deployment_env(deployments: Any, name: str) -> dict[str, str]:
     return {}
 
 
+def _component_from_deployment(item: dict[str, Any]) -> str:
+    env = item.get("operational_env")
+    if isinstance(env, dict):
+        explicit = str(env.get("OTEL_SERVICE_NAME") or "").strip()
+        if explicit:
+            return explicit
+        role = str(env.get("SERVICE_ROLE") or "").strip()
+        if role in {"gateway", "web"}:
+            return "platform-api"
+        if role:
+            return f"{role}-service"
+    name = str(item.get("name") or "").strip()
+    return "platform-api" if name == "web" else (f"{name}-service" if name else "")
+
+
+def _service_key(component: str) -> str:
+    value = component.removesuffix("-service")
+    return value.replace("-", "_")
+
+
+def _expected_dependencies(deployments: Any) -> list[str]:
+    components: set[str] = set()
+    if not isinstance(deployments, list):
+        return []
+    for item in deployments:
+        if not isinstance(item, dict):
+            continue
+        component = _component_from_deployment(item)
+        if component and component != "platform-api":
+            components.add(component)
+    return sorted(components)
+
+
 def review_ops_evidence(
     k8s_bundle: dict[str, Any],
     prometheus_bundle: dict[str, Any],
 ) -> dict[str, Any]:
     k8s = _index(k8s_bundle)
     prom = _index(prometheus_bundle)
+    prom_by_component_signal = _component_signal_index(prometheus_bundle)
     findings: list[dict[str, Any]] = []
     learning_candidates: list[dict[str, Any]] = []
 
@@ -119,6 +165,16 @@ def review_ops_evidence(
         if not item or item.get("status") == "unavailable" or _scalar(item) is None:
             missing.append(ref)
 
+    deployments = k8s.get("k8s.deployments", {}).get("value", {}).get("items", [])
+    dependencies = _expected_dependencies(deployments)
+    required_dependency_signals = ("target_up", "error_ratio_5m", "p95_latency_seconds_5m")
+    for component in dependencies:
+        for signal in required_dependency_signals:
+            item = prom_by_component_signal.get((component, signal))
+            if not item or item.get("status") == "unavailable" or _scalar(item) is None:
+                missing.append(f"prometheus.{_service_key(component)}.{signal}")
+
+    missing = sorted(set(missing))
     if missing:
         learning_candidates.append({
             "type": "evidence_gap",
@@ -151,7 +207,6 @@ def review_ops_evidence(
             ["new k8s.pods evidence shows no unexpected unhealthy Pods", "service SLI remains healthy"],
         ))
 
-    deployments = k8s.get("k8s.deployments", {}).get("value", {}).get("items", [])
     degraded_deployments = []
     for item in deployments if isinstance(deployments, list) else []:
         desired = item.get("desired")
@@ -162,26 +217,31 @@ def review_ops_evidence(
         findings.append(_finding(
             "demo_app.deployment_unavailable", "P0",
             f"Deployments below desired Ready replicas: {', '.join(map(str, degraded_deployments))}",
-            "The demo service topology has lost intended redundancy or capacity.",
+            "The reference service topology has lost intended redundancy or capacity.",
             ["k8s.deployments"],
             "Inspect rollout state, Pod reasons, resource pressure and recent GitOps revision before restarting anything.",
-            ["all demo-app deployments ready==desired", "Gateway request succeeds", "error ratio returns to normal"],
+            ["all application deployments ready==desired", "Gateway request succeeds", "error ratio returns to normal"],
         ))
 
     active_faults: dict[str, dict[str, float]] = {}
-    for deployment_name in ("web", "catalog", "orders"):
-        env = _deployment_env(deployments, deployment_name)
+    for item in deployments if isinstance(deployments, list) else []:
+        if not isinstance(item, dict):
+            continue
+        env = item.get("operational_env")
+        env = env if isinstance(env, dict) else {}
         latency_ms = _as_float(env.get("FAULT_LATENCY_MS"))
         error_percent = _as_float(env.get("FAULT_ERROR_RATE_PERCENT"))
         if latency_ms > 0 or error_percent > 0:
-            active_faults[deployment_name] = {
-                "latency_ms": latency_ms,
-                "error_percent": error_percent,
-            }
+            component = _component_from_deployment(item)
+            if component:
+                active_faults[component] = {
+                    "latency_ms": latency_ms,
+                    "error_percent": error_percent,
+                }
     if active_faults:
         rendered = ", ".join(
-            f"{name}(latency={values['latency_ms']:.0f}ms,error={values['error_percent']:.0f}%)"
-            for name, values in sorted(active_faults.items())
+            f"{component}(latency={values['latency_ms']:.0f}ms,error={values['error_percent']:.0f}%)"
+            for component, values in sorted(active_faults.items())
         )
         findings.append(_finding(
             "demo_app.controlled_fault_enabled", "P2",
@@ -241,7 +301,6 @@ def review_ops_evidence(
         ))
 
     error_5m = _scalar(prom.get("prometheus.platform_api_error_ratio_5m"))
-    error_1h = _scalar(prom.get("prometheus.platform_api_error_ratio_1h"))
     burn_5m = _scalar(prom.get("prometheus.platform_api_burn_rate_5m"))
     burn_1h = _scalar(prom.get("prometheus.platform_api_burn_rate_1h"))
     if burn_5m is not None and burn_1h is not None and burn_5m > 14.4 and burn_1h > 14.4:
@@ -272,42 +331,47 @@ def review_ops_evidence(
             ["5m and 1h error ratios return to baseline", "post-change review marks finding resolved"],
         ))
 
-    for service in ("catalog", "orders"):
-        target_ref = f"prometheus.{service}_target_up"
-        error_ref = f"prometheus.{service}_error_ratio_5m"
-        p95_ref = f"prometheus.{service}_p95_latency_5m"
-        target = _scalar(prom.get(target_ref))
-        error_ratio = _scalar(prom.get(error_ref))
-        service_p95 = _scalar(prom.get(p95_ref))
+    for component in dependencies:
+        key = _service_key(component)
+        target_obs = prom_by_component_signal.get((component, "target_up"))
+        error_obs = prom_by_component_signal.get((component, "error_ratio_5m"))
+        p95_obs = prom_by_component_signal.get((component, "p95_latency_seconds_5m"))
+        target = _scalar(target_obs)
+        error_ratio = _scalar(error_obs)
+        service_p95 = _scalar(p95_obs)
+        target_ref = str((target_obs or {}).get("id") or f"prometheus.{key}.target_up")
+        error_ref = str((error_obs or {}).get("id") or f"prometheus.{key}.error_ratio_5m")
+        p95_ref = str((p95_obs or {}).get("id") or f"prometheus.{key}.p95_latency_seconds_5m")
+
         if target is not None and target < 1:
             findings.append(_finding(
-                f"dependency.{service}_target_down", "P1",
-                f"{service}-service scrape target up={target}",
+                f"dependency.{key}_target_down", "P1",
+                f"{component} scrape target up={target}",
                 "A platform-api dependency or its telemetry target is unavailable.",
                 [target_ref],
-                "Check the dependency Deployment/Service and compare with platform-api 502/errors and trace spans.",
-                ["dependency target up=1", "platform-api dependency span succeeds"],
+                "Check the dependency Deployment/Service and compare with upstream errors and trace spans.",
+                ["dependency target up=1", "upstream dependency span succeeds"],
             ))
         if error_ratio is not None and error_ratio > 0.05:
             findings.append(_finding(
-                f"dependency.{service}_high_error_ratio", "P1",
-                f"{service}-service 5m 5xx ratio is {error_ratio:.2%}",
-                "The dependency can propagate failures into the public platform-api.",
+                f"dependency.{key}_high_error_ratio", "P1",
+                f"{component} 5m 5xx ratio is {error_ratio:.2%}",
+                "The dependency can propagate failures into upstream services.",
                 [error_ref],
                 "Inspect dependency logs and traces before scaling or restarting; verify whether fault injection is enabled.",
-                ["dependency error ratio <5%", "platform-api error ratio recovers"],
+                ["dependency error ratio <5%", "upstream error ratio recovers"],
             ))
         if service_p95 is not None and service_p95 > 0.5:
             findings.append(_finding(
-                f"dependency.{service}_high_p95_latency", "P1",
-                f"{service}-service P95 latency is {service_p95:.3f}s",
+                f"dependency.{key}_high_p95_latency", "P1",
+                f"{component} P95 latency is {service_p95:.3f}s",
                 "The dependency is slow enough to inflate end-to-end user latency.",
                 [p95_ref],
                 "Inspect the dependency trace span/log duration and compare with resource saturation before scaling.",
-                ["dependency P95 <500ms", "platform-api P95 returns below threshold"],
+                ["dependency P95 <500ms", "upstream P95 returns below threshold"],
             ))
 
-        fault = active_faults.get(service)
+        fault = active_faults.get(component)
         symptom_refs: list[str] = []
         if error_ratio is not None and error_ratio > 0.05:
             symptom_refs.append(error_ref)
@@ -315,8 +379,8 @@ def review_ops_evidence(
             symptom_refs.append(p95_ref)
         if fault and symptom_refs:
             findings.append(_finding(
-                f"dependency.{service}_fault_injection_correlated", "P1",
-                f"{service}-service has an active GitOps fault profile and matching service symptoms",
+                f"dependency.{key}_fault_injection_correlated", "P1",
+                f"{component} has an active GitOps fault profile and matching service symptoms",
                 "The configured experiment is a strong causal candidate for the observed dependency degradation.",
                 ["k8s.deployments", *symptom_refs],
                 "Remove the FAULT_* values through GitOps, let Argo reconcile, then collect fresh metrics/traces/logs before closing the incident.",
@@ -330,7 +394,7 @@ def review_ops_evidence(
             f"platform-api P95 latency is {p95:.3f}s",
             "User requests are slower than the current 500ms operational threshold.",
             ["prometheus.platform_api_p95_latency_5m"],
-            "Compare catalog/orders P95 and trace child spans; scale only if CPU/HPA evidence supports saturation.",
+            "Compare dependency P95 and trace child spans; scale only if CPU/HPA evidence supports saturation.",
             ["P95 <500ms", "trace latency localizes/removes the slow span", "HPA/resource evidence is normal"],
         ))
 
@@ -401,11 +465,15 @@ def review_ops_evidence(
         })
 
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "review_id": f"ops-review:{_now()}",
         "reviewed_at": _now(),
         "state": state,
         "release_guidance": release_guidance,
+        "topology": {
+            "public_service": "platform-api",
+            "dependencies": dependencies,
+        },
         "evidence": {
             "kubernetes_bundle": k8s_bundle.get("bundle_id"),
             "kubernetes_observed_at": k8s_bundle.get("observed_at"),
