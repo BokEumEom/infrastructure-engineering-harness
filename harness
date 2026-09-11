@@ -197,14 +197,17 @@ def command_prometheus_evidence(args: argparse.Namespace) -> int:
     if not queries:
         print("Prometheus query file must contain a non-empty JSON object", file=sys.stderr)
         return 2
+    request_headers = {"Host": args.host_header} if args.host_header else None
     try:
         adapter_result = collect_prometheus_evidence(
             base_url=args.url,
             queries=queries,
+            headers=request_headers,
             scope={
                 "namespace": args.namespace,
                 "service": args.service,
                 "query_file": str(_resolve_path(args.query_file)),
+                "host_header": args.host_header,
             },
         )
     except ValueError as exc:
@@ -218,6 +221,7 @@ def command_prometheus_evidence(args: argparse.Namespace) -> int:
 def command_ops_review(args: argparse.Namespace) -> int:
     print("Infrastructure Engineering Agent · Ops review", file=sys.stderr)
     print("Decision mode: evidence-backed / no mutation", file=sys.stderr)
+    from adapters.evidence.base import normalize_adapter_result
     from runtime.ops_review import review_ops_evidence
     try:
         k8s = _read_json_file(args.k8s, label="Kubernetes evidence")
@@ -311,6 +315,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     prometheus_evidence = sub.add_parser("prometheus-evidence", help="collect read-only Prometheus query evidence for agent review")
     prometheus_evidence.add_argument("--url", default="http://127.0.0.1:9090", help="Prometheus base URL")
+    prometheus_evidence.add_argument("--host-header", help="optional HTTP Host header for Gateway-routed Prometheus access")
     prometheus_evidence.add_argument("--query-file", required=True, help="JSON object describing PromQL queries")
     prometheus_evidence.add_argument("--namespace", help="optional namespace scope metadata")
     prometheus_evidence.add_argument("--service", help="optional service scope metadata")
