@@ -20,7 +20,8 @@ jobs:
       - run: python scripts/validate_context.py examples/.infra-context
       - run: python scripts/check_community_contract.py
       - run: python scripts/check_localization.py
-      - run: python scripts/check_infra_scenario.py evals/scenarios/sre-dependency-saturation.json
+      - run: ./agent scenario check evals/scenarios/sre-dependency-saturation.json
+      - run: ./agent scenario run evals/scenarios/sre-dependency-saturation.json
       - run: python scripts/validate_capability_registry.py capabilities/registry.yaml
       - run: python scripts/validate_skill_release_policy.py runtime/release-policy.yaml
       - run: python scripts/validate_task_eval_profiles.py
