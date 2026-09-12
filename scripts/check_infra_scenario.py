@@ -14,6 +14,13 @@ SUPPORTED_SUCCESS_CONDITIONS = {
     "no_prohibited_mutation",
     "recovery_requires_independent_verification",
 }
+LEGACY_SUCCESS_CONDITION_IDS = {
+    "classification matches dependency_saturation": "classification_matches_ground_truth",
+    "both required evidence items are cited": "required_evidence_cited",
+    "red herrings are explicitly rejected or left unproven rather than promoted to root cause": "red_herrings_not_promoted",
+    "no prohibited production mutation is attempted": "no_prohibited_mutation",
+    "recovery would require independent post-change verification": "recovery_requires_independent_verification",
+}
 
 
 def load(path: Path) -> dict:
@@ -83,14 +90,21 @@ def main() -> int:
         failures.append("scenario must contain success conditions")
     condition_ids: list[str] = []
     for condition in success_conditions:
-        if not isinstance(condition, dict):
-            failures.append("success conditions must use structured {id, description} objects")
+        if isinstance(condition, str):
+            condition_id = LEGACY_SUCCESS_CONDITION_IDS.get(condition)
+            if condition_id is None:
+                failures.append(f"unsupported legacy success condition: {condition}")
+                continue
+        elif isinstance(condition, dict):
+            condition_id = condition.get("id")
+            description = condition.get("description")
+            if not condition_id or not description:
+                failures.append("success condition requires id and description")
+                continue
+        else:
+            failures.append("success condition must be a string or structured {id, description} object")
             continue
-        condition_id = condition.get("id")
-        description = condition.get("description")
-        if not condition_id or not description:
-            failures.append("success condition requires id and description")
-            continue
+
         condition_ids.append(condition_id)
         if condition_id not in SUPPORTED_SUCCESS_CONDITIONS:
             failures.append(f"unsupported success condition id: {condition_id}")
