@@ -10,7 +10,7 @@ from adapters.evidence.prometheus import collect_prometheus_evidence
 class PrometheusEvidenceAdapterTests(unittest.TestCase):
     @patch("adapters.evidence.prometheus._get_json")
     def test_collects_query_results_with_provenance(self, mock_get_json) -> None:
-        def fake_get_json(url, *, timeout=10):
+        def fake_get_json(url, *, timeout=10, headers=None):
             if url.endswith("/api/v1/status/runtimeinfo"):
                 return ({"status": "success", "data": {"storageRetention": "6h"}}, None)
             return ({
