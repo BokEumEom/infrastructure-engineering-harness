@@ -37,16 +37,29 @@ def _get_json(
         return None, f"invalid JSON: {exc}"
 
 
+def _requested_trace_ids(
+    trace_id: str | None,
+    trace_ids: list[str] | None,
+) -> list[str]:
+    ordered: list[str] = []
+    for raw in ([trace_id] if trace_id else []) + list(trace_ids or []):
+        value = str(raw or "").strip()
+        if value and value not in ordered:
+            ordered.append(value)
+    return ordered
+
+
 def collect_tempo_evidence(
     *,
     base_url: str,
     searches: dict[str, dict[str, Any]],
     lookback_seconds: int = 900,
     trace_id: str | None = None,
+    trace_ids: list[str] | None = None,
     scope: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Collect bounded Tempo search results and optionally one trace by ID."""
+    """Collect bounded Tempo search results and optional exact trace lookups."""
     if lookback_seconds <= 0:
         raise ValueError("lookback_seconds must be positive")
 
@@ -104,23 +117,28 @@ def collect_tempo_evidence(
             "provenance": provenance,
         })
 
-    if trace_id:
-        tid = trace_id.strip()
-        if not tid:
-            raise ValueError("trace_id must not be blank")
+    requested = _requested_trace_ids(trace_id, trace_ids)
+    for index, tid in enumerate(requested, start=1):
         url = f"{base}/api/traces/{tid}"
         data, error = _get_json(url, headers=headers)
-        provenance = {"reference": f"{base}/api/traces/{tid}", "trace_id": tid}
+        provenance: dict[str, Any] = {
+            "reference": f"{base}/api/traces/{tid}",
+            "trace_id": tid,
+            "lookup": "exact",
+        }
         if headers and headers.get("Host"):
             provenance["host_header"] = headers["Host"]
+        status = "observed"
+        if error is not None:
+            status = "not_found" if "404" in error else "unavailable"
         observations.append({
-            "id": "tempo.trace",
+            "id": "tempo.trace" if len(requested) == 1 else f"tempo.trace.{index}",
             "source_type": "traces",
             "source": "tempo",
             "component": "trace",
             "signal": "trace_by_id",
-            "value": data if error is None else {"error": error},
-            "status": "observed" if error is None else "unavailable",
+            "value": {"trace_id": tid, "trace": data} if error is None else {"trace_id": tid, "error": error},
+            "status": status,
             "provenance": provenance,
         })
 
