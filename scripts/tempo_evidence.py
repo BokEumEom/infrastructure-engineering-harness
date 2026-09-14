@@ -79,6 +79,8 @@ def main() -> int:
         },
     )
     payload = normalize_adapter_result(result)
+    # Preserve bounded adapter scope metadata needed by smoke/evaluation reports.
+    payload["scope"] = result.get("scope", {})
     rendered = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     if args.output:
         output = Path(args.output).expanduser().resolve()
