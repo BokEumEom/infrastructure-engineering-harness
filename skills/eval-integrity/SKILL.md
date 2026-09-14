@@ -1,6 +1,6 @@
 ---
 name: eval-integrity
-description: Audit an eval, benchmark, metric, paired experiment, holdout, or success gate for circularity and leakage before using it as evidence. Check independent ground truth, scorer/designer separation, control isolation, fixture/live separation, negative controls, and whether only the intended variable changes. Read-only by default.
+description: Audit evaluation validity before using results as evidence of effectiveness. Use for benchmark, paired-experiment, or scorer reviews.
 ---
 
 # Eval Integrity

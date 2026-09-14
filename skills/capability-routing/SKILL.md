@@ -5,7 +5,7 @@ description: Select the minimum implementation or verification capabilities need
 
 # Capability Routing
 
-Use this Skill after the engineering objective and constraints are known. Do not use technology-specific capability guidance to replace Architecture, SRE, Security, FinOps, or Change Review decisions.
+Use this Skill after the engineering objective and constraints are known, when capability selection or source/trust/availability checks are needed. It is optional when the required tools and method are already established. Do not use technology-specific capability guidance to replace Architecture, SRE, Security, FinOps, or Change Review decisions.
 
 ## Inputs
 

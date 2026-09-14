@@ -1,6 +1,6 @@
 ---
 name: artifact-hygiene
-description: Review a newly created or materially changed engineering artifact before handoff. Keep the current truth compact, remove stale patch residue and duplication, preserve authoritative history where history is the artifact, route scattered facts to SSOT review, and route evals to independence review. Use before calling docs, runbooks, policies, schemas, plans, prompts, or skills done.
+description: Review materially revised engineering documents for stale or duplicated guidance. Use for artifact cleanup or handoff review.
 ---
 
 # Artifact Hygiene
@@ -14,10 +14,10 @@ Leave the artifact cleaner, more current, and easier for a fresh agent or engine
 ## Workflow
 
 1. Identify the artifact type and its authority. A current-state guide should read like a clean current version; an ADR, incident record, audit log, or changelog must preserve the history it is meant to preserve.
-2. Read the target end to end before changing it, then inspect nearby artifacts that must remain aligned.
+2. For a local edit, read the affected section and directly related references. Read the entire target when reviewing whole-document coherence or making structural or broad semantic changes; inspect nearby artifacts only where alignment is affected.
 3. Remove stale deltas, duplicated explanation, scaffolding residue, obsolete alternatives, and wording that only explains the editing process.
 4. Prefer "what is true now" over "what changed" unless the artifact is explicitly historical.
-5. If one fact is copied across multiple maintained surfaces, invoke `ssot-review` instead of silently choosing a winner.
+5. Use `ssot-review` when duplicated facts create drift or require a canonical-home decision. Straightforward cleanup may proceed within the user-authorized scope when the canonical source and meaning are clear and no protected artifact or trust boundary is affected.
 6. If the artifact defines an eval, benchmark, metric, experiment, or success gate, invoke `eval-integrity` before trusting the result.
 7. If the artifact claims provider/tool neutrality, verify that durable rules describe mechanisms and constraints rather than incidental product nouns.
 8. Re-read from a cold-start perspective. If nothing materially improves, make no change.

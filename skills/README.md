@@ -12,4 +12,4 @@ The repository keeps all directly discoverable Agent Skills under `skills/` for 
 
 Current local skills are primarily Decision, Control and Workflow Skills. Third-party implementation knowledge is registered separately so it does not flood every prompt or silently gain execution authority.
 
-Use `capability-routing` when a task moves from an engineering decision to concrete build or operations implementation.
+Use `capability-routing` when implementation or verification capability selection is unresolved, or source, trust, or availability checks are needed. Proceed directly when the required tools and method are already established.

@@ -5,7 +5,7 @@ description: Review technology cost and value using allocation, usage efficiency
 
 # FinOps Review
 
-Read `domains/finops/README.md` and the applicable FinOps profile from the selected context root.
+Read `domains/finops/README.md` when its domain guidance materially helps. Load the applicable FinOps profile when the decision depends on organizational policy, targets, or constraints; reuse context already provided.
 
 Current cost, usage, utilization, rate and business-volume values must come from evidence. Datadog or any cloud billing product is optional.
 

@@ -8,7 +8,7 @@
       "kind": "explicit",
       "prompt": "Use artifact-hygiene to review this updated runbook before handoff.",
       "expected_activation": true,
-      "expected_behaviors": ["reads the artifact end to end", "removes stale patch residue", "preserves authoritative operational facts", "reports applicable checks"]
+      "expected_behaviors": ["reads enough of the artifact to assess the requested handoff review", "removes stale patch residue", "preserves authoritative operational facts", "reports applicable checks"]
     },
     {
       "id": "implicit-current-doc",
@@ -31,6 +31,19 @@
       "expected_activation": false,
       "expected_behaviors": ["does not rewrite authoritative history"],
       "prohibited_behaviors": ["removes incident timeline entries", "rewrites the source record as a clean current-state document"]
+    },
+    {
+      "id": "negative-typo-only",
+      "kind": "negative",
+      "prompt": "Fix only the typo in the README heading, without changing its meaning.",
+      "expected_activation": false,
+      "expected_behaviors": [
+        "completes the local text edit with a focused check"
+      ],
+      "prohibited_behaviors": [
+        "starts a whole-document hygiene or SSOT audit",
+        "requires unrelated domain documents"
+      ]
     }
   ]
 }

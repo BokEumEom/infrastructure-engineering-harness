@@ -9,6 +9,8 @@ Review a change as an infrastructure decision, not only as syntax.
 
 ## Context loading
 
+Select only the context that materially affects the current decision; reuse evidence already provided. The list is not a mandatory reading order. If missing context blocks a safety, authority, or correctness decision, defer that decision while continuing independent work.
+
 1. service catalog
 2. affected architecture
 3. production/security policy

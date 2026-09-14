@@ -41,7 +41,7 @@ When a fact or decision is scattered across maintained artifacts:
 3. identify the strongest canonical home;
 4. preserve unique details;
 5. propose references/removals/reconciliation;
-6. mutate only after approval when the change crosses maintained artifacts.
+6. complete user-authorized consolidation of unprotected documents when the canonical source and meaning are clear within the same trust and visibility boundary; require an owner decision or applicable approval for contradictions, ambiguous authority, protected facts, or boundary changes.
 
 Do not consolidate across trust, visibility, customer, tenant, security, or legal boundaries merely to reduce duplication.
 

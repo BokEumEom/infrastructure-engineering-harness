@@ -1,6 +1,6 @@
 ---
 name: ssot-review
-description: Audit one fact, decision, policy, or definition that appears across multiple artifacts and identify the canonical home. Start read-only, classify copies and contradictions, and propose references or reconciliation. Mutate only after explicit approval and never cross trust or permission boundaries silently.
+description: Identify the canonical home of a fact duplicated across maintained artifacts. Use for source-of-truth drift or consolidation reviews.
 ---
 
 # SSOT Review
@@ -14,13 +14,13 @@ One fact should have one authoritative home. Other maintained surfaces should re
 ## Workflow
 
 1. Name the exact truth in scope. Do not audit the whole repository when only one fact or decision is at issue.
-2. Search for all occurrences using at least two independent search formulations or paths.
+2. Search for occurrences within scope. Add search formulations or paths when the initial results leave a material risk of missing alternate wording or maintained copies.
 3. Classify each occurrence as exact copy, paraphrase, partial, stale, contradictory, or intentional boundary copy.
 4. Identify the strongest canonical home: closest to where the fact is owned, changed, reviewed, and enforced.
 5. Record unique details that exist only in non-canonical copies so consolidation cannot lose information.
 6. Separate contradictions from duplicates. Contradictions require an owner decision; do not infer the winner from recency alone.
-7. Produce a read-only plan: canonical home, occurrence map, proposed reference/removal/reconciliation action, and any human decision required.
-8. Only after explicit approval, apply the consolidation through the appropriate governed workflow.
+7. Identify the canonical home, occurrences, proposed actions, and any unresolved owner decisions. For an audit-only request, return these findings without editing.
+8. Complete consolidation already authorized by the user when the canonical source and meaning are clear and only unprotected documents within the same trust and visibility boundary are affected. Request a decision or approval for ambiguous authority, contradictory facts, protected source-of-truth changes, or boundary changes; continue independent authorized work. Existing authorization applies only to its stated scope, and protected changes still use the appropriate governed workflow.
 9. Verify every remaining reference resolves and no unique detail was lost.
 
 ## Rules

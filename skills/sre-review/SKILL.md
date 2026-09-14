@@ -5,7 +5,7 @@ description: Review reliability using SLI/SLO, error budgets, burn rates, incide
 
 # SRE Review
 
-Read `domains/sre/README.md` and the applicable SRE profile from the selected context root.
+Read `domains/sre/README.md` when its domain guidance materially helps. Load the applicable SRE profile when the decision depends on organizational policy, targets, or constraints; reuse context already provided.
 
 Use current SLI, burn-rate, alert and incident values only when provided as evidence or available through read-only tools. Never invent them.
 

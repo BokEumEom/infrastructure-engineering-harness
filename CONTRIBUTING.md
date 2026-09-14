@@ -86,7 +86,7 @@ When reviewing a translation:
 - do not weaken safety, authorization or fixture-vs-live language;
 - prefer stable technical terms over awkward literal translation;
 - update the localization contract when a new supported language is added;
-- run `./agent validate` before opening a PR.
+- run `python scripts/check_localization.py` for translation-only changes; use the validation scope below when technical contracts also change.
 
 See `docs/LOCALIZATION.md`.
 
@@ -110,11 +110,15 @@ Keep PRs focused. State:
 - how it was validated;
 - what it intentionally does **not** change.
 
-Run before opening a PR:
+Before opening a PR, run checks that cover the changed contracts and behavior. For documentation-only changes, verify affected links, commands, and document consistency; for translation changes, also run `python scripts/check_localization.py`. Skill changes should validate the affected frontmatter and evaluation cases.
+
+Run the full validation for Runtime, schema, policy, or shared-contract changes, or when focused checks leave a concrete cross-cutting risk:
 
 ```bash
 ./agent validate
 ```
+
+CI continues to run the full validation suite for all PRs. Fix failures caused by the requested change and rerun affected checks without requiring approval at each local step; external or production actions still require their applicable authorization.
 
 If validation fails, `./agent doctor` shows the local runtime/dependency state. Use the lower-level command reported by the failing check only when deeper debugging is needed.
 

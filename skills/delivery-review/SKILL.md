@@ -1,11 +1,11 @@
 ---
 name: delivery-review
-description: Review software delivery flow, deployment risk, rollback, quality gates and DORA software delivery performance signals. Use for DevOps, release, deployment, CI/CD, change-flow, recovery or delivery-performance questions.
+description: Review delivery flow, release risk, rollback, and quality gates. Use when evaluating or changing a delivery process.
 ---
 
 # DevOps / Delivery Review
 
-Read `domains/devops/README.md` and the applicable delivery profile from the selected context root.
+Read `domains/devops/README.md` when its domain guidance materially helps. Load the applicable delivery profile when the decision depends on organizational policy, targets, or constraints; reuse context already provided.
 
 Treat delivery metrics as evidence, not goals to optimize independently. Prefer trends for the same service and look for flow/stability trade-offs.
 
