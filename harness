@@ -221,7 +221,6 @@ def command_prometheus_evidence(args: argparse.Namespace) -> int:
 def command_ops_review(args: argparse.Namespace) -> int:
     print("Infrastructure Engineering Agent · Ops review", file=sys.stderr)
     print("Decision mode: evidence-backed / no mutation", file=sys.stderr)
-    from adapters.evidence.base import normalize_adapter_result
     from runtime.ops_review import review_ops_evidence
     try:
         k8s = _read_json_file(args.k8s, label="Kubernetes evidence")
@@ -253,6 +252,47 @@ def command_ops_compare(args: argparse.Namespace) -> int:
     print(f"New: {len(comparison['new'])}", file=sys.stderr)
     print(f"Verified recovery: {comparison['verified_recovery']}", file=sys.stderr)
     return 0 if not comparison["regressed"] else 1
+
+
+def command_capacity_review(args: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Agent · Capacity review", file=sys.stderr)
+    print("Decision mode: evidence-backed / no mutation", file=sys.stderr)
+    from runtime.capacity_review import review_capacity_evidence
+    try:
+        k8s = _read_json_file(args.k8s, label="Kubernetes evidence")
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    review = review_capacity_evidence(
+        k8s,
+        workload=args.workload,
+        target_hpa_max=args.target_hpa_max,
+        target_requests_cpu=args.target_requests_cpu,
+        warning_max_age_seconds=args.warning_max_age_seconds,
+    )
+    _write_json(review, output=args.output, noun="Capacity review")
+    print(f"State: {review['state']}", file=sys.stderr)
+    print(f"Findings: {len(review['findings'])}", file=sys.stderr)
+    print(f"Proposal: {'yes' if review.get('proposal') else 'no'}", file=sys.stderr)
+    return 0 if review["state"] in {"healthy", "at_risk", "acute"} else 1
+
+
+def command_change_policy(args: argparse.Namespace) -> int:
+    print("Infrastructure Engineering Agent · Change policy", file=sys.stderr)
+    from runtime.change_policy import evaluate_change_policy
+    try:
+        proposal = _read_json_file(args.proposal, label="Change proposal")
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    if proposal.get("proposal") and isinstance(proposal.get("proposal"), dict):
+        proposal = proposal["proposal"]
+    result = evaluate_change_policy(proposal)
+    _write_json(result, output=args.output, noun="Policy decision")
+    print(f"Risk: {result['risk']}", file=sys.stderr)
+    print(f"Decision: {result['decision']}", file=sys.stderr)
+    print(f"Approval required: {result['approval_required']}", file=sys.stderr)
+    return 0 if result["executable"] else 1
 
 
 def command_validate(_: argparse.Namespace) -> int:
@@ -334,6 +374,20 @@ def build_parser() -> argparse.ArgumentParser:
     ops_compare.add_argument("--after", required=True, help="after Ops review JSON")
     ops_compare.add_argument("--output", help="write the comparison JSON to a file")
     ops_compare.set_defaults(func=command_ops_compare)
+
+    capacity_review = sub.add_parser("capacity-review", help="correlate HPA saturation with recent ResourceQuota rejection evidence")
+    capacity_review.add_argument("--k8s", required=True, help="normalized Kubernetes evidence JSON")
+    capacity_review.add_argument("--workload", default="web", help="HPA/Deployment workload name")
+    capacity_review.add_argument("--target-hpa-max", type=int, default=8, help="proposed HPA maxReplicas")
+    capacity_review.add_argument("--target-requests-cpu", default="2", help="proposed Terraform ResourceQuota requests.cpu")
+    capacity_review.add_argument("--warning-max-age-seconds", type=int, default=900, help="maximum age for quota warnings used in correlation")
+    capacity_review.add_argument("--output", help="write the capacity review JSON to a file")
+    capacity_review.set_defaults(func=command_capacity_review)
+
+    change_policy = sub.add_parser("change-policy", help="classify infrastructure change proposal risk before approval")
+    change_policy.add_argument("--proposal", required=True, help="proposal JSON or capacity-review JSON containing a proposal")
+    change_policy.add_argument("--output", help="write the policy decision JSON to a file")
+    change_policy.set_defaults(func=command_change_policy)
 
     doctor = sub.add_parser("doctor", help="show local runtime and dependency status")
     doctor.set_defaults(func=command_doctor)
