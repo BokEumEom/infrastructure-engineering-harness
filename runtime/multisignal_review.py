@@ -46,18 +46,40 @@ def _log_trace_index(bundle: dict[str, Any]) -> dict[str, dict[str, set[str]]]:
     return indexed
 
 
+def _exact_trace_summary(observation: dict[str, Any], trace_id: str) -> dict[str, Any]:
+    value = observation.get("value") if isinstance(observation.get("value"), dict) else {}
+    trace = value.get("trace") if isinstance(value.get("trace"), dict) else {}
+    batches = trace.get("batches") if isinstance(trace, dict) else None
+    resource_spans = trace.get("resourceSpans") if isinstance(trace, dict) else None
+    return {
+        "traceID": trace_id,
+        "lookup": "exact",
+        "batchCount": len(batches) if isinstance(batches, list) else None,
+        "resourceSpanCount": len(resource_spans) if isinstance(resource_spans, list) else None,
+    }
+
+
 def _tempo_trace_index(bundle: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
     indexed: dict[str, list[dict[str, Any]]] = {}
     for observation in bundle.get("observations", []):
-        value = observation.get("value") if isinstance(observation, dict) else None
+        if not isinstance(observation, dict):
+            continue
+        value = observation.get("value") if isinstance(observation.get("value"), dict) else None
         if not isinstance(value, dict):
             continue
+
         for trace in value.get("traces") or []:
             if not isinstance(trace, dict):
                 continue
             trace_id = str(trace.get("traceID") or trace.get("traceId") or "").strip()
             if trace_id:
                 indexed.setdefault(trace_id, []).append(trace)
+
+        if observation.get("status") == "observed" and observation.get("signal") == "trace_by_id":
+            provenance = observation.get("provenance") if isinstance(observation.get("provenance"), dict) else {}
+            trace_id = str(value.get("trace_id") or provenance.get("trace_id") or "").strip()
+            if trace_id:
+                indexed.setdefault(trace_id, []).append(_exact_trace_summary(observation, trace_id))
     return indexed
 
 
@@ -66,7 +88,7 @@ def correlate_multisignal_evidence(
     loki_bundle: dict[str, Any],
     tempo_bundle: dict[str, Any],
 ) -> dict[str, Any]:
-    """Correlate log trace IDs with Tempo search results without changing Ops decisions."""
+    """Correlate log trace IDs with Tempo search/exact results without changing Ops decisions."""
     unavailable = sorted(set(_unavailable(loki_bundle) + _unavailable(tempo_bundle)))
     logs = _log_trace_index(loki_bundle)
     traces = _tempo_trace_index(tempo_bundle)
