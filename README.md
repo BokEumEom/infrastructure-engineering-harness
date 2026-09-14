@@ -6,7 +6,7 @@ A provider-neutral **Infrastructure Engineering Agent** for investigating, revie
 
 > **Let the agent reason freely; make execution flow explicit; constrain authority and truth at the control-plane boundary.**
 
-> **Status: Research Preview.** The Agent contract, reference Turn Runtime, Skills, Resource Graph, deterministic scenarios, evaluation plumbing, and local CLI are available. Live adapters, persistent production runtime, and controlled execution remain experimental.
+> **Status: Research Preview.** The Agent contract, reference Turn Runtime, Skills, Resource Graph, deterministic scenarios, evaluation plumbing, local CLI, and read-only Kubernetes/Prometheus/Loki/Tempo evidence adapters are available. Persistent production runtime and controlled execution remain experimental.
 
 The historical repository name `infrastructure-engineering-harness` remains for compatibility. **The product is the Agent; the Orchestrator runs it; the Harness is its internal control plane.**
 
@@ -180,6 +180,26 @@ Credentials stay behind the host/runtime boundary. Chat approval is not executio
 - Production mutation, destructive action, privilege expansion, and financial commitments require independent authorization.
 - Delegation cannot expand parent authority.
 
+## Live evidence adapters
+
+The live reference environment currently has bounded read-only adapters for:
+
+```text
+Kubernetes API
+Prometheus HTTP API
+Loki HTTP API
+Tempo HTTP API
+```
+
+Kubernetes + Prometheus currently drive blocking `ops-review` decisions. Loki and Tempo are enrichment sources first: they preserve provenance, bounded time windows and trace IDs, but must demonstrate better root-cause localization in live/evaluation scenarios before they are allowed to change blocking incident conclusions.
+
+The platform reference environment exposes these observability APIs through MetalLB + Envoy Gateway rather than requiring `kubectl port-forward`. Standalone adapter CLIs are available for live validation:
+
+```bash
+python scripts/loki_evidence.py --help
+python scripts/tempo_evidence.py --help
+```
+
 ## Reference models
 
 Primary structural references are intentionally few:
@@ -200,7 +220,7 @@ See [Reference Models](docs/REFERENCE-MODELS.md), [Commerce Agent Patterns](docs
 
 - turn a sanitized real-world failure pattern into a [Scenario](contrib/scenarios/README.md);
 - run the Agent and submit a [Validation Report](validation-reports/README.md);
-- add a read-only cloud / Kubernetes / Prometheus / CI/CD adapter;
+- add a read-only cloud / Kubernetes / Prometheus / Loki / Tempo / CI/CD adapter;
 - add a Skill Eval / Harness Lift / negative case;
 - propose a well-grounded Reference Model.
 
@@ -216,6 +236,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ./agent doctor
 ```
 
+Live enrichment evidence currently uses the standalone scripts above while the source contracts are being validated. After live reference-environment smoke and regression scenarios prove stable behavior, they can be promoted into the primary `./agent` command surface.
+
 Legacy `./harness` commands remain compatible during Research Preview.
 
 ## Localization
@@ -227,11 +249,11 @@ See [Localization Policy](docs/LOCALIZATION.md).
 ## Current maturity
 
 - Orchestrator: reference read-only Turn Runtime, not a production model/provider runtime;
-- live discovery/evidence adapters: limited;
-- Harness / Control Plane: reference implementation, not a production daemon;
+- live discovery/evidence adapters: Kubernetes and Prometheus are operational; Loki and Tempo enrichment adapters are implemented and require live reference-environment validation;
+- Harness / Control Plane: reference implementation with deterministic policy/change-control contracts, not a production daemon;
 - Backend: contract/facade, not a complete AWS/Kubernetes implementation;
 - autonomous production mutation: not promised;
-- real Agent effectiveness: requires `source: live` validation evidence.
+- real Agent effectiveness: requires `source: live` validation evidence and a broader failure/evaluation corpus.
 
 See [Release Status](docs/RELEASE-STATUS.md) and [Community Validation](docs/COMMUNITY-VALIDATION.md).
 
