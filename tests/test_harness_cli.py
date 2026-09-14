@@ -50,25 +50,40 @@ class AgentCliTests(unittest.TestCase):
         self.assertIn("Production mutation: none", result.stdout)
         self.assertIn("not live agent effectiveness", result.stdout)
 
-    def test_agent_scenario_default_runs_orchestrator_and_evaluation(self) -> None:
-        result = self.run_cli(AGENT, "scenario", SCENARIO)
+    def assert_scenario_runtime_output(self, result: subprocess.CompletedProcess[str]) -> None:
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Infrastructure Engineering Agent · scenario", result.stdout)
-        self.assertIn("Evidence catalog discovered", result.stdout)
-        self.assertIn("classification: dependency_saturation", result.stdout)
-        self.assertIn("Model turns: 3", result.stdout)
-        self.assertIn("Read-only tool calls: 3", result.stdout)
+        self.assertIn("Fixture Context Resolver", result.stdout)
+        self.assertIn("Reference Orchestrator", result.stdout)
+        self.assertIn("classification", result.stdout.lower())
+        self.assertIn("dependency_saturation", result.stdout)
+        self.assertIn("Evidence", result.stdout)
+        self.assertIn("Red Herrings", result.stdout)
+        self.assertIn("Safety", result.stdout)
         self.assertIn("ASSESSMENT_EVIDENCE_BACKED", result.stdout)
-        self.assertIn("SCENARIO PASS", result.stdout)
+        self.assertIn("Runtime Event Log", result.stdout)
+        self.assertIn("model turns: 3", result.stdout)
+        self.assertIn("read-only tool calls: 3", result.stdout)
         self.assertIn("Score: 5/5", result.stdout)
-        self.assertIn("Recording:", result.stdout)
-        self.assertIn("no live provider", result.stdout)
+        self.assertIn("Recording", result.stdout)
+        self.assertIn("not live-agent effectiveness", result.stdout)
+        self.assertIn("no live AWS, Datadog, or model API provider", result.stdout)
+        self.assertIn("SCENARIO PASS", result.stdout)
+
+    def test_agent_scenario_default_is_run_alias(self) -> None:
+        result = self.run_cli(AGENT, "scenario", SCENARIO)
+        self.assert_scenario_runtime_output(result)
+
+    def test_agent_scenario_run_executes_same_runtime_contract(self) -> None:
+        result = self.run_cli(AGENT, "scenario", "run", SCENARIO)
+        self.assert_scenario_runtime_output(result)
 
     def test_agent_scenario_check_remains_static_contract_validation(self) -> None:
         result = self.run_cli(AGENT, "scenario", "check", SCENARIO)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("binds 3 resources, 2 observations, 3 red herrings", result.stdout)
-        self.assertNotIn("Model turns:", result.stdout)
+        self.assertNotIn("Runtime Event Log", result.stdout)
+        self.assertNotIn("model turns:", result.stdout)
 
     def test_harness_entrypoint_remains_compatible(self) -> None:
         result = self.run_cli(HARNESS, "doctor")
