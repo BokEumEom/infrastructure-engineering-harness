@@ -50,6 +50,49 @@ class MultiSignalReviewTests(unittest.TestCase):
         self.assertEqual(result["correlations"][0]["trace_id"], "abc123")
         self.assertEqual(result["correlations"][0]["log_services"], ["orders-service"])
 
+    def test_correlates_exact_trace_followup_when_search_sample_does_not_overlap(self) -> None:
+        ops = {"state": "healthy", "release_guidance": "continue", "findings": []}
+        loki = {
+            "observations": [
+                {
+                    "id": "loki.recent",
+                    "status": "observed",
+                    "value": {
+                        "result": [
+                            {
+                                "stream": {"app": "web"},
+                                "values": [["2", '{"trace_id":"exact123","service":"platform-api","event":"request_completed","level":"info"}']],
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+        tempo = {
+            "observations": [
+                {
+                    "id": "tempo.search",
+                    "status": "observed",
+                    "value": {"traces": [{"traceID": "different456"}]},
+                },
+                {
+                    "id": "tempo.trace.1",
+                    "status": "observed",
+                    "signal": "trace_by_id",
+                    "value": {"trace_id": "exact123", "trace": {"batches": [{"resource": {}}]}},
+                    "provenance": {"trace_id": "exact123", "lookup": "exact"},
+                },
+            ]
+        }
+
+        result = correlate_multisignal_evidence(ops, loki, tempo)
+
+        self.assertEqual(result["status"], "correlated")
+        self.assertEqual(result["correlation_count"], 1)
+        self.assertEqual(result["correlations"][0]["trace_id"], "exact123")
+        self.assertEqual(result["correlations"][0]["tempo_summaries"][-1]["lookup"], "exact")
+        self.assertEqual(result["decision_effect"], "enrichment_only")
+
     def test_reports_source_gap_without_changing_ops_decision(self) -> None:
         ops = {"state": "healthy", "release_guidance": "continue", "findings": []}
         loki = {"observations": [{"id": "loki.logs", "status": "unavailable", "value": {"error": "down"}}]}
