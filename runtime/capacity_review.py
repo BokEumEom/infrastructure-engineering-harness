@@ -76,7 +76,7 @@ def review_capacity_evidence(
     target_requests_cpu: str = "2",
     warning_max_age_seconds: int = 900,
 ) -> dict[str, Any]:
-    """Correlate HPA saturation with recent quota-rejection evidence.
+    """Correlate HPA scale pressure with recent quota-rejection evidence.
 
     This reviewer is intentionally bounded to capacity diagnosis/proposal. It does
     not mutate Kubernetes, Git, Terraform, or approval state.
@@ -94,17 +94,23 @@ def review_capacity_evidence(
 
     findings: list[dict[str, Any]] = []
     hpa_limited = False
+    scaleout_pending = False
+    at_max = False
     if hpa:
         conditions = hpa.get("conditions") if isinstance(hpa.get("conditions"), dict) else {}
+        current = int(hpa.get("current") or 0)
+        desired = int(hpa.get("desired") or 0)
+        maximum = int(hpa.get("max") or 0)
         hpa_limited = conditions.get("ScalingLimited") == "True"
-        at_max = hpa.get("current") is not None and hpa.get("max") is not None and int(hpa.get("current") or 0) >= int(hpa.get("max") or 0)
-        if hpa_limited or at_max:
+        scaleout_pending = desired > current
+        at_max = maximum > 0 and current >= maximum
+        if hpa_limited or scaleout_pending or at_max:
             findings.append({
                 "id": f"capacity.{workload}_hpa_saturated",
                 "severity": "P1",
                 "observation": (
                     f"{workload} HPA current={hpa.get('current')} desired={hpa.get('desired')} max={hpa.get('max')} "
-                    f"ScalingLimited={conditions.get('ScalingLimited')}"
+                    f"ScalingLimited={conditions.get('ScalingLimited')} scaleout_pending={scaleout_pending}"
                 ),
                 "evidence_refs": ["k8s.hpa"],
             })
@@ -118,12 +124,12 @@ def review_capacity_evidence(
             "evidence_refs": ["k8s.warning_events"],
         })
 
-    correlated = bool(hpa_limited and warnings)
+    correlated = bool(warnings and (hpa_limited or scaleout_pending or at_max))
     if correlated:
         findings.append({
             "id": f"capacity.{workload}_hpa_quota_correlated",
             "severity": "P1",
-            "observation": "HPA scale-out is limited while recent Pod creation is rejected by ResourceQuota",
+            "observation": "HPA is under scale pressure while recent Pod creation is rejected by ResourceQuota",
             "evidence_refs": ["k8s.hpa", "k8s.warning_events", "k8s.deployments"],
         })
 
@@ -160,8 +166,8 @@ def review_capacity_evidence(
                 "ownership_domains": ["terraform", "gitops"],
             },
             "post_checks": [
-                f"{workload} HPA is no longer ScalingLimited",
                 "no fresh exceeded-quota FailedCreate events",
+                f"{workload} Deployment reaches desired Ready replicas",
                 "application HTTPS path remains healthy",
                 "fresh Ops review contains no new blocking findings",
             ],
@@ -187,6 +193,9 @@ def review_capacity_evidence(
         "evidence_summary": {
             "hpa": hpa,
             "deployment": deployment,
+            "hpa_scaling_limited": hpa_limited,
+            "hpa_scaleout_pending": scaleout_pending,
+            "hpa_at_max": at_max,
             "recent_quota_warning_count": len(warnings),
             "quota_requests_cpu_limit": quota_limit,
         },
