@@ -11,7 +11,7 @@ from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-LINK_RE = re.compile(r"!?[[^]]*](([^)]+))")
+LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
 EXTERNAL_PREFIXES = (
     "http://",
@@ -162,7 +162,9 @@ def structural_check() -> int:
 
     for doc in sorted(DOCS.rglob("*.md")):
         if doc.resolve() not in reachable:
-            failures.append(f"orphaned documentation not reachable from docs/README.md: {repo_relative(doc)}")
+            failures.append(
+                f"orphaned documentation not reachable from docs/README.md: {repo_relative(doc)}"
+            )
 
     if failures:
         return report_failures(failures)
