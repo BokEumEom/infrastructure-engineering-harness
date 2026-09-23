@@ -16,20 +16,28 @@
 - [ ] Eval / Validation
 - [ ] Community / Docs
 
+## Documentation impact
+
+- [ ] I checked whether this changes behavior, architecture, configuration, CLI/API/schema contracts, setup, operations, release status, evaluation meaning, or safety boundaries.
+- [ ] Relevant canonical documentation was updated, or no documentation change is required because the documented contract is unchanged.
+- [ ] New or moved project documentation is reachable from docs/README.md.
+
+See docs/DOCUMENTATION.md for the documentation maintenance rules.
+
 ## Validation
 
 <!-- Paste the commands/results you ran. -->
 
-```text
+~~~text
 
-```
+~~~
 
 ## Safety / invariants
 
 - [ ] No secrets or proprietary production data are included.
 - [ ] Provider output is not treated as verified engineering truth without the existing evidence boundary.
 - [ ] Production authorization is not broadened by this PR.
-- [ ] Third-party `reference_only` capabilities do not gain execution authority.
+- [ ] Third-party reference_only capabilities do not gain execution authority.
 - [ ] Fixture results are not presented as live Skill/Context/Agent effectiveness evidence.
 
 ## Artifact hygiene

@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -20,6 +22,10 @@ jobs:
       - run: python scripts/validate_context.py examples/.infra-context
       - run: python scripts/check_community_contract.py
       - run: python scripts/check_localization.py
+      - run: python scripts/check_docs.py
+      - name: Documentation drift advisory
+        if: github.event_name == 'pull_request'
+        run: python scripts/check_docs.py --drift-warning "origin/${{ github.base_ref }}"
       - run: python scripts/check_infra_scenario.py evals/scenarios/sre-dependency-saturation.json
       - run: python scripts/validate_capability_registry.py capabilities/registry.yaml
       - run: python scripts/validate_skill_release_policy.py runtime/release-policy.yaml

@@ -24,17 +24,42 @@ Do not silently rewrite durable source-of-truth artifacts such as Architecture, 
 <!-- rule: verified-completion -->
 Completion means the real objective is independently verified, required safety/permission gates are satisfied, and material regression obligations have not failed.
 
+## Documentation maintenance
+
+docs/README.md is the canonical documentation index. Keep repository-level documentation progressively disclosed: overview documents should route to focused documents instead of duplicating their details.
+
+When a change affects any of the following, identify and update the related documentation before completion:
+
+- user-visible behavior or supported workflows;
+- architecture, component boundaries, or source-of-truth ownership;
+- configuration, CLI, API, schema, or compatibility contracts;
+- installation, setup, operational procedures, or troubleshooting;
+- release status, capability availability, evaluation meaning, or safety boundaries.
+
+A documentation edit is normally unnecessary for internal refactoring, formatting, test-only changes, or implementation cleanup that does not change documented behavior.
+
+For a documentation-affecting change:
+
+1. start from docs/README.md and load only the relevant document;
+2. update the canonical detail document rather than repeating the same explanation elsewhere;
+3. update an index only when navigation changed or a document was added, removed, or moved;
+4. run python scripts/check_docs.py for documentation structure;
+5. use broader validation only when the changed contract warrants it.
+
+CI catches structural drift such as broken navigation and orphaned documentation. It can only warn when functional code changes without any documentation change; semantic correctness still requires human review. See docs/DOCUMENTATION.md.
+
 ## Discoverable references
 
-- `agents/infrastructure_engineering/` — user-facing Agent contract and provider-neutral Backend facade
-- `runtime/orchestrator.py` — reference Agent Turn Runtime; owns flow, not truth or authority
-- `runtime/` — internal event, provenance, approval, guard, recording, memory, release, and observability contracts
-- `skills/` — optional task-specific guidance
-- `loops/` — optional bounded reconciliation state for long-running work
-- `domains/` — Infrastructure / SRE / DevOps / FinOps / Security lenses
-- `capabilities/` — implementation/verification source, trust, risk, and availability metadata
-- `environment/` and `adapters/evidence/` — live resource/evidence contracts
-- `docs/ARCHITECTURE.md` — canonical synthesized architecture
-- `docs/HARNESS-UNHOBBLING.md` — why always-loaded guidance is intentionally small
+- agents/infrastructure_engineering/ — user-facing Agent contract and provider-neutral Backend facade
+- runtime/orchestrator.py — reference Agent Turn Runtime; owns flow, not truth or authority
+- runtime/ — internal event, provenance, approval, guard, recording, memory, release, and observability contracts
+- skills/ — optional task-specific guidance
+- loops/ — optional bounded reconciliation state for long-running work
+- domains/ — Infrastructure / SRE / DevOps / FinOps / Security lenses
+- capabilities/ — implementation/verification source, trust, risk, and availability metadata
+- environment/ and adapters/evidence/ — live resource/evidence contracts
+- docs/README.md — canonical documentation map
+- docs/ARCHITECTURE.md — canonical synthesized architecture
+- docs/HARNESS-UNHOBBLING.md — why always-loaded guidance is intentionally small
 
 The model-facing surface should usually remain **Context / Skills / Tools**. Treat Domain, Capability, Binding, Workflow, and Loop as internal metadata unless the task specifically needs them.
